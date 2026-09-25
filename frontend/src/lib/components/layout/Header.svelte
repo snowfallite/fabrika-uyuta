@@ -31,7 +31,10 @@
 				scrolled ? 'shadow-header glass' : 'bg-transparent'
 			)}
 		>
-			<a href="/" class="font-display text-xl font-medium tracking-tight text-primary md:text-2xl">
+			<a
+				href="/"
+				class="font-display text-xl font-medium tracking-tight whitespace-nowrap text-primary md:text-2xl"
+			>
 				{BRAND}
 			</a>
 			<nav aria-label="Основное меню" class="hidden items-center gap-8 lg:flex">
@@ -52,7 +55,8 @@
 						<Phone class="size-4" aria-hidden="true" />{settings.phone_display}
 					</a>
 				{/if}
-				<a href="/lead" class="{buttonVariants({ size: 'sm' })} hidden sm:inline-flex">{LEAD_CTA}</a
+				<a href="/lead" class={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex')}
+					>{LEAD_CTA}</a
 				>
 				<MobileNav {nav} phone={settings.phone} />
 			</div>

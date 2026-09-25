@@ -1,7 +1,15 @@
 <script lang="ts">
-	import { Container } from '$lib/components/ui/container';
+	import Hero from '$lib/features/hero/Hero.svelte';
+
+	let { data } = $props();
 </script>
 
-<Container class="pt-32 pb-24">
-	<h1 class="text-5xl font-light text-primary">Фабрика Уюта</h1>
-</Container>
+<svelte:head>
+	<title>Фабрика Уюта: мебель на заказ в Вологде</title>
+	<meta
+		name="description"
+		content="Кухни, шкафы, шкафы-купе, кухонные столы и офисная мебель на заказ в Вологде. ЛДСП и МДФ."
+	/>
+</svelte:head>
+
+<Hero image={data.home.slots.hero} />

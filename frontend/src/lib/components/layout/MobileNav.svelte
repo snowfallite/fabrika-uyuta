@@ -6,6 +6,7 @@
 	import type { NavItem } from '$lib/config/nav';
 	import { LEAD_CTA, MENU_TITLE } from '$lib/content/layout';
 	import { formatPhoneInput } from '$lib/domain/phone';
+	import { cn } from '$lib/utils';
 
 	interface Props {
 		nav: NavItem[];
@@ -19,7 +20,7 @@
 
 <Sheet.Root bind:open>
 	<Sheet.Trigger
-		class="{buttonVariants({ variant: 'secondary', size: 'icon' })} lg:hidden"
+		class={cn(buttonVariants({ variant: 'secondary', size: 'icon' }), 'lg:hidden')}
 		aria-label={MENU_TITLE}
 	>
 		<Menu class="size-5" aria-hidden="true" />
