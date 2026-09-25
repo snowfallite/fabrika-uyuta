@@ -1,0 +1,19 @@
+{
+	"$schema": "https://unpkg.com/knip@6/schema.json",
+	"ignore": ["src/lib/components/ui/**", "src/lib/utils.ts"],
+	"ignoreDependencies": [
+		"@axe-core/playwright",
+		"@fontsource-variable/cormorant-garamond",
+		"@lucide/svelte",
+		"bits-ui",
+		"cn",
+		"fast-check",
+		"openapi-fetch",
+		"tailwind-variants",
+		"vitest-browser-svelte"
+	],
+	"ignoreIssues": {
+		"src/lib/components/ui/**": ["exports", "types"],
+		"src/lib/types/api.d.ts": ["exports", "types"]
+	}
+}
