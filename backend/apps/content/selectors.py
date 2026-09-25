@@ -2,6 +2,10 @@
 
 from typing import Any
 
+from apps.content.models import SiteImage
+from apps.content.services.images import to_image_asset
+from apps.core.enums import SiteImageSlot
+
 
 def get_site_settings() -> dict[str, Any]:
     # Stub until S2-10.
@@ -17,11 +21,15 @@ def get_site_settings() -> dict[str, Any]:
 
 
 def get_home_content() -> dict[str, Any]:
-    # Stub until S1-09 (slots), S2-06 (categories), S2-07 (featured).
+    # categories: stub until S2-06; featured: stub until S2-07.
+    return {"slots": _slots(), "categories": [], "featured": []}
+
+
+def _slots() -> dict[str, dict[str, Any] | None]:
+    images = {image.slot: image for image in SiteImage.objects.all()}
     return {
-        "slots": {"hero": None, "about": None, "material_ldsp": None, "material_mdf": None},
-        "categories": [],
-        "featured": [],
+        slot: to_image_asset(images[slot], f"Фабрика Уюта: {label}") if slot in images else None
+        for slot, label in SiteImageSlot.choices
     }
 
 

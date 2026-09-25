@@ -78,8 +78,11 @@ class GalleryItemAdmin(ImageAdminMixin):
 
 @admin.register(SiteImage)
 class SiteImageAdmin(ImageAdminMixin, ReferenceRowAdmin):
+    """Fixed photo slots of the home sections (tech.md, S1-09)."""
+
     list_display = ["__str__", "image_preview", "updated_at"]
-    readonly_fields = ["image_preview"]
+    fields = ["slot", "image", "image_preview", "alt"]
+    readonly_fields = ["slot", "image_preview"]
 
 
 class SocialLinkInline(admin.TabularInline):

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -14,3 +15,6 @@ urlpatterns = [
     path("api/v1/", include("apps.content.api.urls")),
     path("api/v1/", include("apps.leads.api.urls")),
 ]
+
+# Caddy serves /media/ everywhere except dev, where Vite proxies it here.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
