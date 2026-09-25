@@ -69,6 +69,7 @@ def test_ac3_invalid_phone_is_a_400_not_a_500(client: Client, settings: Any) -> 
 def test_create_lead_query_count(
     client: Client, settings: Any, django_assert_max_num_queries: MaxQueries
 ) -> None:
-    # Throttle bookkeeping lives in the database cache, the insert is one query.
-    with django_assert_max_num_queries(6):
+    # One insert; the rest is throttle bookkeeping in the database cache (get, then set inside
+    # a savepoint with a cull check).
+    with django_assert_max_num_queries(7):
         assert post(client, settings, valid_body()).status_code == 201

@@ -1,6 +1,7 @@
 """Lead DTOs of tech.md, section 7; error texts of section 12.1."""
 
 from typing import Any
+from urllib.parse import urlsplit
 
 from django.core.validators import ProhibitNullCharactersValidator
 from rest_framework import serializers
@@ -8,6 +9,7 @@ from rest_framework.validators import ProhibitSurrogateCharactersValidator
 
 from apps.core.enums import ProductKind
 from apps.core.phone import normalize_phone
+from apps.core.text import clean_name, clean_text
 
 NAME_REQUIRED = "Укажите ФИО"
 NAME_TOO_SHORT = "Слишком короткое имя"
@@ -21,7 +23,8 @@ CONSENT_REQUIRED = "Нужно согласие на обработку перс
 
 
 def _messages(default: str, **overrides: str) -> dict[str, Any]:
-    return {"required": default, "blank": default, "null": default, "invalid": default} | overrides
+    keys = ("required", "blank", "null", "invalid", "max_length")
+    return dict.fromkeys(keys, default) | overrides
 
 
 class RawCharField(serializers.CharField):
@@ -76,11 +79,38 @@ class LeadCreateSerializer(serializers.Serializer):
     website = RawCharField(required=False, allow_blank=True)
     source_url = RawCharField(required=False, allow_blank=True, max_length=2000)
 
+    def validate_name(self, value: str) -> str:
+        name = clean_name(value)
+        if not any(ch.isalpha() for ch in name):
+            raise serializers.ValidationError(NAME_REQUIRED)
+        if len(name) < 2:
+            raise serializers.ValidationError(NAME_TOO_SHORT)
+        if len(name) > 120:
+            raise serializers.ValidationError(NAME_TOO_LONG)
+        return name
+
     def validate_phone(self, value: str) -> str:
         phone = normalize_phone(value)
         if phone is None:
             raise serializers.ValidationError(PHONE_INVALID)
         return phone
+
+    def validate_dimensions(self, value: str) -> str:
+        return clean_text(value)
+
+    def validate_comment(self, value: str) -> str:
+        return clean_text(value)
+
+    def validate_consent(self, value: bool) -> bool:
+        if value is not True:
+            raise serializers.ValidationError(CONSENT_REQUIRED)
+        return value
+
+    def validate_source_url(self, value: str) -> str:
+        """Path and query only, no host, at most 500 characters (tech.md, section 7)."""
+        parts = urlsplit(clean_text(value))
+        path = parts.path + (f"?{parts.query}" if parts.query else "")
+        return path[:500]
 
 
 class LeadCreatedSerializer(serializers.Serializer):
