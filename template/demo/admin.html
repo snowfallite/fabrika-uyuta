@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Админ-панель — Фабрика Уюта</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../dist/styles.css" />
+  <style>
+    .ph { background: linear-gradient(135deg, hsl(36 22% 88%), hsl(36 22% 78%) 55%, hsl(27 18% 62%)); }
+    .ph-2 { background: linear-gradient(160deg, hsl(43 30% 84%), hsl(36 22% 70%)); }
+    .ph-3 { background: linear-gradient(135deg, hsl(27 22% 60%), hsl(27 22% 40%)); }
+  </style>
+</head>
+<body>
+<div class="min-h-screen bg-secondary/30 flex">
+
+  <!-- Sidebar (Admin.jsx) -->
+  <aside id="side" class="fixed lg:sticky top-0 z-40 h-screen w-64 bg-card border-r border-border flex flex-col transition-transform duration-300 -translate-x-full lg:translate-x-0">
+    <div class="p-6 border-b border-border">
+      <a href="index.html" class="font-heading text-xl text-primary">Фабрика Уюта</a>
+      <p class="text-xs text-muted-foreground mt-1">Админ-панель</p>
+    </div>
+    <nav id="tabs" class="flex-1 p-4 space-y-1"></nav>
+    <div class="p-4 border-t border-border space-y-2">
+      <a href="index.html" class="flex items-center gap-2 px-3 py-2 text-sm text-foreground/70 hover:text-primary">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg> На сайт
+      </a>
+      <a href="auth.html#login" class="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive/80 hover:text-destructive">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg> Выйти
+      </a>
+    </div>
+  </aside>
+
+  <div id="overlay" class="hidden fixed inset-0 z-30 bg-primary/30 lg:hidden"></div>
+
+  <!-- Main -->
+  <div class="flex-1 min-w-0">
+    <header class="sticky top-0 z-20 glass border-b border-border px-5 md:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="burger" class="lg:hidden w-9 h-9 rounded-full glass flex items-center justify-center" aria-label="Меню">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <h1 id="title" class="font-heading text-2xl text-primary">Заявки</h1>
+      </div>
+      <span class="text-sm text-muted-foreground hidden sm:block">admin@example.com</span>
+    </header>
+
+    <main class="p-5 md:p-8 max-w-6xl mx-auto" id="content"></main>
+  </div>
+</div>
+
+<script>
+  const ICONS = {
+    leads: '<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>',
+    gallery: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+    categories: '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>',
+    materials: '<path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5"/>',
+    content: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"/>'
+  };
+  const TABS = [
+    { id: 'leads', label: 'Заявки' },
+    { id: 'gallery', label: 'Галерея' },
+    { id: 'categories', label: 'Категории мебели' },
+    { id: 'materials', label: 'Материалы' },
+    { id: 'content', label: 'Контент' },
+  ];
+  let active = 'leads';
+  const side = document.getElementById('side'), overlay = document.getElementById('overlay');
+  const setNav = open => {
+    side.classList.toggle('translate-x-0', open); side.classList.toggle('-translate-x-full', !open);
+    overlay.classList.toggle('hidden', !open);
+  };
+  document.getElementById('burger').onclick = () => setNav(true);
+  overlay.onclick = () => setNav(false);
+
+  // Содержимое вкладок в исходниках не передавалось (AdminLeads, AdminGallery и т.д.),
+  // поэтому ниже — пример в токенах сайта, а не копия ваших компонентов.
+  const card = 'rounded-2xl border border-border bg-card';
+  const badge = (t, cls) => `<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}">${t}</span>`;
+  const VIEWS = {
+    leads: () => `
+      <div class="${card} overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="text-left text-xs font-medium uppercase tracking-widest text-muted-foreground border-b border-border">
+            <th class="px-5 py-4">Имя</th><th class="px-5 py-4">Телефон</th><th class="px-5 py-4">Комментарий</th><th class="px-5 py-4">Статус</th></tr></thead>
+          <tbody class="divide-y divide-border">
+            <tr><td class="px-5 py-4 font-medium">Анна</td><td class="px-5 py-4">+7 900 000-00-01</td><td class="px-5 py-4 text-muted-foreground">Кухня 3 м</td><td class="px-5 py-4">${badge('new','bg-primary/10 text-primary')}</td></tr>
+            <tr><td class="px-5 py-4 font-medium">Игорь</td><td class="px-5 py-4">+7 900 000-00-02</td><td class="px-5 py-4 text-muted-foreground">Шкаф-купе</td><td class="px-5 py-4">${badge('in_progress','bg-secondary text-secondary-foreground')}</td></tr>
+            <tr><td class="px-5 py-4 font-medium">Мария</td><td class="px-5 py-4">+7 900 000-00-03</td><td class="px-5 py-4 text-muted-foreground">Офисные столы</td><td class="px-5 py-4">${badge('done','bg-muted text-muted-foreground')}</td></tr>
+          </tbody>
+        </table>
+      </div>`,
+    gallery: () => `
+      <div class="flex justify-end mb-5"><button class="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">Добавить работу</button></div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        ${['ph','ph-2','ph-3'].map((p,i)=>`<div class="${card} overflow-hidden"><div class="${p} aspect-[4/3]"></div><div class="p-4"><p class="font-heading text-lg text-primary">Проект ${i+1}</p><p class="text-xs text-muted-foreground">Категория</p></div></div>`).join('')}
+      </div>`,
+    other: (label) => `<div class="${card} p-8 text-center"><p class="font-heading text-2xl text-primary">${label}</p><p class="mt-2 text-sm text-muted-foreground">Здесь будет список записей и форма редактирования.</p></div>`
+  };
+  function render() {
+    document.getElementById('tabs').innerHTML = TABS.map(t => `
+      <button data-id="${t.id}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${active === t.id ? 'bg-primary text-primary-foreground' : 'text-foreground/75 hover:bg-secondary'}">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[t.id]}</svg>${t.label}
+      </button>`).join('');
+    const t = TABS.find(t => t.id === active);
+    document.getElementById('title').textContent = t.label;
+    document.getElementById('content').innerHTML = (VIEWS[active] || (() => VIEWS.other(t.label)))();
+  }
+  document.getElementById('tabs').onclick = e => { const b = e.target.closest('button'); if (b) { active = b.dataset.id; setNav(false); render(); } };
+  render();
+</script>
+</body>
+</html>

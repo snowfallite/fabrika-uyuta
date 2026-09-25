@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 38 27% 97%;
+    --foreground: 0 0% 17%;
+    --card: 38 33% 99%;
+    --card-foreground: 0 0% 17%;
+    --popover: 38 33% 99%;
+    --popover-foreground: 0 0% 17%;
+    --primary: 27 22% 33%;
+    --primary-foreground: 38 27% 97%;
+    --secondary: 36 22% 92%;
+    --secondary-foreground: 27 22% 24%;
+    --muted: 36 20% 94%;
+    --muted-foreground: 30 7% 42%;
+    --accent: 27 22% 33%;
+    --accent-foreground: 38 27% 97%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 38 27% 97%;
+    --border: 36 18% 82%;
+    --input: 36 18% 82%;
+    --ring: 27 22% 33%;
+    --chart-1: 27 22% 33%;
+    --chart-2: 36 22% 52%;
+    --chart-3: 173 25% 39%;
+    --chart-4: 43 30% 66%;
+    --chart-5: 12 30% 55%;
+    --radius: 0.9rem;
+    --font-heading: "Cormorant Garamond", ui-serif, Georgia, serif;
+    --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --sidebar-background: 38 27% 97%;
+    --sidebar-foreground: 27 22% 24%;
+    --sidebar-primary: 27 22% 33%;
+    --sidebar-primary-foreground: 38 27% 97%;
+    --sidebar-accent: 36 22% 92%;
+    --sidebar-accent-foreground: 27 22% 24%;
+    --sidebar-border: 36 18% 82%;
+    --sidebar-ring: 27 22% 33%;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    font-feature-settings: "ss01", "cv01";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(249, 247, 242, 0.78);
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid rgba(209, 199, 183, 0.45);
+  }
+  .glass-dark {
+    background: rgba(44, 44, 44, 0.64);
+    backdrop-filter: blur(16px) saturate(125%);
+    -webkit-backdrop-filter: blur(16px) saturate(125%);
+    border: 1px solid rgba(209, 199, 183, 0.16);
+  }
+  .joinery-line {
+    background: linear-gradient(90deg, transparent, hsl(var(--border)) 50%, transparent);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+    transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .lift-hover {
+    transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.55s ease;
+  }
+  .lift-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 36px 70px -36px rgba(44, 44, 44, 0.32);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+  }
+}
