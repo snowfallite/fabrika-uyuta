@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/template/**)",
+      "Edit(/backend/apps/*/migrations/**)",
+      "Edit(/contracts/openapi.yaml)",
+      "Edit(/frontend/src/lib/types/api.d.ts)",
+      "Read(/.env)",
+      "Read(//**/google-sa*.json)"
+    ],
+    "ask": ["Edit(/tech.md)"]
+  }
+}
