@@ -26,6 +26,7 @@ gen:
 
 seed:
 	$(MANAGE) sync_reference_data
+	$(MANAGE) seed_demo
 
 fmt:
 	pnpm -C frontend format
