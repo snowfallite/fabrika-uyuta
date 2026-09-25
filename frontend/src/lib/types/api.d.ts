@@ -3,10 +3,178 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>;
+export interface paths {
+    "/api/v1/categories/{slug}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["categories_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/home/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["home_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leads/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leads_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/site-settings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["site_settings_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        CategoryDetail: {
+            slug: components["schemas"]["CategorySlugEnum"];
+            title: string;
+            short_description: string;
+            cover: components["schemas"]["ImageAsset"] | null;
+            description: string;
+            seo_title: string;
+            seo_description: string;
+            gallery: components["schemas"]["GalleryItem"][];
+        };
+        /**
+         * @description * `kitchens` - Кухни под заказ
+         *     * `kitchen-tables` - Кухонные столы
+         *     * `wardrobes` - Шкафы
+         *     * `sliding-wardrobes` - Шкафы-купе
+         *     * `office` - Офисная мебель
+         * @enum {string}
+         */
+        CategorySlugEnum: "kitchens" | "kitchen-tables" | "wardrobes" | "sliding-wardrobes" | "office";
+        CategorySummary: {
+            slug: components["schemas"]["CategorySlugEnum"];
+            title: string;
+            short_description: string;
+            cover: components["schemas"]["ImageAsset"] | null;
+        };
+        /** @description DRF default error body for 403, 404 and 429 (tech.md, section 7). */
+        ErrorDetail: {
+            detail: string;
+        };
+        GalleryItem: {
+            id: number;
+            category: components["schemas"]["CategorySlugEnum"];
+            title: string;
+            caption: string;
+            image: components["schemas"]["ImageAsset"];
+        };
+        HomeContent: {
+            slots: components["schemas"]["HomeSlots"];
+            categories: components["schemas"]["CategorySummary"][];
+            featured: components["schemas"]["GalleryItem"][];
+        };
+        HomeSlots: {
+            hero: components["schemas"]["ImageAsset"] | null;
+            about: components["schemas"]["ImageAsset"] | null;
+            material_ldsp: components["schemas"]["ImageAsset"] | null;
+            material_mdf: components["schemas"]["ImageAsset"] | null;
+        };
+        ImageAsset: {
+            url: string;
+            srcset: string;
+            width: number;
+            height: number;
+            alt: string;
+            color: string;
+        };
+        /** @description 400 body: field -> messages from 12.1. */
+        LeadCreateError: {
+            name?: string[];
+            phone?: string[];
+            product?: string[];
+            dimensions?: string[];
+            comment?: string[];
+            consent?: string[];
+            non_field_errors?: string[];
+        };
+        LeadCreateRequest: {
+            name: string;
+            phone: string;
+            product: components["schemas"]["ProductKindEnum"];
+            dimensions?: string;
+            comment?: string;
+            consent: boolean;
+            website?: string;
+            source_url?: string;
+        };
+        LeadCreated: {
+            /** Format: uuid */
+            id: string;
+        };
+        /**
+         * @description * `kitchens` - Кухни под заказ
+         *     * `kitchen-tables` - Кухонные столы
+         *     * `wardrobes` - Шкафы
+         *     * `sliding-wardrobes` - Шкафы-купе
+         *     * `office` - Офисная мебель
+         *     * `other` - Другое
+         * @enum {string}
+         */
+        ProductKindEnum: "kitchens" | "kitchen-tables" | "wardrobes" | "sliding-wardrobes" | "office" | "other";
+        SiteSettings: {
+            phone: string;
+            phone_display: string;
+            email: string;
+            address: string;
+            work_hours: string;
+            map_url: string;
+            social_links: components["schemas"]["SocialLink"][];
+        };
+        SocialLink: {
+            label: string;
+            url: string;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -14,4 +182,143 @@ export interface components {
     pathItems: never;
 }
 export type $defs = Record<string, never>;
-export type operations = Record<string, never>;
+export interface operations {
+    categories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDetail"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    home_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeContent"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    leads_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCreated"];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadCreateError"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+    site_settings_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SiteSettings"];
+                };
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorDetail"];
+                };
+            };
+        };
+    };
+}

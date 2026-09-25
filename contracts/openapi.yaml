@@ -1,6 +1,400 @@
 openapi: 3.0.3
 info:
-  title: ''
-  version: 0.0.0
-paths: {}
-components: {}
+  title: 'Фабрика Уюта: внутренний API'
+  version: '1'
+paths:
+  /api/v1/categories/{slug}/:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - categories
+      security:
+      - InternalToken: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryDetail'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+  /api/v1/home/:
+    get:
+      operationId: home_retrieve
+      tags:
+      - home
+      security:
+      - InternalToken: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeContent'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+  /api/v1/leads/:
+    post:
+      operationId: leads_create
+      tags:
+      - leads
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadCreateRequest'
+        required: true
+      security:
+      - InternalToken: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadCreated'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadCreateError'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+  /api/v1/site-settings/:
+    get:
+      operationId: site_settings_retrieve
+      tags:
+      - site-settings
+      security:
+      - InternalToken: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteSettings'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+          description: ''
+components:
+  schemas:
+    CategoryDetail:
+      type: object
+      properties:
+        slug:
+          $ref: '#/components/schemas/CategorySlugEnum'
+        title:
+          type: string
+        short_description:
+          type: string
+        cover:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+        description:
+          type: string
+        seo_title:
+          type: string
+        seo_description:
+          type: string
+        gallery:
+          type: array
+          items:
+            $ref: '#/components/schemas/GalleryItem'
+      required:
+      - cover
+      - description
+      - gallery
+      - seo_description
+      - seo_title
+      - short_description
+      - slug
+      - title
+    CategorySlugEnum:
+      enum:
+      - kitchens
+      - kitchen-tables
+      - wardrobes
+      - sliding-wardrobes
+      - office
+      type: string
+      description: |-
+        * `kitchens` - Кухни под заказ
+        * `kitchen-tables` - Кухонные столы
+        * `wardrobes` - Шкафы
+        * `sliding-wardrobes` - Шкафы-купе
+        * `office` - Офисная мебель
+    CategorySummary:
+      type: object
+      properties:
+        slug:
+          $ref: '#/components/schemas/CategorySlugEnum'
+        title:
+          type: string
+        short_description:
+          type: string
+        cover:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+      required:
+      - cover
+      - short_description
+      - slug
+      - title
+    ErrorDetail:
+      type: object
+      description: DRF default error body for 403, 404 and 429 (tech.md, section 7).
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    GalleryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          $ref: '#/components/schemas/CategorySlugEnum'
+        title:
+          type: string
+        caption:
+          type: string
+        image:
+          $ref: '#/components/schemas/ImageAsset'
+      required:
+      - caption
+      - category
+      - id
+      - image
+      - title
+    HomeContent:
+      type: object
+      properties:
+        slots:
+          $ref: '#/components/schemas/HomeSlots'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySummary'
+        featured:
+          type: array
+          items:
+            $ref: '#/components/schemas/GalleryItem'
+      required:
+      - categories
+      - featured
+      - slots
+    HomeSlots:
+      type: object
+      properties:
+        hero:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+        about:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+        material_ldsp:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+        material_mdf:
+          allOf:
+          - $ref: '#/components/schemas/ImageAsset'
+          nullable: true
+      required:
+      - about
+      - hero
+      - material_ldsp
+      - material_mdf
+    ImageAsset:
+      type: object
+      properties:
+        url:
+          type: string
+        srcset:
+          type: string
+        width:
+          type: integer
+        height:
+          type: integer
+        alt:
+          type: string
+        color:
+          type: string
+      required:
+      - alt
+      - color
+      - height
+      - srcset
+      - url
+      - width
+    LeadCreateError:
+      type: object
+      description: '400 body: field -> messages from 12.1.'
+      properties:
+        name:
+          type: array
+          items:
+            type: string
+        phone:
+          type: array
+          items:
+            type: string
+        product:
+          type: array
+          items:
+            type: string
+        dimensions:
+          type: array
+          items:
+            type: string
+        comment:
+          type: array
+          items:
+            type: string
+        consent:
+          type: array
+          items:
+            type: string
+        non_field_errors:
+          type: array
+          items:
+            type: string
+    LeadCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 32
+        product:
+          $ref: '#/components/schemas/ProductKindEnum'
+        dimensions:
+          type: string
+          maxLength: 300
+        comment:
+          type: string
+          maxLength: 2000
+        consent:
+          type: boolean
+        website:
+          type: string
+        source_url:
+          type: string
+          maxLength: 2000
+      required:
+      - consent
+      - name
+      - phone
+      - product
+    LeadCreated:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+      required:
+      - id
+    ProductKindEnum:
+      enum:
+      - kitchens
+      - kitchen-tables
+      - wardrobes
+      - sliding-wardrobes
+      - office
+      - other
+      type: string
+      description: |-
+        * `kitchens` - Кухни под заказ
+        * `kitchen-tables` - Кухонные столы
+        * `wardrobes` - Шкафы
+        * `sliding-wardrobes` - Шкафы-купе
+        * `office` - Офисная мебель
+        * `other` - Другое
+    SiteSettings:
+      type: object
+      properties:
+        phone:
+          type: string
+        phone_display:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        work_hours:
+          type: string
+        map_url:
+          type: string
+        social_links:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialLink'
+      required:
+      - address
+      - email
+      - map_url
+      - phone
+      - phone_display
+      - social_links
+      - work_hours
+    SocialLink:
+      type: object
+      properties:
+        label:
+          type: string
+        url:
+          type: string
+      required:
+      - label
+      - url
+  securitySchemes:
+    InternalToken:
+      type: apiKey
+      in: header
+      name: X-Internal-Token

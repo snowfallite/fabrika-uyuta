@@ -148,6 +148,33 @@ SESSION_COOKIE_SECURE = APP_ENV in {"staging", "production"}
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SILENCED_SYSTEM_CHECKS = ["security.W004", "security.W008"]
 
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["apps.core.permissions.InternalTokenPermission"],
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "UNAUTHENTICATED_USER": None,
+    "DEFAULT_THROTTLE_RATES": {"leads": LEAD_THROTTLE_RATE},
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Фабрика Уюта: внутренний API",
+    "VERSION": "1",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "ENUM_NAME_OVERRIDES": {
+        "ProductKindEnum": "apps.core.enums.ProductKind",
+        "CategorySlugEnum": "apps.core.enums.CATEGORY_SLUG_CHOICES",
+    },
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "InternalToken": {"type": "apiKey", "in": "header", "name": "X-Internal-Token"}
+        }
+    },
+    "SECURITY": [{"InternalToken": []}],
+}
+
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1  # hours
 AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
