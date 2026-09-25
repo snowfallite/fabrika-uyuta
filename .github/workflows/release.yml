@@ -1,0 +1,65 @@
+# Tag v*.*.*: retag the already built images and deploy production (tech.md, 16.3).
+# workflow_dispatch with a tag redeploys that tag, which is how rollback works.
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to deploy, e.g. v1.0.0
+        required: true
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+      - name: Legal texts are in place
+        run: |
+          if grep -rn "LEGAL_TEXT_PENDING" frontend/src; then
+            echo "::error::LEGAL_TEXT_PENDING found: legal texts are not final (tech.md, 13.2)"
+            exit 1
+          fi
+      - id: owner
+        run: echo "name=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Retag images built for this commit
+        run: |
+          sha="$(git rev-parse HEAD)"
+          for image in fabrika-backend fabrika-frontend; do
+            ref="ghcr.io/${{ steps.owner.outputs.name }}/$image"
+            docker buildx imagetools create -t "$ref:$TAG" "$ref:$sha"
+          done
+      - name: SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+      - name: Copy deploy/
+        run: rsync -az --delete deploy/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/fabrika/app/deploy/"
+      - name: Deploy
+        run: >
+          ssh "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}"
+          "GHCR_OWNER=${{ steps.owner.outputs.name }} /opt/fabrika/app/deploy/deploy.sh production $TAG"
+      - name: Smoke
+        run: deploy/smoke.sh "https://${{ vars.DOMAIN }}"
