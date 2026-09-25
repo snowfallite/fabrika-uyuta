@@ -1,7 +1,57 @@
-from django.contrib import admin
-from django.http import HttpRequest
+from typing import Any
 
-from apps.content.models import Category, GalleryItem, SiteImage, SiteSettings, SocialLink
+from django import forms
+from django.contrib import admin
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
+from django.http import HttpRequest
+from django.utils.html import format_html
+from django.utils.safestring import SafeString
+
+from apps.content.models import (
+    Category,
+    GalleryItem,
+    ImageFieldsMixin,
+    SiteImage,
+    SiteSettings,
+    SocialLink,
+)
+from apps.content.services.images import clear_image, ingest_image, validate_image_file
+
+
+class ImageAdminForm(forms.ModelForm):
+    def clean_image(self) -> Any:
+        upload = self.cleaned_data.get("image")
+        if isinstance(upload, UploadedFile):
+            validate_image_file(upload)
+        return upload
+
+
+class ImageAdminMixin(admin.ModelAdmin):
+    """Uploads go through the image pipeline (tech.md, section 9); no business logic here."""
+
+    form = ImageAdminForm
+
+    @admin.display(description="Превью")
+    def image_preview(self, obj: ImageFieldsMixin) -> SafeString | str:
+        variants = obj.image_variants or {}
+        if not variants:
+            return "—"
+        smallest = variants[min(variants, key=int)]
+        return format_html(
+            '<img src="{}" alt="" style="height:64px;width:auto;border-radius:8px">',
+            default_storage.url(smallest),
+        )
+
+    def save_model(
+        self, request: HttpRequest, obj: ImageFieldsMixin, form: forms.ModelForm, change: bool
+    ) -> None:
+        upload = form.cleaned_data.get("image")
+        if isinstance(upload, UploadedFile):
+            ingest_image(obj, upload)
+        elif upload is False:
+            clear_image(obj)
+        super().save_model(request, obj, form, change)
 
 
 class ReferenceRowAdmin(admin.ModelAdmin):
@@ -15,18 +65,21 @@ class ReferenceRowAdmin(admin.ModelAdmin):
 
 
 @admin.register(Category)
-class CategoryAdmin(ReferenceRowAdmin):
-    list_display = ["title", "slug", "position", "is_published"]
+class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
+    list_display = ["title", "image_preview", "slug", "position", "is_published"]
+    readonly_fields = ["image_preview"]
 
 
 @admin.register(GalleryItem)
-class GalleryItemAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "category", "position", "is_published", "is_featured"]
+class GalleryItemAdmin(ImageAdminMixin):
+    list_display = ["__str__", "image_preview", "category", "position", "is_published"]
+    readonly_fields = ["image_preview"]
 
 
 @admin.register(SiteImage)
-class SiteImageAdmin(ReferenceRowAdmin):
-    list_display = ["__str__", "updated_at"]
+class SiteImageAdmin(ImageAdminMixin, ReferenceRowAdmin):
+    list_display = ["__str__", "image_preview", "updated_at"]
+    readonly_fields = ["image_preview"]
 
 
 class SocialLinkInline(admin.TabularInline):
