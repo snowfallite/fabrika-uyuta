@@ -1,5 +1,4 @@
-import uuid
-
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.request import Request
@@ -12,6 +11,7 @@ from apps.leads.api.serializers import (
     LeadCreateErrorSerializer,
     LeadCreateSerializer,
 )
+from apps.leads.services.create_lead import create_lead
 
 
 class LeadCreateView(InternalAPIView):
@@ -27,5 +27,5 @@ class LeadCreateView(InternalAPIView):
     def post(self, request: Request) -> Response:
         serializer = LeadCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # Stub until S2-01: validates, stores nothing.
-        return Response({"id": str(uuid.uuid4())}, status=status.HTTP_201_CREATED)
+        lead = create_lead(serializer.validated_data, timezone.now())
+        return Response({"id": str(lead.public_id)}, status=status.HTTP_201_CREATED)

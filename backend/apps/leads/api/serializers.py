@@ -7,6 +7,7 @@ from rest_framework import serializers
 from rest_framework.validators import ProhibitSurrogateCharactersValidator
 
 from apps.core.enums import ProductKind
+from apps.core.phone import normalize_phone
 
 NAME_REQUIRED = "Укажите ФИО"
 NAME_TOO_SHORT = "Слишком короткое имя"
@@ -74,6 +75,12 @@ class LeadCreateSerializer(serializers.Serializer):
     consent = StrictBooleanField(error_messages=_messages(CONSENT_REQUIRED))
     website = RawCharField(required=False, allow_blank=True)
     source_url = RawCharField(required=False, allow_blank=True, max_length=2000)
+
+    def validate_phone(self, value: str) -> str:
+        phone = normalize_phone(value)
+        if phone is None:
+            raise serializers.ValidationError(PHONE_INVALID)
+        return phone
 
 
 class LeadCreatedSerializer(serializers.Serializer):
