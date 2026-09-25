@@ -1,6 +1,6 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v5
+- Версия: v6
 - Дата: 2026-09-26
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v6 (2026-09-26): S2-02, расширение контракта примитивов: `autofocus?: boolean` у Input, Textarea, Select, Checkbox, PhoneInput. Без JS фокус на первое ошибочное поле (AC7) ставит только атрибут `autofocus`.
 - v5 (2026-09-26): S1-11, каркас готов: contract-guard переходит в режим ошибки, в `.claude/settings.json` добавлены строки `ask` из 16.6. Проверено локально: гейт фронта и бэка, миграции и `makemigrations --check` на Postgres 18, drift `openapi.yaml` и `api.d.ts`, Schemathesis по всем операциям, воркер против фейка и тесты идемпотентности, сид и тестовый эндпоинт, полный стек `compose.e2e.yml` с Caddy, `smoke.sh`, все E2E на 1440 и 360 px, axe. Ждут инфраструктуры владельца: прогоны CI на GitHub и branch protection (`scripts/protect-main.sh`), деплой на staging (VPS, домен), long-lead раздела 20.
 - v4 (2026-09-26): S1-10. Деплой-конфиг вне `.env.example`: `deploy.sh` берёт `GHCR_OWNER` (владелец GHCR в нижнем регистре) из окружения; GitHub Secret `STAGING_BASIC_AUTH` (`user:password` для smoke staging) и Variable `DOMAIN`; `/opt/fabrika/edge/.env` для edge Caddy: `DOMAIN`, `ACME_EMAIL`, `PRODUCTION_ADMIN_PATH`, `STAGING_ADMIN_PATH`, `STAGING_BASIC_AUTH_USER`, `STAGING_BASIC_AUTH_HASH`. Том media стека называется `<stack>_media`. `/robots.txt` появляется в S1-10 (AC1 staging), S2-11 его проверяет.
 - v3 (2026-09-26): S1-02. Компонентные тесты: браузерный режим Vitest (`vitest-browser-svelte`, `@vitest/browser-playwright`, Chromium), как ставит `sv add vitest`; jsdom и `@testing-library/svelte` не используются. `.env.example`: комментарии к пустым значениям вынесены на отдельные строки, Docker Compose и python-dotenv читают `KEY=   # comment` как значение `# comment`. Фактические версии `sv create`: Kit 2.63, Svelte 5.56, Vite 8, Vitest 4, TypeScript 6, ESLint 10. Конфиг Kit остаётся в `svelte.config.js` (плагин `sveltekit()` без опций читает его). shadcn-svelte 1.7 ставит `cn` (замена clsx и tailwind-merge), `tailwind-variants`, `tw-animate-css`. Правило eslint `svelte/no-navigation-without-resolve` выключено: сайт в корне домена без `paths.base`, ссылки `NAV` с якорями. django-stubs 5.2.x и djangorestframework-stubs 3.16.x под Django 5.2.
@@ -757,24 +758,25 @@ export const NAV: NavItem[] = [
 // Input (shadcn-svelte, native input)
 { name: string; id?: string; type?: 'text' | 'email' | 'tel'; value?: string /* $bindable */;
   required?: boolean; maxlength?: number; autocomplete?: string; placeholder?: string;
-  'aria-invalid'?: boolean; 'aria-describedby'?: string; class?: string }
+  'aria-invalid'?: boolean; 'aria-describedby'?: string; class?: string;
+  autofocus?: boolean /* v6: first invalid field after a no-JS submit */ }
 
 // Textarea (shadcn-svelte, native textarea): Input props + rows?: number (default 4)
 
 // Select (own, native select)
 { name: string; id?: string; options: { value: string; label: string }[];
   value?: string /* $bindable */; placeholder?: string /* disabled empty option */;
-  required?: boolean; 'aria-invalid'?: boolean; 'aria-describedby'?: string }
+  required?: boolean; 'aria-invalid'?: boolean; 'aria-describedby'?: string; autofocus?: boolean }
 
 // Checkbox (own, native checkbox)
 { name: string; id?: string; checked?: boolean /* $bindable */; value?: string /* default "on" */;
-  required?: boolean; 'aria-invalid'?: boolean; 'aria-describedby'?: string;
+  required?: boolean; 'aria-invalid'?: boolean; 'aria-describedby'?: string; autofocus?: boolean;
   children: Snippet /* label content, may contain links */ }
 
 // PhoneInput (own): native input type="tel", inputmode="tel", autocomplete="tel",
 // mask formatPhoneInput on input; without JS works as a plain field
 { name: string; id?: string; value?: string /* $bindable */; required?: boolean;
-  'aria-invalid'?: boolean; 'aria-describedby'?: string }
+  'aria-invalid'?: boolean; 'aria-describedby'?: string; autofocus?: boolean }
 
 // Field (own): label + control + hint + error
 { id: string; label: string; required?: boolean; hint?: string; error?: string;
