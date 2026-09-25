@@ -41,6 +41,9 @@ extend-exclude = ["apps/*/migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "DJ", "S", "SIM", "RUF"]
+# RUF001-003: Russian UI texts are not homoglyph attacks.
+# RUF012: Django Meta and admin options are declarative lists by design.
+ignore = ["RUF001", "RUF002", "RUF003", "RUF012"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101"]
@@ -52,6 +55,17 @@ files = ["apps", "config", "conftest.py"]
 exclude = ["/migrations/"]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
+[[tool.mypy.overrides]]
+# DRF serializers and Django admin classes are generic only in the stubs; subscripting them at
+# runtime needs django_stubs_ext, which production images do not ship.
+module = ["apps.*.admin", "apps.*.api.serializers", "apps.core.serializers", "apps.*.tests.*"]
+disallow_any_generics = false
+
+[[tool.mypy.overrides]]
+# drf-spectacular and Schemathesis helpers used by contract tests have no type hints.
+module = ["apps.*.tests.*"]
+disallow_untyped_calls = false
+
 [tool.django-stubs]
 django_settings_module = "config.settings"
 
@@ -60,3 +74,4 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 # Tests reach only the local Postgres (tech.md, section 17).
 addopts = "--allow-hosts=127.0.0.1,::1 --strict-markers"
 testpaths = ["apps"]
+filterwarnings = ["ignore:No directory at:UserWarning"]
