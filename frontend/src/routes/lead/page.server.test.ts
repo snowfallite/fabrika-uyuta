@@ -71,7 +71,24 @@ describe('/lead action', () => {
 		});
 	});
 
+	it('AC7: maps a 400 to field errors and keeps the values', async () => {
+		const result = await submit(
+			event(
+				async () => json(400, { name: ['Укажите ФИО'], phone: ['Проверьте номер телефона'] }),
+				filled
+			)
+		);
+		expect(result).toMatchObject({
+			status: 400,
+			data: {
+				errors: { name: 'Укажите ФИО', phone: 'Проверьте номер телефона' },
+				values: { name: 'Тестовый Клиент', product: 'wardrobes' }
+			}
+		});
+	});
+
 	it.each([
+		['a 400 without field errors', async () => json(400, [])],
 		['a 500', async () => json(500, {})],
 		[
 			'a network error',

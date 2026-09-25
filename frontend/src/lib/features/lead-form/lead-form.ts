@@ -1,3 +1,5 @@
+import type { LeadFormErrors } from '$lib/domain/lead-errors';
+
 /** Values the form sends back on failure; honeypot and source stay out. */
 export type LeadValues = {
 	name: string;
@@ -8,15 +10,20 @@ export type LeadValues = {
 	consent: boolean;
 };
 
-type LeadErrors = Partial<Record<keyof LeadValues | 'form', string>>;
-
 export type LeadFailure = {
 	values: LeadValues;
-	errors: LeadErrors;
+	errors: LeadFormErrors;
 	status?: 'throttled' | 'unavailable';
 };
 
 export type LeadResult = { success: true } | LeadFailure;
+
+/** Form order: the first of these with an error takes focus. */
+const FIELD_ORDER = ['name', 'phone', 'product', 'dimensions', 'comment', 'consent'] as const;
+
+export function firstInvalid(errors: LeadFormErrors) {
+	return FIELD_ORDER.find((field) => errors[field]);
+}
 
 export const EMPTY_VALUES: LeadValues = {
 	name: '',

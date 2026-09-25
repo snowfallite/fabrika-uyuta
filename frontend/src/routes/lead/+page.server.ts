@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { readLeadForm, type LeadFailure } from '$lib/features/lead-form/lead-form';
+import { mapLeadErrors } from '$lib/domain/lead-errors';
 import { isProductKind } from '$lib/domain/product-kind';
 import { createApi } from '$lib/server/api';
 import type { ProductKind } from '$lib/types';
@@ -18,17 +19,22 @@ export const actions: Actions = {
 			fail(status, { values, errors: {}, ...extra } satisfies LeadFailure);
 
 		try {
-			const { response } = await createApi(fetch, getClientAddress()).POST('/api/v1/leads/', {
-				body: {
-					...values,
-					// The API validates the kind; a wrong value comes back as a 400.
-					product: values.product as ProductKind,
-					website,
-					source_url: sourceUrl
+			const { response, error } = await createApi(fetch, getClientAddress()).POST(
+				'/api/v1/leads/',
+				{
+					body: {
+						...values,
+						// The API validates the kind; a wrong value comes back as a 400.
+						product: values.product as ProductKind,
+						website,
+						source_url: sourceUrl
+					}
 				}
-			});
+			);
 			if (response.status === 201) return { success: true as const };
 			if (response.status === 429) return failure(429, { status: 'throttled' });
+			const errors = response.status === 400 ? mapLeadErrors(error) : {};
+			if (Object.keys(errors).length > 0) return failure(400, { errors });
 		} catch {
 			// Network error or timeout: same message as a 5xx.
 		}

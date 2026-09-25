@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { Alert } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -12,9 +12,10 @@
 	import { Select } from '$lib/components/ui/select';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { LEAD_FIELDS, LEAD_MESSAGES } from '$lib/content/lead-form';
+	import type { LeadFormErrors } from '$lib/domain/lead-errors';
 	import { PRODUCT_KIND_LABELS } from '$lib/domain/product-kind';
 	import type { ProductKind } from '$lib/types';
-	import { EMPTY_VALUES, type LeadFailure, type LeadResult } from './lead-form';
+	import { EMPTY_VALUES, firstInvalid, type LeadFailure, type LeadResult } from './lead-form';
 
 	interface Props {
 		/** Keeps ids unique when the page and the dialog both hold a form. */
@@ -38,9 +39,12 @@
 	const seed = untrack(() => ({ result, product }));
 	const initial = failure(seed.result);
 	let values = $state(initial ? { ...initial.values } : { ...EMPTY_VALUES, product: seed.product });
+	let errors = $state<LeadFormErrors>(initial?.errors ?? {});
 	let status = $state<Status>(
 		seed.result && 'success' in seed.result ? 'success' : (initial?.status ?? 'idle')
 	);
+	// Without JS only the autofocus attribute can move focus to the first bad field.
+	const autofocusField = firstInvalid(initial?.errors ?? {});
 
 	const options = Object.entries(PRODUCT_KIND_LABELS).map(([value, label]) => ({ value, label }));
 	const sourceUrl = $derived((page.url.pathname + page.url.search).slice(0, 2000));
@@ -52,30 +56,38 @@
 			return;
 		}
 		status = 'submitting';
-		return async ({ result: outcome }) => {
+		return async ({ result: outcome, formElement }) => {
 			if (outcome.type === 'success') {
 				values = { ...EMPTY_VALUES, product: seed.product };
+				errors = {};
 				status = 'success';
-			} else if (outcome.type === 'failure') {
-				const data = failure(outcome.data as LeadResult);
-				status = data?.status ?? 'unavailable';
-			} else {
-				status = 'unavailable';
+				return;
+			}
+			const data = outcome.type === 'failure' ? failure(outcome.data as LeadResult) : null;
+			errors = data?.errors ?? {};
+			status = data?.status ?? (data ? 'idle' : 'unavailable');
+			const field = firstInvalid(errors);
+			if (field) {
+				await tick();
+				formElement.querySelector<HTMLElement>(`#${id(field)}`)?.focus();
 			}
 		};
 	};
+
+	function again() {
+		status = 'idle';
+		errors = {};
+	}
 </script>
 
 {#if status === 'success'}
 	<div class="flex flex-col items-start gap-6 py-6">
 		<Alert tone="success">{LEAD_MESSAGES.success}</Alert>
-		<Button variant="secondary" size="sm" onclick={() => (status = 'idle')}>
-			{LEAD_MESSAGES.again}
-		</Button>
+		<Button variant="secondary" size="sm" onclick={again}>{LEAD_MESSAGES.again}</Button>
 	</div>
 {:else}
 	<form method="POST" action="/lead" novalidate use:enhance={submit} class="space-y-7">
-		<Field id={id('name')} label={LEAD_FIELDS.name.label} required>
+		<Field id={id('name')} label={LEAD_FIELDS.name.label} required error={errors.name}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Input
 					{id}
@@ -87,10 +99,11 @@
 					placeholder={LEAD_FIELDS.name.placeholder}
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'name'}
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('phone')} label={LEAD_FIELDS.phone.label} required>
+		<Field id={id('phone')} label={LEAD_FIELDS.phone.label} required error={errors.phone}>
 			{#snippet children({ id, describedBy, invalid })}
 				<PhoneInput
 					{id}
@@ -99,10 +112,11 @@
 					required
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'phone'}
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('product')} label={LEAD_FIELDS.product.label} required>
+		<Field id={id('product')} label={LEAD_FIELDS.product.label} required error={errors.product}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Select
 					{id}
@@ -113,10 +127,11 @@
 					required
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'product'}
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('dimensions')} label={LEAD_FIELDS.dimensions.label}>
+		<Field id={id('dimensions')} label={LEAD_FIELDS.dimensions.label} error={errors.dimensions}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Input
 					{id}
@@ -126,10 +141,11 @@
 					placeholder={LEAD_FIELDS.dimensions.placeholder}
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'dimensions'}
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('comment')} label={LEAD_FIELDS.comment.label}>
+		<Field id={id('comment')} label={LEAD_FIELDS.comment.label} error={errors.comment}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Textarea
 					{id}
@@ -139,10 +155,11 @@
 					placeholder={LEAD_FIELDS.comment.placeholder}
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'comment'}
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('consent')} label="">
+		<Field id={id('consent')} label="" error={errors.consent}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Checkbox
 					{id}
@@ -151,6 +168,7 @@
 					required
 					aria-invalid={invalid}
 					aria-describedby={describedBy}
+					autofocus={autofocusField === 'consent'}
 				>
 					{LEAD_FIELDS.consent.before}<a
 						href="/consent"
@@ -174,6 +192,8 @@
 					<a href="tel:{phone}" class="font-medium whitespace-nowrap underline">{phoneDisplay}</a>
 				{/if}
 			</Alert>
+		{:else if errors.form}
+			<Alert tone="error">{errors.form}</Alert>
 		{/if}
 
 		<Button type="submit" class="w-full" loading={status === 'submitting'}>
