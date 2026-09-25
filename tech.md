@@ -1,6 +1,6 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v3
+- Версия: v4
 - Дата: 2026-09-26
 - Каркас: не готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v4 (2026-09-26): S1-10. Деплой-конфиг вне `.env.example`: `deploy.sh` берёт `GHCR_OWNER` (владелец GHCR в нижнем регистре) из окружения; GitHub Secret `STAGING_BASIC_AUTH` (`user:password` для smoke staging) и Variable `DOMAIN`; `/opt/fabrika/edge/.env` для edge Caddy: `DOMAIN`, `ACME_EMAIL`, `PRODUCTION_ADMIN_PATH`, `STAGING_ADMIN_PATH`, `STAGING_BASIC_AUTH_USER`, `STAGING_BASIC_AUTH_HASH`. Том media стека называется `<stack>_media`. `/robots.txt` появляется в S1-10 (AC1 staging), S2-11 его проверяет.
 - v3 (2026-09-26): S1-02. Компонентные тесты: браузерный режим Vitest (`vitest-browser-svelte`, `@vitest/browser-playwright`, Chromium), как ставит `sv add vitest`; jsdom и `@testing-library/svelte` не используются. `.env.example`: комментарии к пустым значениям вынесены на отдельные строки, Docker Compose и python-dotenv читают `KEY=   # comment` как значение `# comment`. Фактические версии `sv create`: Kit 2.63, Svelte 5.56, Vite 8, Vitest 4, TypeScript 6, ESLint 10. Конфиг Kit остаётся в `svelte.config.js` (плагин `sveltekit()` без опций читает его). shadcn-svelte 1.7 ставит `cn` (замена clsx и tailwind-merge), `tailwind-variants`, `tw-animate-css`. Правило eslint `svelte/no-navigation-without-resolve` выключено: сайт в корне домена без `paths.base`, ссылки `NAV` с якорями. django-stubs 5.2.x и djangorestframework-stubs 3.16.x под Django 5.2.
 - v2 (2026-09-26): S1-01, инвентаризация `template/`. Приложение А заполнено: 11 секций в порядке шаблона, статичные тексты, ассеты. Добавлены секция и якорь `materials` (карточки ЛДСП и МДФ из шаблона). Секция `about` стала «О компании» по шаблону, секции «О производстве» в шаблоне нет. `SiteImageSlot`: `production` заменён на `material_ldsp` и `material_mdf` (фото карточек материалов), `HomeSlots` и счётчики слотов (6, 15.2, 15.3, S1-04, S1-08, S1-09, S2-10) следом: слотов 4. `NAV`: 6 пунктов шаблона. Токены раздела 11 со значениями из `template/src/index.css`. Текстовый шрифт: Manrope вместо Plus Jakarta Sans, у Plus Jakarta Sans нет базовой кириллицы (только `cyrillic-ext`). Контейнер: `max-w-7xl`, поля `px-5 md:px-8` по шаблону. Не переносятся: фильтр галереи по категориям (на главной не больше 12 работ, полная галерея на `/catalog/<slug>`), ссылка «Админ-панель» в подвале (путь админки секретный, 13.1), отдельный текст «Нажимая кнопку…» (его заменяет чекбокс согласия, 12.1). Вторичный текст подвала не прозрачнее `/80`: иначе контраст ниже AA.
 - v1 (2026-09-25): первичное ядро. Стек, схема БД, API v1 с заглушками каркаса, контракт Google Sheets и воркера, пайплайн изображений, UI-примитивы, CI/CD, стадии 1 и 2.
@@ -1066,7 +1067,7 @@ Branch protection на `main`: только через PR; обязательн�
   4. ждать healthy до 120 с: backend `/healthz` (БД и heartbeat воркера), frontend `/healthz`. Не дождались: выход 1.
 - Откат: `deploy.sh <env> <предыдущий tag>`. Работает, потому что миграции только расширяющие (15.1).
 - Первый деплой staging: владелец вручную запускает `seed_demo`.
-- GitHub Secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`. На VPS один раз `docker login ghcr.io` токеном с `read:packages`.
+- GitHub Secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `STAGING_BASIC_AUTH` (`user:password` для smoke staging); GitHub Variable `DOMAIN`. `deploy.sh` берёт `GHCR_OWNER` из окружения. На VPS один раз `docker login ghcr.io` токеном с `read:packages`.
 
 ### 16.4 Edge Caddy и маршрутизация
 
@@ -1080,6 +1081,8 @@ Branch protection на `main`: только через PR; обязательн�
 | остальное | `reverse_proxy <project>-frontend:3000` | |
 
 Везде: `encode zstd gzip`, заголовки из 13.1, `header -Server`. Production: HSTS. Staging: `basic_auth`, `X-Robots-Tag: noindex, nofollow`.
+
+Edge Caddy читает `/opt/fabrika/edge/.env`: `DOMAIN`, `ACME_EMAIL`, `PRODUCTION_ADMIN_PATH`, `STAGING_ADMIN_PATH`, `STAGING_BASIC_AUTH_USER`, `STAGING_BASIC_AUTH_HASH` (bcrypt из `caddy hash-password`, в одинарных кавычках). Один раз на VPS: `docker network create edge`, `docker volume create fabrika-staging_media`, `docker volume create fabrika-production_media`.
 
 ### 16.5 Образы
 
