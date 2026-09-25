@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v1
-- Дата: 2026-09-25
+- Версия: v2
+- Дата: 2026-09-26
 - Каркас: не готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v2 (2026-09-26): S1-01, инвентаризация `template/`. Приложение А заполнено: 11 секций в порядке шаблона, статичные тексты, ассеты. Добавлены секция и якорь `materials` (карточки ЛДСП и МДФ из шаблона). Секция `about` стала «О компании» по шаблону, секции «О производстве» в шаблоне нет. `SiteImageSlot`: `production` заменён на `material_ldsp` и `material_mdf` (фото карточек материалов), `HomeSlots` и счётчики слотов (6, 15.2, 15.3, S1-04, S1-08, S1-09, S2-10) следом: слотов 4. `NAV`: 6 пунктов шаблона. Токены раздела 11 со значениями из `template/src/index.css`. Текстовый шрифт: Manrope вместо Plus Jakarta Sans, у Plus Jakarta Sans нет базовой кириллицы (только `cyrillic-ext`). Контейнер: `max-w-7xl`, поля `px-5 md:px-8` по шаблону. Не переносятся: фильтр галереи по категориям (на главной не больше 12 работ, полная галерея на `/catalog/<slug>`), ссылка «Админ-панель» в подвале (путь админки секретный, 13.1), отдельный текст «Нажимая кнопку…» (его заменяет чекбокс согласия, 12.1). Вторичный текст подвала не прозрачнее `/80`: иначе контраст ниже AA.
 - v1 (2026-09-25): первичное ядро. Стек, схема БД, API v1 с заглушками каркаса, контракт Google Sheets и воркера, пайплайн изображений, UI-примитивы, CI/CD, стадии 1 и 2.
 
 ---
@@ -114,7 +115,7 @@ frontend/src/lib/components/ui/**
 | Рантайм фронта | Node.js, pnpm | Node 24 LTS |
 | Стили | Tailwind CSS: CSS-first, токены в `@theme`, без `tailwind.config.js` | 4.x |
 | Примитивы | shadcn-svelte (Bits UI), иконки `@lucide/svelte` | CLI latest |
-| Шрифты | self-hosted через `@fontsource/*`, гарнитуры из шаблона | |
+| Шрифты | self-hosted: `@fontsource-variable/cormorant-garamond` (заголовки), `@fontsource-variable/manrope` (текст), подмножества `latin` и `cyrillic` | |
 | Клиент API | `openapi-typescript` (генерация типов), `openapi-fetch` (клиент) | |
 | Бэкенд | Python, Django, Django REST Framework, drf-spectacular, gunicorn (`gthread`) | Python 3.13, Django 5.2 LTS, DRF 3.16+ |
 | Бэкенд, библиотеки | psycopg 3, Pillow, phonenumberslite, google-auth, requests, django-axes, whitenoise, python-dotenv | |
@@ -273,7 +274,8 @@ CATEGORY_SLUG_CHOICES = [(v, label) for v, label in ProductKind.choices if v != 
 class SiteImageSlot(models.TextChoices):
     HERO = "hero", "Главный экран"
     ABOUT = "about", "О компании"
-    PRODUCTION = "production", "Производство"
+    MATERIAL_LDSP = "material_ldsp", "Материал ЛДСП"
+    MATERIAL_MDF = "material_mdf", "Материал МДФ"
 
 
 class SheetStatus(models.TextChoices):
@@ -415,7 +417,7 @@ class Lead(models.Model):
         ]
 ```
 
-Справочные строки создаёт `sync_reference_data` (15.2): 5 категорий (по одной на `CATEGORY_SLUG_CHOICES`), 3 слота `SiteImage`, одна строка `SiteSettings` с `id=1`. В админке у этих моделей нет добавления и удаления.
+Справочные строки создаёт `sync_reference_data` (15.2): 5 категорий (по одной на `CATEGORY_SLUG_CHOICES`), 4 слота `SiteImage` (по одному на `SiteImageSlot`), одна строка `SiteSettings` с `id=1`. В админке у этих моделей нет добавления и удаления.
 
 ## 7. HTTP API v1 (внутренний)
 
@@ -484,7 +486,12 @@ type GalleryItem = {
   image: ImageAsset;
 };
 
-type HomeSlots = { hero: ImageAsset | null; about: ImageAsset | null; production: ImageAsset | null };
+type HomeSlots = {
+  hero: ImageAsset | null;
+  about: ImageAsset | null;
+  material_ldsp: ImageAsset | null;
+  material_mdf: ImageAsset | null;
+};
 
 type HomeContent = {
   slots: HomeSlots;
@@ -645,7 +652,7 @@ def get_sheets_client() -> SheetsClient: ...  # by SHEETS_BACKEND: "fake" | "goo
 | `/dev/ui` | `+page.svelte` | нет | kitchen sink; 404 при `PUBLIC_APP_ENV=production` |
 | ошибки | `+error.svelte` | нет | 404 и 5xx |
 
-Якоря секций (контракт для навигации и E2E): `hero`, `catalog`, `works`, `advantages`, `process`, `about`, `lead`, `contacts`.
+Якоря секций (контракт для навигации и E2E), в порядке на странице: `hero`, `about`, `catalog`, `works`, `materials`, `process`, `advantages`, `lead`, `contacts`.
 
 ### 10.2 Правила
 
@@ -721,13 +728,15 @@ export type CategorySlug = S['CategorySlugEnum'];
 // frontend/src/lib/config/nav.ts
 export type NavItem = { label: string; href: string };
 export const NAV: NavItem[] = [
-  { label: 'Каталог', href: '/#catalog' },
-  { label: 'Наши работы', href: '/#works' },
+  { label: 'О компании', href: '/#about' },
+  { label: 'Направления', href: '/#catalog' },
+  { label: 'Галерея', href: '/#works' },
+  { label: 'Материалы', href: '/#materials' },
   { label: 'Как мы работаем', href: '/#process' },
   { label: 'Контакты', href: '/#contacts' },
 ];
 ```
-Меню меняется правкой массива, не разметки. Итоговый состав фиксирует S1-01.
+Меню меняется правкой массива, не разметки. Состав зафиксирован в S1-01 (v2) по шаблону.
 
 ## 11. UI-примитивы и layout
 
@@ -782,7 +791,7 @@ export const NAV: NavItem[] = [
 // image: <img src srcset sizes width height alt decoding="async"> with background image.color
 // null: <div aria-hidden="true"> with token background and aspect
 
-// Container (own): { class?: string; children: Snippet }  max width + 16px side gutters
+// Container (own): { class?: string; children: Snippet }  max-w-7xl, side gutters px-5 md:px-8 (template)
 // Section (own): { id?: string; title?: string; subtitle?: string; tone?: 'default' | 'muted' | 'inverted';
 //                  headingLevel?: 2 | 3; class?: string; children: Snippet }  <section aria-labelledby>
 ```
@@ -794,7 +803,29 @@ Layout (`src/lib/components/layout/`):
 - `SkipLink`: ссылка на `#main`.
 - `Seo` (S2-08): `{ title: string; description: string; path: string; image?: ImageAsset | null; noindex?: boolean }`. Title, description, canonical, OG в `<svelte:head>`.
 
-Токены: имена переменных shadcn-svelte в `src/app.css` (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--destructive`, `--border`, `--input`, `--ring`, `--radius`), связка через `@theme inline`. Шрифты: `--font-sans`, `--font-display`. Значения берутся из шаблона в S1-01. Тёмной темы нет.
+Токены: имена переменных shadcn-svelte в `src/app.css` (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--destructive`, `--border`, `--input`, `--ring`, `--radius`), связка через `@theme inline`. Шрифты: `--font-sans`, `--font-display`. Тёмной темы нет.
+
+Значения (S1-01, из `template/src/index.css`):
+
+| Токен | Значение | HEX |
+|---|---|---|
+| `--background` | `hsl(38 27% 97%)` | `#F9F8F5` |
+| `--foreground` | `hsl(0 0% 17%)` | `#2B2B2B` |
+| `--card`, `--popover` | `hsl(38 33% 99%)` | `#FDFDFC` |
+| `--card-foreground`, `--popover-foreground` | `hsl(0 0% 17%)` | `#2B2B2B` |
+| `--primary`, `--accent`, `--ring` | `hsl(27 22% 33%)` | `#675242` |
+| `--primary-foreground`, `--accent-foreground` | `hsl(38 27% 97%)` | `#F9F8F5` |
+| `--secondary` | `hsl(36 22% 92%)` | `#EFEBE6` |
+| `--secondary-foreground` | `hsl(27 22% 24%)` | `#4B3C30` |
+| `--muted` | `hsl(36 20% 94%)` | `#F3F0ED` |
+| `--muted-foreground` | `hsl(30 7% 42%)` | `#736B64` |
+| `--destructive` | `hsl(0 72% 48%)` | `#D32222` |
+| `--border`, `--input` | `hsl(36 18% 82%)` | `#D9D3C9` |
+| `--radius` | `0.9rem` | |
+| `--font-display` | `'Cormorant Garamond Variable', ui-serif, Georgia, serif` | заголовки и цифры, начертания 300..500 |
+| `--font-sans` | `'Manrope Variable', ui-sans-serif, system-ui, sans-serif` | текст и интерфейс |
+
+Производные утилиты в `app.css` (только из токенов): `glass` (фон `--background` 78 %, рамка `--border` 45 %, blur 16px), `glass-dark` (фон `--foreground` 64 %), `joinery-line` (градиент по `--border`), тени `shadow-float`, `shadow-header`, `shadow-lift` (цвет `--foreground`). Анимация `reveal` и подъём `lift-hover` по шаблону, с учётом `prefers-reduced-motion`. Типографика и отступы: `template/STYLE-GUIDE.md`, разделы «Типографика», «Форма и отступы».
 
 Правила UI:
 - Есть примитив: самописный аналог запрещён.
@@ -965,7 +996,7 @@ E2E_API_URL=http://localhost:8000
 
 Идемпотентна, создаёт только недостающее, существующие значения не перезаписывает:
 - 5 строк `Category`: `slug` из `CATEGORY_SLUG_CHOICES`, `title` = метка, `position` = порядок в enum;
-- 3 строки `SiteImage` (пустые слоты);
+- 4 строки `SiteImage` (пустые слоты);
 - `SiteSettings` с `id=1`;
 - группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`).
 
@@ -975,7 +1006,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 3 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`) с фиктивными данными.
+- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`) с фиктивными данными.
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1248,7 +1279,7 @@ tech.md v<N>; touched: <sections> | none
 - `make gen`: `contracts/openapi.yaml`, `api.d.ts`. Руками: `src/lib/types/index.ts`, `src/lib/server/api.ts`, `contracts/fixtures/phone-cases.json` (набор 12.3).
 - AC1: `openapi.yaml` содержит все операции и компоненты раздела 7 с точными именами; поля вида и категории ссылаются на `ProductKindEnum` и `CategorySlugEnum`.
 - AC2: запрос без `X-Internal-Token` или с неверным получает 403 на каждой операции `/api/v1/`.
-- AC3: `sync_reference_data` дважды подряд даёт те же количества (5 категорий, 3 слота, 1 строка настроек, 2 группы) и не перезаписывает правки.
+- AC3: `sync_reference_data` дважды подряд даёт те же количества (5 категорий, 4 слота, 1 строка настроек, 2 группы) и не перезаписывает правки.
 - AC4: ограничения БД: вторая строка `SiteSettings`, `sent` без `sheet_synced_at`, телефон не E.164 → `IntegrityError`.
 - AC5: `check --deploy` при `APP_ENV=production` падает по каждому условию раздела 14.
 - AC6: `normalize_phone` и `format_phone_display` проходят все векторы `phone-cases.json`.
@@ -1287,13 +1318,13 @@ tech.md v<N>; touched: <sections> | none
 ### S1-08 Сид и dev-окружение
 - `seed_demo` (15.3), `backend/fixtures/demo/`, `make seed`.
 - AC1: `make seed` дважды → те же количества; `seed_demo --reset` пересоздаёт демо-данные.
-- AC2: после сида в БД: 3 слота с фото, 5 категорий с обложками, 12 работ (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`); у каждой картинки варианты и цвет по разделу 9.
+- AC2: после сида в БД: 4 слота с фото, 5 категорий с обложками, 12 работ (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`); у каждой картинки варианты и цвет по разделу 9.
 - AC3: `seed_demo` при `APP_ENV=production` завершается с ошибкой и ничего не пишет.
 - AC4: демо-заявка `pending` доходит воркером до `backend/var/fake-sheet.jsonl`.
 - Тесты: pytest на AC1..AC4.
 
 ### S1-09 Эталонный слайс: Hero
-- Сквозная вертикаль и образец для всех слайсов Стадии 2: заглушка `home.slots` заменяется поведением. Админка `SiteImage` (3 фиксированных слота, без добавления и удаления, превью, `ImageAdminMixin`), селектор `get_home_content` (часть `slots`), `+page.server.ts`, `Hero.svelte` на `ResponsiveImage` (`loading="eager"`, `fetchpriority="high"`, `sizes="100vw"`), H1, подзаголовок и CTA из шаблона (`src/lib/content/home.ts`). CTA ведёт на `/lead` (роут появится в S2-01).
+- Сквозная вертикаль и образец для всех слайсов Стадии 2: заглушка `home.slots` заменяется поведением. Админка `SiteImage` (4 фиксированных слота, без добавления и удаления, превью, `ImageAdminMixin`), селектор `get_home_content` (часть `slots`), `+page.server.ts`, `Hero.svelte` на `ResponsiveImage` (`loading="eager"`, `fetchpriority="high"`, `sizes="100vw"`), H1, подзаголовок и CTA из шаблона (`src/lib/content/home.ts`). CTA ведёт на `/lead` (роут появится в S2-01).
 - AC1: фото, загруженное в слот `hero` в админке, появляется на главной с `srcset` из всех вариантов и атрибутами `width` и `height`.
 - AC2: пустой слот `hero` → страница рендерится без ошибок, фон из токена, H1 и CTA на месте.
 - AC3: фото hero является LCP-элементом и не грузится лениво.
@@ -1428,7 +1459,7 @@ tech.md v<N>; touched: <sections> | none
 - Тесты: pytest на AC1..AC3 на сгенерированных картинках; AC4 замер на staging, результат в PR.
 
 ### S2-10 Статичные секции и контакты
-- `GET /site-settings/` вместо заглушки, `SiteSettingsAdmin` (синглтон: без добавления и удаления, пункт меню сразу открывает форму), инлайн `SocialLink`, нормализация телефона при сохранении. Секции по карте шаблона: преимущества, как мы работаем, о производстве (слоты `about` и `production`), контакты.
+- `GET /site-settings/` вместо заглушки, `SiteSettingsAdmin` (синглтон: без добавления и удаления, пункт меню сразу открывает форму), инлайн `SocialLink`, нормализация телефона при сохранении. Секции по карте шаблона (приложение А): о компании (слот `about`), материалы (слоты `material_ldsp`, `material_mdf`), как мы работаем, преимущества, контакты.
 - Зависит от: S1-11.
 - AC1: все секции карты шаблона на месте с якорями из 10.1.
 - AC2: телефон в шапке, подвале и контактах: ссылка `tel:` с E.164, текст `phone_display`.
@@ -1469,19 +1500,68 @@ tech.md v<N>; touched: <sections> | none
 - Автоудаление старых заявок: срок хранения согласовать с заказчиком.
 - Транспорт реального времени.
 
-## Приложение А. Карта шаблона (черновик до S1-01)
 
-| # | Секция | Якорь | Фича | Данные | Статус |
+## Приложение А. Карта шаблона (итог S1-01, v2)
+
+Источник: `template/demo/index.html` (порядок секций как в `Home.jsx`), `template/STYLE-GUIDE.md`, `template/src/index.css`. Фон `muted` у секции: `bg-secondary/40`.
+
+| # | Секция шаблона | Якорь | Фича | Данные | Фон |
 |---|---|---|---|---|---|
-| 1 | Шапка: логотип, меню, телефон, CTA | нет | `layout/Header` | `NAV`, `SiteSettings` | черновик |
-| 2 | Главный экран: H1, подзаголовок, CTA, фото | `hero` | `hero` | `slots.hero`, статичный текст | черновик |
-| 3 | Каталог: 5 категорий | `catalog` | `categories` | `home.categories` | черновик |
-| 4 | Наши работы | `works` | `gallery` | `home.featured` | черновик |
-| 5 | Преимущества | `advantages` | `sections` | `src/lib/content/home.ts` | черновик |
-| 6 | Как мы работаем: замер, проект, производство, монтаж | `process` | `sections` | `src/lib/content/home.ts` | черновик |
-| 7 | О производстве | `about` | `sections` | `slots.about`, `slots.production`, статичный текст | черновик |
-| 8 | Форма заявки | `lead` | `lead-form` | `POST /leads/` | черновик |
-| 9 | Контакты | `contacts` | `sections` | `SiteSettings` | черновик |
-| 10 | Подвал | нет | `layout/Footer` | `NAV`, `SiteSettings`, юр. ссылки | черновик |
+| 1 | Шапка: логотип, меню, телефон, CTA | нет | `layout/Header`, `layout/MobileNav` | `NAV`, `SiteSettings` | прозрачная, `glass` после 24px скролла |
+| 2 | Hero: H1, подзаголовок, 2 CTA, фото, плашка | `hero` | `hero` | `slots.hero`, `home.ts` | default |
+| 3 | About: текст, 4 пункта, фото, плашка | `about` | `sections` (`About`) | `slots.about`, `home.ts` | default |
+| 4 | Directions: 5 категорий | `catalog` | `categories` | `home.categories`, `home.ts` | muted |
+| 5 | Gallery: работы, лайтбокс | `works` | `gallery` | `home.featured`, `home.ts` | default |
+| 6 | Materials: ЛДСП, МДФ | `materials` | `sections` (`Materials`) | `slots.material_ldsp`, `slots.material_mdf`, `home.ts` | muted |
+| 7 | Process: 5 шагов | `process` | `sections` (`Process`) | `home.ts` | default |
+| 8 | Advantages: 4 карточки | `advantages` | `sections` (`Advantages`) | `home.ts` | muted |
+| 9 | LeadForm | `lead` | `lead-form` (`LeadSection`, `LeadForm`) | `POST /leads/`, `home.ts`, раздел 12 | default |
+| 10 | Contacts: 4 карточки, CTA | `contacts` | `sections` (`Contacts`) | `SiteSettings`, `home.ts` | muted |
+| 11 | Footer | нет | `layout/Footer` | `NAV`, `SiteSettings`, юр. ссылки | `bg-primary` |
 
-Токены (заполняет S1-01): цвета по списку раздела 11, `--radius`, шрифты `--font-sans` и `--font-display` с пакетами `@fontsource/*`, ширина контейнера.
+Статичные тексты (`src/lib/content/home.ts`, `src/lib/content/pages.ts`). Кавычки «» не входят в текст.
+
+| Место | Текст |
+|---|---|
+| Hero, H1 | «Мебель на заказ в Вологде» |
+| Hero, подзаголовок | «Кухни, шкафы, шкафы-купе, кухонные столы и офисная мебель, изготовленные под ваше пространство.» |
+| Hero, CTA | «Оставить заявку» (`/lead`, с JS открывает LeadDialog); «Смотреть наши работы» (`/#works`) |
+| Hero, плашка | «Материалы» / «ЛДСП и МДФ» |
+| About, надзаголовок и H2 | «О компании» / «Делаем мебель, которая подходит именно вашему дому» |
+| About, текст | «Проектируем и изготавливаем мебель по размерам вашего помещения. Замер, проект, производство и монтаж делаем сами.» (черновик: в шаблоне заглушка, текст даёт заказчик) |
+| About, пункты | «Замер и проект», «Собственное производство», «Доставка и сборка», «Гарантия на изделия» |
+| About, плашка | «Индивидуально» / «под ваше пространство» |
+| Directions | «Направления производства» / «Что мы производим» / «Изготовляем мебель на заказ для дома и офиса: от кухни до систем хранения.» |
+| Карточка категории | название и `short_description` из API; CTA «Оставить заявку» |
+| Gallery | «Наши работы» / «Галерея реализованных проектов»; подпись миниатюры: метка категории и `title`; кнопки лайтбокса «Закрыть», «Назад», «Вперёд» |
+| Materials | «Материалы» / «С чем мы работаем»; «ЛДСП»: «Практичный материал для корпусной мебели с широкой палитрой декоров.»; «МДФ»: «Гладкие и фрезерованные фасады для кухонь и шкафов.» |
+| Process | «Как мы работаем» / «Путь от заявки до готовой мебели»; 01 «Заявка»: «Вы оставляете контакты.»; 02 «Замер»: «Мастер приезжает на объект.»; 03 «Проект»: «Согласуем дизайн и смету.»; 04 «Производство»: «Изготавливаем изделие.»; 05 «Монтаж»: «Доставка и установка.» |
+| Advantages | «Почему выбирают нас» / «Подход, который виден в деталях»; 01 «Точные размеры»: «Мебель делается под ваши замеры.»; 02 «Свой цех»: «Контролируем качество на каждом этапе.»; 03 «Фурнитура»: «Надёжные механизмы и аккуратные детали.»; 04 «Монтаж»: «Доставим и соберём на месте.» |
+| LeadForm | «Заявка» / «Расскажите, какая мебель вам нужна» / «Оставьте контакты: мы свяжемся и обсудим детали вашего проекта.»; после успеха кнопка «Отправить ещё одну»; поля и сообщения: раздел 12 |
+| Contacts | «Контакты» / «Свяжитесь с нами» / «Позвоните, напишите или оставьте заявку: ответим в рабочее время.»; подписи карточек «Телефон», «Email», «Адрес», «Часы работы»; ссылка «Открыть на карте» (`map_url`); CTA «Заказать мебель» (`/lead`) |
+| Шапка | логотип «Фабрика Уюта»; CTA «Оставить заявку»; кнопка мобильного меню и заголовок Sheet «Меню» |
+| SkipLink | «Перейти к содержанию» |
+| Подвал | «Фабрика Уюта»; «Мебель на заказ для дома и офиса. Кухни, шкафы, столы и системы хранения, изготовленные под ваше пространство.»; «Навигация»; «Заявка»: «Оставьте заявку, и мы обсудим детали вашего будущего изделия.» + «Оставить заявку»; «© <год> Фабрика Уюта. Все права защищены.»; «Политика обработки персональных данных», «Согласие на обработку персональных данных» |
+| `/catalog/<slug>` | ссылка «Все направления» (`/#catalog`); H1 = `title`; галерея «Наши работы», пустая: «Скоро здесь появятся фото работ.»; блок формы как LeadForm |
+| `/lead` | H1 «Оставить заявку»; текст как у LeadForm |
+| `/privacy`, `/consent` | H1 «Политика обработки персональных данных», «Согласие на обработку персональных данных»; до текста заказчика: «Текст документа готовит юрист. Он появится здесь до запуска сайта.» + маркер `LEGAL_TEXT_PENDING` |
+| 404 | «Страница не найдена» / «Возможно, её удалили или в ссылке опечатка.» / «На главную» |
+| 5xx | «Что-то пошло не так» / «Попробуйте обновить страницу через минуту.» / «На главную» |
+
+SEO (S2-08, S2-11):
+
+| Страница | title | description |
+|---|---|---|
+| `/` | «Фабрика Уюта: мебель на заказ в Вологде» | «Кухни, шкафы, шкафы-купе, кухонные столы и офисная мебель на заказ в Вологде. ЛДСП и МДФ.» |
+| `/catalog/<slug>` | «<seo_title> \| Фабрика Уюта» | `seo_description` |
+| `/lead` | «Оставить заявку \| Фабрика Уюта» | «Заявка на изготовление мебели на заказ.» (`noindex`) |
+| `/privacy` | «Политика обработки персональных данных \| Фабрика Уюта» | «Как Фабрика Уюта обрабатывает персональные данные.» |
+| `/consent` | «Согласие на обработку персональных данных \| Фабрика Уюта» | «Текст согласия на обработку персональных данных.» |
+| ошибка | «Страница не найдена \| Фабрика Уюта», «Ошибка \| Фабрика Уюта» | без description, `noindex` |
+
+Ассеты:
+- Логотип: текстовый, «Фабрика Уюта» шрифтом `--font-display`. Файла нет.
+- Иконки: inline SVG шаблона совпадают с Lucide (`Menu`, `ArrowRight`, `ArrowUpRight`, `Check`, `X`, `ChevronLeft`, `ChevronRight`, `CircleCheck`, `Send`, `Phone`, `Mail`, `MapPin`, `Clock`), берутся из `@lucide/svelte`. `src/lib/icons/` не нужен.
+- Фото: файлов в шаблоне нет (hero и about ссылаются на Unsplash, остальное цветные заглушки). `seed_demo` генерирует картинки Pillow (15.3). Пустой слот или обложка: заглушка ResponsiveImage.
+- Шрифты: Cormorant Garamond (есть `cyrillic`), Manrope вместо Plus Jakarta Sans (у Plus Jakarta Sans только `cyrillic-ext`, русские буквы шли бы системным шрифтом). Пакеты в разделе 4.
+- Favicon и manifest: в шаблоне нет. S2-11 кладёт `static/favicon.svg` (буква «Ф» цветом `--primary` на `--background`) и `static/manifest.webmanifest`.
