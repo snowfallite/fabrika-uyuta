@@ -1,6 +1,11 @@
 {
 	"$schema": "https://unpkg.com/knip@6/schema.json",
-	"ignore": ["src/lib/components/ui/**", "src/lib/utils.ts"],
+	"ignore": [
+		"src/lib/components/ui/**",
+		"src/lib/utils.ts",
+		"src/lib/server/api.ts",
+		"src/lib/types/index.ts"
+	],
 	"ignoreDependencies": [
 		"@axe-core/playwright",
 		"@fontsource-variable/cormorant-garamond",
