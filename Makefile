@@ -4,7 +4,7 @@ export
 
 MANAGE := cd backend && uv run python manage.py
 
-.PHONY: dev dev-down migrations migrate gen fmt check-fast test gate drift guard e2e
+.PHONY: dev dev-down migrations migrate gen seed fmt check-fast test gate drift guard e2e
 
 dev:
 	docker compose up -d db backend
@@ -23,6 +23,9 @@ migrate:
 gen:
 	$(MANAGE) spectacular --validate --file ../contracts/openapi.yaml
 	pnpm -C frontend gen:api
+
+seed:
+	$(MANAGE) sync_reference_data
 
 fmt:
 	pnpm -C frontend format
