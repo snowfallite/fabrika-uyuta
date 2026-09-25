@@ -13,7 +13,7 @@
 		"lint": "eslint .",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"knip": "knip",
-		"test:unit": "vitest run --passWithNoTests",
+		"test:unit": "vitest run",
 		"test:e2e": "playwright test",
 		"gen:api": "openapi-typescript ../contracts/openapi.yaml -o src/lib/types/api.d.ts"
 	},

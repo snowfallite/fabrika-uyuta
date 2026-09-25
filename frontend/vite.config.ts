@@ -32,6 +32,8 @@ export default defineConfig(({ mode }) => {
 						browser: {
 							enabled: true,
 							provider: playwright(),
+							// Pin IPv4: on some hosts localhost resolves to ::1 only.
+							api: { host: '127.0.0.1' },
 							instances: [{ browser: 'chromium', headless: true }]
 						},
 						include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
