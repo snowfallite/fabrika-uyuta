@@ -1,0 +1,10 @@
+{
+	auto_https off
+	admin off
+}
+
+import /etc/caddy/site.caddy
+
+:8080 {
+	import fabrika e2e admin/
+}

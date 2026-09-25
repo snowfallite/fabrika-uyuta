@@ -1,0 +1,38 @@
+# Edge Caddy: TLS and routing for fabrika-production and fabrika-staging (tech.md, 16.4).
+# Once per VPS, before the first `docker compose -f deploy/edge/compose.yml up -d`:
+#   docker network create edge
+#   docker volume create fabrika-staging_media && docker volume create fabrika-production_media
+#   /opt/fabrika/edge/.env: DOMAIN, ACME_EMAIL, PRODUCTION_ADMIN_PATH, STAGING_ADMIN_PATH,
+#   STAGING_BASIC_AUTH_USER, STAGING_BASIC_AUTH_HASH (single-quoted: bcrypt hashes contain $;
+#   get one with `docker run --rm caddy:2 caddy hash-password`).
+name: edge
+
+services:
+  caddy:
+    image: caddy:2
+    env_file: /opt/fabrika/edge/.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../caddy/site.caddy:/etc/caddy/site.caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - fabrika-production_media:/srv/fabrika-production/media:ro
+      - fabrika-staging_media:/srv/fabrika-staging/media:ro
+    networks: [edge]
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
+  fabrika-production_media:
+    external: true
+  fabrika-staging_media:
+    external: true
+
+networks:
+  edge:
+    external: true

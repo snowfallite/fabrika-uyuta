@@ -3,8 +3,9 @@
 export
 
 MANAGE := cd backend && uv run python manage.py
+E2E := docker compose -f compose.e2e.yml
 
-.PHONY: dev dev-down migrations migrate gen seed fmt check-fast test gate drift guard e2e
+.PHONY: dev dev-down migrations migrate gen seed fmt check-fast test gate drift guard e2e e2e-down
 
 dev:
 	docker compose up -d db backend worker
@@ -45,13 +46,13 @@ gate:
 	pnpm -C frontend lint
 	pnpm -C frontend check
 	pnpm -C frontend knip
-	pnpm -C frontend test:unit
+	CI=1 pnpm -C frontend test:unit
 	pnpm -C frontend build
 	cd backend && uv run ruff format --check .
 	cd backend && uv run ruff check .
 	cd backend && uv run mypy
 	$(MANAGE) makemigrations --check --dry-run
-	cd backend && uv run pytest
+	cd backend && uv run pytest --hypothesis-profile=ci
 	$(MAKE) drift
 	$(MAKE) guard
 
@@ -63,4 +64,9 @@ guard:
 	uv run --no-project python scripts/contract_guard.py --base main
 
 e2e:
-	E2E_BASE_URL=http://localhost:5173 pnpm -C frontend test:e2e
+	$(E2E) up --build --wait
+	$(E2E) exec -T backend python manage.py seed_demo
+	pnpm -C frontend test:e2e
+
+e2e-down:
+	$(E2E) down -v

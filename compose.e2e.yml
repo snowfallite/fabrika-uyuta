@@ -1,0 +1,121 @@
+# Full stack from the Dockerfiles for E2E (tech.md, 16.5): Caddy on localhost:8080.
+# INTERNAL_API_TOKEN comes from the root .env, so Playwright can call the test endpoint.
+name: e2e
+
+x-backend-env: &backend-env
+  APP_ENV: e2e
+  DJANGO_DEBUG: "false"
+  DJANGO_SECRET_KEY: e2e-insecure-secret-key-not-for-production
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,e2e-backend
+  DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8080
+  DJANGO_ADMIN_PATH: admin/
+  INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
+  POSTGRES_DB: fabrika
+  POSTGRES_USER: fabrika
+  POSTGRES_PASSWORD: fabrika
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  MEDIA_ROOT: /data/media
+  LEAD_THROTTLE_RATE: 1000/hour
+  CONSENT_VERSION: "2026-09-25"
+  ENABLE_TEST_ENDPOINTS: "true"
+  SHEETS_BACKEND: fake
+  SHEETS_FAKE_PATH: /data/fake-sheet.jsonl
+  SHEETS_POLL_SECONDS: "1"
+  PUBLIC_SITE_URL: http://localhost:8080
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: fabrika
+      POSTGRES_USER: fabrika
+      POSTGRES_PASSWORD: fabrika
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fabrika -d fabrika"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  release:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: fabrika-backend:e2e
+    command: ["python", "manage.py", "release"]
+    environment: *backend-env
+    volumes:
+      - data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: fabrika-backend:e2e
+    environment: *backend-env
+    ports:
+      - "8000:8000" # test endpoint only
+    volumes:
+      - data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    depends_on:
+      release:
+        condition: service_completed_successfully
+    networks:
+      default:
+        aliases: [e2e-backend]
+
+  worker:
+    image: fabrika-backend:e2e
+    command: ["python", "manage.py", "run_sheets_worker"]
+    environment: *backend-env
+    volumes:
+      - data:/data
+    stop_grace_period: 30s
+    depends_on:
+      release:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: fabrika-frontend:e2e
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+      INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN}
+      PUBLIC_SITE_URL: http://localhost:8080
+      PUBLIC_APP_ENV: e2e
+      ORIGIN: http://localhost:8080
+      ADDRESS_HEADER: X-Forwarded-For
+      XFF_DEPTH: "1"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      default:
+        aliases: [e2e-frontend]
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./deploy/caddy/Caddyfile.e2e:/etc/caddy/Caddyfile:ro
+      - ./deploy/caddy/site.caddy:/etc/caddy/site.caddy:ro
+      - data:/srv/e2e:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+volumes:
+  data:

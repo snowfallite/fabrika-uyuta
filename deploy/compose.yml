@@ -1,0 +1,73 @@
+# One environment on the VPS (tech.md, 16.3). deploy.sh sets STACK, TAG, GHCR_OWNER, ENV_DIR:
+#   STACK=fabrika-staging, ENV_DIR=/opt/fabrika/staging (.env and google-sa.json live there).
+x-backend: &backend
+  image: ghcr.io/${GHCR_OWNER:?}/fabrika-backend:${TAG:?}
+  env_file: ${ENV_DIR:?}/.env
+  environment:
+    POSTGRES_HOST: db
+    MEDIA_ROOT: /data/media
+  volumes:
+    - media:/data/media
+    - ${ENV_DIR}/google-sa.json:/run/secrets/google-sa.json:ro
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:18
+    env_file: ${ENV_DIR}/.env
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    <<: *backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    networks:
+      default:
+      edge:
+        aliases: ["${STACK:?}-backend"]
+
+  worker:
+    <<: *backend
+    command: ["python", "manage.py", "run_sheets_worker"]
+    stop_grace_period: 30s
+
+  frontend:
+    image: ghcr.io/${GHCR_OWNER}/fabrika-frontend:${TAG}
+    env_file: ${ENV_DIR}/.env
+    environment:
+      API_INTERNAL_URL: http://backend:8000
+      ADDRESS_HEADER: X-Forwarded-For
+      XFF_DEPTH: "1"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    restart: unless-stopped
+    networks:
+      default:
+      edge:
+        aliases: ["${STACK}-frontend"]
+
+volumes:
+  pgdata:
+  media:
+    # Edge Caddy mounts this read-only as /srv/<stack>/media.
+    name: ${STACK}_media
+
+networks:
+  edge:
+    external: true
