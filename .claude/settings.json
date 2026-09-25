@@ -8,6 +8,15 @@
       "Read(/.env)",
       "Read(//**/google-sa*.json)"
     ],
-    "ask": ["Edit(/tech.md)"]
+    "ask": [
+      "Edit(/tech.md)",
+      "Edit(/contracts/fixtures/**)",
+      "Edit(/backend/apps/core/enums.py)",
+      "Edit(/backend/apps/leads/sheets/row.py)",
+      "Edit(/frontend/src/lib/types/index.ts)",
+      "Edit(/frontend/src/lib/server/api.ts)",
+      "Edit(/frontend/src/lib/components/ui/**)",
+      "Edit(/.env.example)"
+    ]
   }
 }

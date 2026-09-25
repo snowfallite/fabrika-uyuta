@@ -1,14 +1,15 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v4
+- Версия: v5
 - Дата: 2026-09-26
-- Каркас: не готов
+- Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
 ## Changelog
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v5 (2026-09-26): S1-11, каркас готов: contract-guard переходит в режим ошибки, в `.claude/settings.json` добавлены строки `ask` из 16.6. Проверено локально: гейт фронта и бэка, миграции и `makemigrations --check` на Postgres 18, drift `openapi.yaml` и `api.d.ts`, Schemathesis по всем операциям, воркер против фейка и тесты идемпотентности, сид и тестовый эндпоинт, полный стек `compose.e2e.yml` с Caddy, `smoke.sh`, все E2E на 1440 и 360 px, axe. Ждут инфраструктуры владельца: прогоны CI на GitHub и branch protection (`scripts/protect-main.sh`), деплой на staging (VPS, домен), long-lead раздела 20.
 - v4 (2026-09-26): S1-10. Деплой-конфиг вне `.env.example`: `deploy.sh` берёт `GHCR_OWNER` (владелец GHCR в нижнем регистре) из окружения; GitHub Secret `STAGING_BASIC_AUTH` (`user:password` для smoke staging) и Variable `DOMAIN`; `/opt/fabrika/edge/.env` для edge Caddy: `DOMAIN`, `ACME_EMAIL`, `PRODUCTION_ADMIN_PATH`, `STAGING_ADMIN_PATH`, `STAGING_BASIC_AUTH_USER`, `STAGING_BASIC_AUTH_HASH`. Том media стека называется `<stack>_media`. `/robots.txt` появляется в S1-10 (AC1 staging), S2-11 его проверяет.
 - v3 (2026-09-26): S1-02. Компонентные тесты: браузерный режим Vitest (`vitest-browser-svelte`, `@vitest/browser-playwright`, Chromium), как ставит `sv add vitest`; jsdom и `@testing-library/svelte` не используются. `.env.example`: комментарии к пустым значениям вынесены на отдельные строки, Docker Compose и python-dotenv читают `KEY=   # comment` как значение `# comment`. Фактические версии `sv create`: Kit 2.63, Svelte 5.56, Vite 8, Vitest 4, TypeScript 6, ESLint 10. Конфиг Kit остаётся в `svelte.config.js` (плагин `sveltekit()` без опций читает его). shadcn-svelte 1.7 ставит `cn` (замена clsx и tailwind-merge), `tailwind-variants`, `tw-animate-css`. Правило eslint `svelte/no-navigation-without-resolve` выключено: сайт в корне домена без `paths.base`, ссылки `NAV` с якорями. django-stubs 5.2.x и djangorestframework-stubs 3.16.x под Django 5.2.
 - v2 (2026-09-26): S1-01, инвентаризация `template/`. Приложение А заполнено: 11 секций в порядке шаблона, статичные тексты, ассеты. Добавлены секция и якорь `materials` (карточки ЛДСП и МДФ из шаблона). Секция `about` стала «О компании» по шаблону, секции «О производстве» в шаблоне нет. `SiteImageSlot`: `production` заменён на `material_ldsp` и `material_mdf` (фото карточек материалов), `HomeSlots` и счётчики слотов (6, 15.2, 15.3, S1-04, S1-08, S1-09, S2-10) следом: слотов 4. `NAV`: 6 пунктов шаблона. Токены раздела 11 со значениями из `template/src/index.css`. Текстовый шрифт: Manrope вместо Plus Jakarta Sans, у Plus Jakarta Sans нет базовой кириллицы (только `cyrillic-ext`). Контейнер: `max-w-7xl`, поля `px-5 md:px-8` по шаблону. Не переносятся: фильтр галереи по категориям (на главной не больше 12 работ, полная галерея на `/catalog/<slug>`), ссылка «Админ-панель» в подвале (путь админки секретный, 13.1), отдельный текст «Нажимая кнопку…» (его заменяет чекбокс согласия, 12.1). Вторичный текст подвала не прозрачнее `/80`: иначе контраст ниже AA.
