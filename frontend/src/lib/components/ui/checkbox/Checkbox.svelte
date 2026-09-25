@@ -9,6 +9,8 @@
 		required?: boolean;
 		'aria-invalid'?: boolean;
 		'aria-describedby'?: string;
+		/** First invalid field after a no-JS submit (tech.md v6). */
+		autofocus?: boolean;
 		/** Label content; may contain links. */
 		children: Snippet;
 	}

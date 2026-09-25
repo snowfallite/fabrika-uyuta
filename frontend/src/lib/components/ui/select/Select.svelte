@@ -12,6 +12,8 @@
 		required?: boolean;
 		'aria-invalid'?: boolean;
 		'aria-describedby'?: string;
+		/** First invalid field after a no-JS submit (tech.md v6). */
+		autofocus?: boolean;
 	}
 
 	let { value = $bindable(''), options, placeholder, ...rest }: Props = $props();
