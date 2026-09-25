@@ -7,7 +7,7 @@ MANAGE := cd backend && uv run python manage.py
 .PHONY: dev dev-down migrations migrate gen seed fmt check-fast test gate drift guard e2e
 
 dev:
-	docker compose up -d db backend
+	docker compose up -d db backend worker
 	@echo "Frontend: pnpm -C frontend dev"
 
 dev-down:

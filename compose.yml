@@ -1,4 +1,4 @@
-# Dev stack: Postgres and Django. Frontend runs on the host: pnpm -C frontend dev.
+# Dev stack: Postgres, Django and the Sheets worker. Frontend runs on the host: pnpm -C frontend dev.
 services:
   db:
     image: postgres:18
@@ -17,7 +17,7 @@ services:
   backend:
     image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
     working_dir: /app
-    command: sh -c "uv sync --frozen --no-dev && uv run --no-sync python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "uv sync --frozen --no-dev && exec /venv/bin/python manage.py runserver 0.0.0.0:8000"
     env_file: .env
     environment:
       POSTGRES_HOST: db
@@ -30,6 +30,25 @@ services:
       - ./backend:/app
       - venv:/venv
       - uv-cache:/root/.cache/uv
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/astral-sh/uv:python3.13-bookworm-slim
+    working_dir: /app
+    # uv locks the shared venv, so both services may sync at start.
+    command: sh -c "uv sync --frozen --no-dev && exec /venv/bin/python manage.py run_sheets_worker"
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      UV_PROJECT_ENVIRONMENT: /venv
+      UV_LINK_MODE: copy
+    volumes:
+      - ./backend:/app
+      - venv:/venv
+      - uv-cache:/root/.cache/uv
+    stop_grace_period: 30s
     depends_on:
       db:
         condition: service_healthy
