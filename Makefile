@@ -4,7 +4,7 @@ export
 
 MANAGE := cd backend && uv run python manage.py
 
-.PHONY: dev dev-down migrations migrate fmt check-fast test gate e2e
+.PHONY: dev dev-down migrations migrate gen fmt check-fast test gate drift guard e2e
 
 dev:
 	docker compose up -d db backend
@@ -19,6 +19,10 @@ migrations:
 migrate:
 	$(MANAGE) migrate
 	$(MANAGE) createcachetable
+
+gen:
+	$(MANAGE) spectacular --validate --file ../contracts/openapi.yaml
+	pnpm -C frontend gen:api
 
 fmt:
 	pnpm -C frontend format
@@ -44,6 +48,15 @@ gate:
 	cd backend && uv run mypy
 	$(MANAGE) makemigrations --check --dry-run
 	cd backend && uv run pytest
+	$(MAKE) drift
+	$(MAKE) guard
+
+drift: gen
+	git diff --exit-code contracts/openapi.yaml frontend/src/lib/types/api.d.ts
+
+guard:
+	uvx pytest scripts/ -q
+	uv run --no-project python scripts/contract_guard.py --base main
 
 e2e:
 	E2E_BASE_URL=http://localhost:5173 pnpm -C frontend test:e2e

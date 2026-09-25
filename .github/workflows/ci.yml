@@ -1,0 +1,96 @@
+# PR gate without deploy (tech.md, 16.2).
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  front:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Component tests run in Vitest browser mode on Chromium.
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm check
+      - run: pnpm knip
+      - run: pnpm test:unit
+      - run: pnpm build
+
+  back:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: fabrika
+          POSTGRES_USER: fabrika
+          POSTGRES_PASSWORD: fabrika
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fabrika -d fabrika"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - run: cp ../.env.example ../.env
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run mypy
+      - run: uv run python manage.py makemigrations --check --dry-run
+      - run: uv run python manage.py migrate
+      - run: uv run pytest --hypothesis-profile=ci
+
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: cp .env.example .env
+      - uses: astral-sh/setup-uv@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm -C frontend install --frozen-lockfile
+      - run: make gen
+      - run: git diff --exit-code contracts/openapi.yaml frontend/src/lib/types/api.d.ts
+
+  contract-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx pytest scripts/ -q
+      - run: python3 scripts/contract_guard.py
