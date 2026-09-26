@@ -4,6 +4,7 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import SkipLink from '$lib/components/layout/SkipLink.svelte';
 	import { NAV } from '$lib/config/nav';
+	import LeadDialog from '$lib/features/lead-form/LeadDialog.svelte';
 
 	let { data, children } = $props();
 </script>
@@ -14,3 +15,4 @@
 	{@render children()}
 </main>
 <Footer settings={data.settings} nav={NAV} />
+<LeadDialog settings={data.settings} />
