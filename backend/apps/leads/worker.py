@@ -16,6 +16,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.enums import SheetStatus
+from apps.leads.alerts import check_alerts
 from apps.leads.models import Lead
 from apps.leads.sheets.client import (
     SheetsClient,
@@ -103,6 +104,7 @@ def run_cycle(
         heartbeat(now())
         picked += 1
     heartbeat(now())
+    check_alerts(now())
     return picked
 
 
