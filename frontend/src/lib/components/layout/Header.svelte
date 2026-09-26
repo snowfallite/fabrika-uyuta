@@ -39,7 +39,7 @@
 			>
 				{BRAND}
 			</a>
-			<nav aria-label="Основное меню" class="hidden items-center gap-5 lg:flex xl:gap-6">
+			<nav aria-label="Основное меню" class="hidden items-center gap-4 lg:flex xl:gap-6">
 				{#each nav as item (item.href)}
 					<a
 						href={item.href}
@@ -59,7 +59,7 @@
 					<a
 						href="tel:{settings.phone}"
 						aria-label="{CALL_LABEL} {settings.phone_display}"
-						class={cn(buttonVariants({ variant: 'secondary', size: 'icon' }), 'xl:hidden')}
+						class={cn(buttonVariants({ variant: 'secondary', size: 'icon' }), 'lg:hidden')}
 					>
 						<Phone class="size-5" aria-hidden="true" />
 					</a>
