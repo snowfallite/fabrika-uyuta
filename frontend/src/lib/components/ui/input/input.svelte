@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	// Underline field from the template; shared by Textarea, Select and PhoneInput.
 	export const fieldClass =
-		'w-full min-w-0 border-0 border-b border-input bg-transparent py-2 text-base text-foreground transition-[border-color,box-shadow] outline-none placeholder:text-muted-foreground focus:border-primary focus:shadow-[0_1px_0_0_var(--primary)] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive aria-invalid:focus:shadow-[0_1px_0_0_var(--destructive)]';
+		'w-full min-w-0 border-0 border-b border-input bg-transparent py-2 text-base text-foreground transition-[border-color,box-shadow] outline-none placeholder:text-muted-foreground/75 focus:border-primary focus:shadow-[0_1px_0_0_var(--primary)] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive aria-invalid:focus:shadow-[0_1px_0_0_var(--destructive)]';
 </script>
 
 <script lang="ts">

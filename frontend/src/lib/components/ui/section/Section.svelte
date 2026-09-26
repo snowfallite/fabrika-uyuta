@@ -32,7 +32,7 @@
 	{id}
 	aria-labelledby={title ? headingId : undefined}
 	class={cn(
-		'py-16 md:py-20 lg:py-24',
+		'py-14 md:py-16 lg:py-20',
 		// Soft fade in and out: a flat band left a hard line against the lighter default sections.
 		tone === 'muted' && 'bg-linear-to-b from-transparent via-secondary/60 to-transparent',
 		tone === 'inverted' && 'bg-primary text-primary-foreground',
