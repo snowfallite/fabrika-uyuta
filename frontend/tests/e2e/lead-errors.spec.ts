@@ -42,8 +42,14 @@ test.describe('lead errors with JavaScript', () => {
 		await form.getByRole('checkbox', { name: /согласие/ }).check();
 		await form.getByRole('button', { name: 'Отправить заявку' }).click();
 
-		await expect(form.getByRole('alert')).toContainText(
+		const alert = form.getByRole('alert');
+		await expect(alert).toContainText(
 			'Не получилось отправить заявку. Попробуйте ещё раз или позвоните нам.'
+		);
+		// The phone comes from SiteSettings (seed_demo).
+		await expect(alert.getByRole('link', { name: '+7 (817) 200-00-00' })).toHaveAttribute(
+			'href',
+			'tel:+78172000000'
 		);
 		await expect(form.getByLabel('ФИО')).toHaveValue('Тест Клиент');
 	});
