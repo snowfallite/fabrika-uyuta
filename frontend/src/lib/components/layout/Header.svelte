@@ -5,6 +5,7 @@
 	import { BRAND, LEAD_CTA } from '$lib/content/layout';
 	import type { SiteSettings } from '$lib/types';
 	import { cn } from '$lib/utils';
+	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import MobileNav from './MobileNav.svelte';
 
 	interface Props {
@@ -55,8 +56,10 @@
 						<Phone class="size-4" aria-hidden="true" />{settings.phone_display}
 					</a>
 				{/if}
-				<a href="/lead" class={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex')}
-					>{LEAD_CTA}</a
+				<a
+					href="/lead"
+					class={cn(buttonVariants({ size: 'sm' }), 'hidden sm:inline-flex')}
+					onclick={(event) => openFromLink(event)}>{LEAD_CTA}</a
 				>
 				<MobileNav {nav} phone={settings.phone} />
 			</div>

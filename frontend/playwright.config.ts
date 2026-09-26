@@ -4,6 +4,8 @@ export default defineConfig({
 	testDir: 'tests/e2e',
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
+	// A freshly started stack answers its first requests slowly.
+	expect: { timeout: 10_000 },
 	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 	use: {
 		baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8080',

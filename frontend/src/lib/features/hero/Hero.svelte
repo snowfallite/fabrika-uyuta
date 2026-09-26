@@ -4,6 +4,7 @@
 	import { ResponsiveImage } from '$lib/components/ui/responsive-image';
 	import { Section } from '$lib/components/ui/section';
 	import { HERO } from '$lib/content/home';
+	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import type { ImageAsset } from '$lib/types';
 
 	interface Props {
@@ -23,7 +24,7 @@
 			</h1>
 			<p class="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">{HERO.subtitle}</p>
 			<div class="mt-9 flex flex-col gap-3 sm:flex-row">
-				<Button href="/lead">
+				<Button href="/lead" onclick={(event: MouseEvent) => openFromLink(event)}>
 					{HERO.cta}
 					<ArrowRight
 						class="transition-transform group-hover/button:translate-x-1"
