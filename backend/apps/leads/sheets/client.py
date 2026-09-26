@@ -34,5 +34,7 @@ def get_sheets_client() -> SheetsClient:
 
         return FakeSheetsClient(settings.SHEETS_FAKE_PATH)
     if settings.SHEETS_BACKEND == "google":
-        raise ImproperlyConfigured("SHEETS_BACKEND=google is not available yet (S2-04)")
+        from apps.leads.sheets.google import GoogleSheetsClient
+
+        return GoogleSheetsClient.from_settings()
     raise ImproperlyConfigured("SHEETS_BACKEND must be fake or google")
