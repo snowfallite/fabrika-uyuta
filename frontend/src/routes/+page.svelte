@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CategoryGrid from '$lib/features/categories/CategoryGrid.svelte';
 	import Hero from '$lib/features/hero/Hero.svelte';
 	import LeadSection from '$lib/features/lead-form/LeadSection.svelte';
 
@@ -14,4 +15,5 @@
 </svelte:head>
 
 <Hero image={data.home.slots.hero} />
+<CategoryGrid categories={data.home.categories} />
 <LeadSection settings={data.settings} />
