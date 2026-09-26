@@ -46,7 +46,9 @@ test.describe('lead dialog', () => {
 		await expect(dialog.getByRole('status')).toHaveText(SUCCESS);
 
 		await page.keyboard.press('Escape');
+		await expect(dialog).toBeHidden();
 		await cta.click();
+		await expect(dialog).toBeVisible();
 		await expect(dialog.getByLabel('ФИО')).toHaveValue('');
 		await expect(dialog.getByRole('checkbox', { name: /согласие/ })).not.toBeChecked();
 		expect((await onlyRowNamed(request, name))[4]).toBe('Шкафы-купе');

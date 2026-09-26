@@ -12,3 +12,10 @@ export const SERVER_ERROR = {
 };
 
 export const HOME_LINK = 'На главную';
+
+export const CATEGORY_PAGE = {
+	back: 'Все направления',
+	worksTitle: 'Наши работы',
+	emptyGallery: 'Скоро здесь появятся фото работ.',
+	titleSuffix: ' | Фабрика Уюта'
+};
