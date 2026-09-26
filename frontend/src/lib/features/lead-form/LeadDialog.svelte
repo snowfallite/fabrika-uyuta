@@ -19,8 +19,13 @@
 <!-- Content mounts on open, so every opening starts with a clean form. -->
 <Dialog.Root bind:open={leadDialog.isOpen}>
 	<!-- Full screen on phones; the header with the close button stays put while the form scrolls. -->
+	<!-- The close button now comes first in the DOM; focus still starts in the first field (S2-03). -->
 	<Dialog.Content
 		showCloseButton={false}
+		onOpenAutoFocus={(event) => {
+			event.preventDefault();
+			document.getElementById('dialog-name')?.focus();
+		}}
 		class="pt-0 max-sm:inset-0 max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-0 max-sm:rounded-none md:pt-0"
 	>
 		<Dialog.Header
