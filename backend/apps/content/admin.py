@@ -1,10 +1,14 @@
 from typing import Any
 
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.template.response import TemplateResponse
+from django.urls import URLPattern, path
 from django.utils.html import format_html
 from django.utils.safestring import SafeString
 
@@ -16,6 +20,7 @@ from apps.content.models import (
     SiteSettings,
     SocialLink,
 )
+from apps.content.services.batch_upload import MAX_FILES, upload_gallery_batch
 from apps.content.services.images import clear_image, ingest_image, validate_image_file
 
 
@@ -56,6 +61,26 @@ class ImageAdminMixin(admin.ModelAdmin):
         elif upload is False:
             clear_image(obj)
         super().save_model(request, obj, form, change)
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, **kwargs: Any) -> None:
+        kwargs.setdefault(
+            "widget", MultipleFileInput(attrs={"accept": "image/jpeg,image/png,image/webp"})
+        )
+        super().__init__(**kwargs)
+
+    def clean(self, data: Any, initial: Any = None) -> list[UploadedFile]:
+        files = data if isinstance(data, list | tuple) else [data] if data else []
+        return [super(MultipleFileField, self).clean(file, initial) for file in files]
+
+
+class GalleryUploadForm(forms.Form):
+    photos = MultipleFileField(label="Фото", required=False)
 
 
 class ReferenceRowAdmin(admin.ModelAdmin):
@@ -100,6 +125,38 @@ class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
         ("Показ", {"fields": ["position", "is_published"]}),
     ]
     inlines = [GalleryItemInline]
+
+    def get_urls(self) -> list[URLPattern]:
+        upload = path(
+            "<int:pk>/upload/",
+            self.admin_site.admin_view(self.upload_view),
+            name="content_category_upload",
+        )
+        return [upload, *super().get_urls()]
+
+    def upload_view(self, request: HttpRequest, pk: int) -> HttpResponse:
+        """Up to 20 photos into this category's gallery (tech.md, S2-09)."""
+        category = get_object_or_404(Category, pk=pk)
+        if not self.has_change_permission(request, category):
+            raise PermissionDenied
+        form = GalleryUploadForm(request.POST or None, request.FILES or None)
+        if request.method == "POST" and form.is_valid():
+            try:
+                created = upload_gallery_batch(category, form.cleaned_data["photos"])
+            except ValidationError as exc:
+                form.add_error("photos", exc)
+            else:
+                self.message_user(request, f"Загружено фото: {len(created)}.", messages.SUCCESS)
+                return redirect("admin:content_category_change", category.pk)
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "category": category,
+            "form": form,
+            "max_files": MAX_FILES,
+            "title": f"Загрузить фото: {category}",
+        }
+        return TemplateResponse(request, "admin/content/category/upload.html", context)
 
 
 @admin.register(GalleryItem)

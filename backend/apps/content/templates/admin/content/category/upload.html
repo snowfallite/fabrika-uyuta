@@ -1,0 +1,26 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:content_category_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; <a href="{% url 'admin:content_category_change' category.pk %}">{{ category }}</a>
+  &rsaquo; Загрузить фото
+</div>
+{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>До {{ max_files }} фото за раз: JPEG, PNG или WebP до 20 МБ, длинная сторона от 800 px.
+     Работы появятся в конце галереи категории, опубликованными и не на главной.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% if form.errors %}
+      <ul class="errorlist">
+        {% for error in form.photos.errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    <p><label for="id_photos">Фото:</label> {{ form.photos }}</p>
+    <div class="submit-row"><input type="submit" value="Загрузить" class="default"></div>
+  </form>
+</div>
+{% endblock %}
