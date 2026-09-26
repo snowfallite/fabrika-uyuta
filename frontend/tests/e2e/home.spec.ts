@@ -20,16 +20,22 @@ test.describe('home: hero', () => {
 		const hero = page.locator('#hero img');
 		await expect(hero).toHaveAttribute('loading', 'eager');
 		await expect(hero).toHaveAttribute('fetchpriority', 'high');
+		// The photo decodes asynchronously and can become the LCP after `load`, once text already
+		// painted: read the final candidate, not the first batch of entries.
 		const lcp = await page.evaluate(
 			() =>
 				new Promise<string>((resolve) => {
+					let last: (PerformanceEntry & { element?: Element }) | undefined;
 					new PerformanceObserver((list) => {
-						const entries = list.getEntries() as (PerformanceEntry & { element?: Element })[];
-						const last = entries.at(-1);
-						resolve(
-							last?.element?.closest('#hero') && last.element.tagName === 'IMG' ? 'hero' : 'other'
-						);
+						last = list.getEntries().at(-1) as typeof last;
 					}).observe({ type: 'largest-contentful-paint', buffered: true });
+					setTimeout(
+						() =>
+							resolve(
+								last?.element?.closest('#hero') && last.element.tagName === 'IMG' ? 'hero' : 'other'
+							),
+						1500
+					);
 				})
 		);
 		expect(lcp).toBe('hero');
