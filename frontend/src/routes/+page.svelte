@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { env } from '$env/dynamic/public';
+	import Seo from '$lib/components/layout/Seo.svelte';
+	import { HOME_SEO } from '$lib/content/pages';
+	import { furnitureStoreJsonLd, jsonLdScript } from '$lib/domain/json-ld';
 	import CategoryGrid from '$lib/features/categories/CategoryGrid.svelte';
 	import GalleryGrid from '$lib/features/gallery/GalleryGrid.svelte';
 	import Hero from '$lib/features/hero/Hero.svelte';
@@ -10,14 +14,21 @@
 	import Process from '$lib/features/sections/Process.svelte';
 
 	let { data } = $props();
+
+	const jsonLd = $derived(
+		furnitureStoreJsonLd(env.PUBLIC_SITE_URL ?? '', data.settings, data.home.slots.hero)
+	);
 </script>
 
+<Seo
+	title={HOME_SEO.title}
+	description={HOME_SEO.description}
+	path="/"
+	image={data.home.slots.hero}
+/>
 <svelte:head>
-	<title>Фабрика Уюта: мебель на заказ в Вологде</title>
-	<meta
-		name="description"
-		content="Кухни, шкафы, шкафы-купе, кухонные столы и офисная мебель на заказ в Вологде. ЛДСП и МДФ."
-	/>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- escaped JSON built in json-ld.ts -->
+	{@html jsonLdScript(jsonLd)}
 </svelte:head>
 
 <!-- Section order follows the template (tech.md, appendix A). -->

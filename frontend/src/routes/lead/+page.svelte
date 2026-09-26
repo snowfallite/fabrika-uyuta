@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/components/layout/Seo.svelte';
 	import { Container } from '$lib/components/ui/container';
 	import { LEAD_PAGE, LEAD_SECTION } from '$lib/content/lead-form';
 	import LeadForm from '$lib/features/lead-form/LeadForm.svelte';
@@ -6,11 +7,7 @@
 	let { data, form } = $props();
 </script>
 
-<svelte:head>
-	<title>{LEAD_PAGE.metaTitle}</title>
-	<meta name="description" content={LEAD_PAGE.description} />
-	<meta name="robots" content="noindex" />
-</svelte:head>
+<Seo title={LEAD_PAGE.metaTitle} description={LEAD_PAGE.description} path="/lead" noindex />
 
 <Container class="grid gap-10 pt-32 pb-24 lg:grid-cols-2 lg:gap-16">
 	<div>
