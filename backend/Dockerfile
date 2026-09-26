@@ -26,4 +26,5 @@ RUN useradd --system --uid 10001 --home-dir /app app \
 USER app
 
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi", "-k", "gthread", "-w", "2", "--threads", "4", "-t", "120", "-b", "0.0.0.0:8000"]
+# No control socket: nothing uses it, and /app is read-only for the app user.
+CMD ["gunicorn", "config.wsgi", "-k", "gthread", "-w", "2", "--threads", "4", "-t", "120", "-b", "0.0.0.0:8000", "--no-control-socket"]
