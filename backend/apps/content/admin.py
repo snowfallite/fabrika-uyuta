@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from django import forms
@@ -5,6 +7,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
+from django.db import models
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
@@ -22,6 +25,7 @@ from apps.content.models import (
 )
 from apps.content.services.batch_upload import MAX_FILES, upload_gallery_batch
 from apps.content.services.images import clear_image, ingest_image, validate_image_file
+from apps.core.phone import normalize_phone
 
 
 class ImageAdminForm(forms.ModelForm):
@@ -196,11 +200,46 @@ class SiteImageAdmin(ImageAdminMixin, ReferenceRowAdmin):
     readonly_fields = ["slot", "image_preview"]
 
 
+# Links typed without a scheme get https, the Django 6 default.
+HTTPS_URLS: dict[type[models.Field[Any, Any]], dict[str, Any]] = {
+    models.URLField: {"assume_scheme": "https"}
+}
+
+
 class SocialLinkInline(admin.TabularInline):
     model = SocialLink
     extra = 0
+    formfield_overrides = HTTPS_URLS
+
+
+class SiteSettingsForm(forms.ModelForm):
+    # Wider than the E.164 column: people type "+7 (817) 200-00-00".
+    phone = forms.CharField(label="Телефон", max_length=32, required=False)
+    map_url = forms.URLField(
+        label="Ссылка на карту", max_length=200, required=False, assume_scheme="https"
+    )
+
+    class Meta:
+        model = SiteSettings
+        fields = ["phone", "email", "address", "work_hours", "map_url"]
+
+    def clean_phone(self) -> str:
+        raw = self.cleaned_data["phone"]
+        if not raw:
+            return ""
+        phone = normalize_phone(raw)
+        if phone is None:
+            raise ValidationError("Проверьте номер телефона")
+        return phone
 
 
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(ReferenceRowAdmin):
+    """One contacts row (tech.md, S2-10): the menu item opens its form directly."""
+
+    form = SiteSettingsForm
     inlines = [SocialLinkInline]
+    formfield_overrides = HTTPS_URLS
+
+    def changelist_view(self, request: HttpRequest, extra_context: Any = None) -> HttpResponse:
+        return redirect("admin:content_sitesettings_change", 1)

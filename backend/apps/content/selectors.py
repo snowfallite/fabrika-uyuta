@@ -2,21 +2,25 @@
 
 from typing import Any
 
-from apps.content.models import Category, GalleryItem, SiteImage
+from apps.content.models import Category, GalleryItem, SiteImage, SiteSettings
 from apps.content.services.images import to_image_asset
 from apps.core.enums import SiteImageSlot
+from apps.core.phone import format_phone_display
 
 
 def get_site_settings() -> dict[str, Any]:
-    # Stub until S2-10.
+    row = (
+        SiteSettings.objects.prefetch_related("social_links").filter(id=1).first() or SiteSettings()
+    )
+    links = row.social_links.all() if row.pk else []
     return {
-        "phone": "",
-        "phone_display": "",
-        "email": "",
-        "address": "",
-        "work_hours": "",
-        "map_url": "",
-        "social_links": [],
+        "phone": row.phone,
+        "phone_display": format_phone_display(row.phone),
+        "email": row.email,
+        "address": row.address,
+        "work_hours": row.work_hours,
+        "map_url": row.map_url,
+        "social_links": [{"label": link.label, "url": link.url} for link in links],
     }
 
 

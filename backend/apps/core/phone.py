@@ -19,7 +19,10 @@ def format_phone_display(e164: str) -> str:
     """'+79991234567' -> '+7 (999) 123-45-67'; other countries in INTERNATIONAL format."""
     if not e164:
         return ""
-    number = phonenumbers.parse(e164, None)
+    try:
+        number = phonenumbers.parse(e164, None)
+    except NumberParseException:
+        return e164
     if number.country_code == 7:
         digits = f"{number.national_number:010d}"
         return f"+7 ({digits[:3]}) {digits[3:6]}-{digits[6:8]}-{digits[8:]}"
