@@ -14,9 +14,9 @@
 </script>
 
 <Section id="about">
-	<div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+	<div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
 		<div use:reveal>
-			<p class="mb-5 text-xs font-medium tracking-widest text-muted-foreground uppercase">
+			<p class="mb-4 text-xs font-medium tracking-widest text-muted-foreground uppercase">
 				{ABOUT.eyebrow}
 			</p>
 			<h2
@@ -24,8 +24,8 @@
 			>
 				{ABOUT.title}
 			</h2>
-			<p class="mt-7 max-w-xl text-lg leading-relaxed text-muted-foreground">{ABOUT.text}</p>
-			<ul class="mt-9 grid gap-x-6 gap-y-4 sm:grid-cols-2">
+			<p class="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">{ABOUT.text}</p>
+			<ul class="mt-8 grid gap-x-6 gap-y-4 sm:grid-cols-2">
 				{#each ABOUT.points as point (point)}
 					<li class="flex items-start gap-3">
 						<span
@@ -39,19 +39,13 @@
 				{/each}
 			</ul>
 		</div>
-		<div class="relative" use:reveal={80}>
-			<div class="aspect-[4/5] lift-hover overflow-hidden rounded-[2rem]">
+		<div use:reveal={80}>
+			<div class="aspect-[4/3] overflow-hidden rounded-[2rem] sm:aspect-[16/10] lg:aspect-[4/5]">
 				<ResponsiveImage
 					{image}
 					sizes="(min-width: 1024px) 50vw, 100vw"
 					class="size-full object-cover"
 				/>
-			</div>
-			<div
-				class="absolute -top-5 -right-3 max-w-[14rem] rounded-2xl px-5 py-4 shadow-float glass sm:-right-6"
-			>
-				<p class="font-display text-2xl text-primary">{ABOUT.badgeTitle}</p>
-				<p class="text-sm text-muted-foreground">{ABOUT.badgeText}</p>
 			</div>
 		</div>
 	</div>

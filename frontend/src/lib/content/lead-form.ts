@@ -1,9 +1,11 @@
+import { typo } from '$lib/domain/typo';
+
 // Lead form texts (tech.md, 12.1 and 12.2). Field errors come from the API as is.
 export const LEAD_FIELDS = {
 	name: { label: 'ФИО', placeholder: 'Иванов Иван Иванович' },
 	phone: { label: 'Телефон' },
 	product: { label: 'Что хотите заказать', placeholder: 'Выберите' },
-	dimensions: { label: 'Примерные размеры', placeholder: 'Например: стена 3,2 м, высота 2,6 м' },
+	dimensions: { label: 'Примерные размеры', placeholder: 'Стена 3,2 м, высота 2,6 м' },
 	comment: { label: 'Комментарий', placeholder: 'Материал, цвет, сроки, пожелания' },
 	consent: {
 		before: 'Я даю согласие на ',
@@ -11,20 +13,20 @@ export const LEAD_FIELDS = {
 	}
 };
 
-export const LEAD_MESSAGES = {
+export const LEAD_MESSAGES = typo({
 	submit: 'Отправить заявку',
 	sending: 'Отправляем…',
 	success: 'Спасибо! Заявка принята. Перезвоним в рабочее время.',
 	throttled: 'Слишком много заявок с вашего адреса. Попробуйте позже или позвоните нам.',
 	unavailable: 'Не получилось отправить заявку. Попробуйте ещё раз или позвоните нам.',
 	again: 'Отправить ещё одну'
-};
+});
 
-export const LEAD_SECTION = {
+export const LEAD_SECTION = typo({
 	eyebrow: 'Заявка',
 	title: 'Расскажите, какая мебель вам нужна',
 	text: 'Оставьте контакты: мы свяжемся и обсудим детали вашего проекта.'
-};
+});
 
 export const LEAD_PAGE = {
 	title: 'Оставить заявку',

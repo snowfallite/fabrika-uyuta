@@ -32,15 +32,16 @@
 	{id}
 	aria-labelledby={title ? headingId : undefined}
 	class={cn(
-		'py-24 md:py-32',
-		tone === 'muted' && 'bg-secondary/40',
+		'py-16 md:py-20 lg:py-24',
+		// Soft fade in and out: a flat band left a hard line against the lighter default sections.
+		tone === 'muted' && 'bg-linear-to-b from-transparent via-secondary/60 to-transparent',
 		tone === 'inverted' && 'bg-primary text-primary-foreground',
 		className
 	)}
 >
 	<Container>
 		{#if title}
-			<div class="mb-12 max-w-3xl">
+			<div class="mb-8 max-w-3xl md:mb-10">
 				{#if subtitle}
 					<p
 						class={cn(

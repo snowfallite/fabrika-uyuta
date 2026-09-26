@@ -17,7 +17,7 @@ describe('Hero', () => {
 		const screen = await render(Hero, { image });
 		const img = screen.getByRole('img', { name: 'Кухня из дуба' });
 		await expect.element(img).toHaveAttribute('srcset', image.srcset);
-		await expect.element(img).toHaveAttribute('sizes', '100vw');
+		await expect.element(img).toHaveAttribute('sizes', '(min-width: 1024px) 50vw, 100vw');
 		await expect.element(img).toHaveAttribute('width', '1920');
 		await expect.element(img).toHaveAttribute('height', '2400');
 		await expect.element(img).toHaveAttribute('loading', 'eager');
