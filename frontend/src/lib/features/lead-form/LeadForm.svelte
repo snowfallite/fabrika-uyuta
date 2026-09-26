@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { tick, untrack } from 'svelte';
-	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import { Alert } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -17,6 +16,7 @@
 	import { PRODUCT_KIND_LABELS } from '$lib/domain/product-kind';
 	import type { ProductKind } from '$lib/types';
 	import { EMPTY_VALUES, firstInvalid, type LeadFailure, type LeadResult } from './lead-form';
+	import LeadSuccess from './LeadSuccess.svelte';
 
 	interface Props {
 		/** Keeps ids unique when the page and the dialog both hold a form. */
@@ -88,12 +88,7 @@
 </script>
 
 {#if status === 'success'}
-	<!-- Keeps the panel tall: the page must not jump up under the visitor's finger. -->
-	<div class="flex min-h-[26rem] flex-col items-start justify-center gap-6">
-		<CircleCheck class="size-12 text-success" aria-hidden="true" />
-		<Alert tone="success">{LEAD_MESSAGES.success}</Alert>
-		<Button variant="secondary" size="sm" onclick={again}>{LEAD_MESSAGES.again}</Button>
-	</div>
+	<LeadSuccess onagain={again} />
 {:else}
 	<form
 		method="POST"

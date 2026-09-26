@@ -16,7 +16,9 @@ export const LEAD_FIELDS = {
 export const LEAD_MESSAGES = typo({
 	submit: 'Отправить заявку',
 	sending: 'Отправляем…',
-	success: 'Спасибо! Заявка принята. Перезвоним в рабочее время.',
+	// 12.2 success text, split into a heading line and a note for display.
+	successTitle: 'Спасибо! Заявка принята.',
+	successText: 'Перезвоним в рабочее время.',
 	throttled: 'Слишком много заявок с вашего адреса. Попробуйте позже или позвоните нам.',
 	unavailable: 'Не получилось отправить заявку. Попробуйте ещё раз или позвоните нам.',
 	again: 'Отправить ещё одну'

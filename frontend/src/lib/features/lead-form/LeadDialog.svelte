@@ -26,7 +26,7 @@
 			event.preventDefault();
 			document.getElementById('dialog-name')?.focus();
 		}}
-		class="pt-0 max-sm:inset-0 max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-0 max-sm:rounded-none md:pt-0"
+		class="pt-0 max-sm:inset-0 max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-0 max-sm:grid-rows-[auto_1fr] max-sm:rounded-none md:pt-0 [&:has([data-lead-success])_[data-slot=dialog-description]]:hidden"
 	>
 		<Dialog.Header
 			class="sticky top-0 z-10 -mx-7 flex-row items-start justify-between gap-4 bg-background px-7 pt-7 pb-2 md:-mx-10 md:px-10 md:pt-10"
