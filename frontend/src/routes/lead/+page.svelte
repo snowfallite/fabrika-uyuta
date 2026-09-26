@@ -11,7 +11,7 @@
 
 <Container class="grid gap-10 pt-32 pb-24 lg:grid-cols-2 lg:gap-16">
 	<div>
-		<h1 class="text-5xl leading-[1.05] font-light text-balance text-primary sm:text-6xl">
+		<h1 class="text-display">
 			{LEAD_PAGE.title}
 		</h1>
 		<p class="mt-6 max-w-md text-lg leading-relaxed text-muted-foreground">{LEAD_SECTION.text}</p>

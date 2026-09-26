@@ -7,11 +7,13 @@
 
 <Seo title={LEGAL.consent.metaTitle} description={LEGAL.consent.description} path="/consent" />
 
-<Container class="max-w-3xl pt-32 pb-24">
-	<h1 class="text-4xl leading-tight font-light text-balance text-primary sm:text-5xl">
-		{LEGAL.consent.title}
-	</h1>
-	<div class="mt-8 space-y-4 leading-relaxed text-foreground/85">
-		<Consent />
+<Container class="pt-32 pb-20">
+	<div class="max-w-3xl">
+		<h1 class="text-display">
+			{LEGAL.consent.title}
+		</h1>
+		<div class="mt-8 space-y-4 leading-relaxed text-foreground/85">
+			<Consent />
+		</div>
 	</div>
 </Container>

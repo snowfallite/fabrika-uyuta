@@ -34,7 +34,9 @@
 <!-- Section order follows the template (tech.md, appendix A). -->
 <Hero image={data.home.slots.hero} />
 <About image={data.home.slots.about} />
-<CategoryGrid categories={data.home.categories} />
+{#if data.home.categories.length > 0}
+	<CategoryGrid categories={data.home.categories} />
+{/if}
 {#if data.home.featured.length > 0}
 	<GalleryGrid items={data.home.featured} />
 {/if}

@@ -19,7 +19,7 @@
 		data-status={page.status}
 		class="font-display text-7xl font-light text-primary/40 before:content-[attr(data-status)]"
 	></p>
-	<h1 class="mt-4 text-4xl font-light text-balance text-primary sm:text-5xl">{texts.title}</h1>
+	<h1 class="mt-4 text-display">{texts.title}</h1>
 	<p class="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">{texts.text}</p>
 	<Button href="/" class="mt-9">{HOME_LINK}</Button>
 </Container>

@@ -3,21 +3,26 @@
 	import { CATALOG } from '$lib/content/home';
 	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import type { CategorySummary } from '$lib/types';
+	import { cn } from '$lib/utils';
 
 	interface Props {
 		category: CategorySummary;
+		/** Grid placement and aspect ratio, set by CategoryGrid. */
+		class?: string;
 	}
 
-	let { category }: Props = $props();
+	let { category, class: className }: Props = $props();
 </script>
 
 <article
-	class="group relative aspect-[4/5] lift-hover overflow-hidden rounded-[1.75rem] bg-card has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-3 has-[h3_a:focus-visible]:outline-ring"
+	class={cn(
+		'group relative aspect-[4/3] lift-hover overflow-hidden rounded-[1.75rem] bg-card has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-3 has-[h3_a:focus-visible]:outline-ring sm:aspect-[4/5]',
+		className
+	)}
 >
 	<ResponsiveImage
 		image={category.cover}
-		sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-		aspect="4/5"
+		sizes="(min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
 		class="size-full object-cover transition-transform duration-700 group-hover:scale-105"
 	/>
 	<div

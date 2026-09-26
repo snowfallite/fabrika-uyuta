@@ -16,15 +16,16 @@
 
 	let { settings }: Props = $props();
 
-	const card = 'glass rounded-[1.5rem] p-6 lift-hover';
+	const card = 'glass rounded-[1.5rem] p-6';
 	const label = 'mb-1.5 text-xs font-medium tracking-widest text-muted-foreground uppercase';
-	const value = 'font-display text-xl break-words text-primary';
+	// Sans for data: phone digits and hours stay legible and easy to copy.
+	const value = 'text-lg font-medium break-words text-primary';
 </script>
 
 <Section id="contacts" title={CONTACTS.title} subtitle={CONTACTS.eyebrow} tone="muted">
-	<p class="-mt-6 mb-12 max-w-xl leading-relaxed text-muted-foreground">{CONTACTS.text}</p>
+	<p class="-mt-4 mb-8 max-w-xl leading-relaxed text-muted-foreground">{CONTACTS.text}</p>
 	<!-- Empty settings fields hide their cards (tech.md, S2-10 AC3). -->
-	<ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+	<ul class="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
 		{#if settings.phone}
 			<li class={card}>
 				<Phone class="mb-4 size-6 text-primary" aria-hidden="true" />
@@ -47,7 +48,7 @@
 				{#if settings.map_url}
 					<a
 						href={settings.map_url}
-						class="mt-2 inline-block text-sm font-medium text-primary underline underline-offset-2"
+						class="mt-1 inline-block py-2 text-sm font-medium text-primary underline underline-offset-2"
 						rel="noopener external"
 						target="_blank">{CONTACTS.map}</a
 					>
@@ -63,7 +64,7 @@
 		{/if}
 	</ul>
 	{#if settings.social_links.length > 0}
-		<ul class="mt-8 flex flex-wrap gap-3">
+		<ul class="mt-6 flex flex-wrap gap-3">
 			{#each settings.social_links as link (link.url)}
 				<li>
 					<a
@@ -76,7 +77,7 @@
 			{/each}
 		</ul>
 	{/if}
-	<div class="mt-12">
+	<div class="mt-8">
 		<Button href="/lead" onclick={(event: MouseEvent) => openFromLink(event)}>
 			{CONTACTS.cta}
 			<ArrowUpRight

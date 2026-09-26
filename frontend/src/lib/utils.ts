@@ -17,6 +17,10 @@ export function reveal(node: HTMLElement, delay = 0) {
 			if (entry?.isIntersecting) {
 				node.classList.add('is-visible');
 				observer.disconnect();
+				// The stagger delay is for the entrance only; hover transitions must not wait for it.
+				node.addEventListener('transitionend', () => (node.style.transitionDelay = ''), {
+					once: true
+				});
 			}
 		},
 		{ threshold: 0.12 }

@@ -30,7 +30,7 @@
 	<!-- Full-screen dark stage from the template; the controls are glass on it. -->
 	<Dialog.Content
 		showCloseButton={false}
-		class="top-0 left-0 flex h-dvh max-h-none w-full max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none bg-primary/85 p-4 shadow-none backdrop-blur-xl sm:max-w-none md:p-10"
+		class="top-0 left-0 flex h-dvh max-h-none w-full max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none bg-primary/85 p-4 shadow-none backdrop-blur-xl sm:max-w-none md:p-10 [&_:focus-visible]:outline-primary-foreground"
 		{onkeydown}
 	>
 		{#if current}
@@ -44,8 +44,10 @@
 					style:background-color={current.image.color}
 				/>
 				<figcaption class="mt-5 text-center text-primary-foreground">
-					<span class="block text-[11px] tracking-widest uppercase">
-						{PRODUCT_KIND_LABELS[current.category]}
+					<span class="block text-xs tracking-widest uppercase">
+						{PRODUCT_KIND_LABELS[current.category]}{#if items.length > 1}<span
+								class="ml-3 tabular-nums">{index + 1} / {items.length}</span
+							>{/if}
 					</span>
 					<Dialog.Title class="text-2xl text-primary-foreground">
 						{current.title || WORKS.photoTitle}

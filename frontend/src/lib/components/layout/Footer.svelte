@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
 	import type { NavItem } from '$lib/config/nav';
+	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import { BRAND, FOOTER, LEAD_CTA } from '$lib/content/layout';
 	import type { SiteSettings } from '$lib/types';
 
@@ -13,7 +15,7 @@
 </script>
 
 <footer class="bg-primary text-primary-foreground [&_:focus-visible]:outline-primary-foreground">
-	<div class="mx-auto max-w-7xl px-5 py-16 md:px-8 md:py-20">
+	<div class="mx-auto max-w-7xl px-5 py-12 md:px-8 md:py-16">
 		<div class="grid gap-10 md:grid-cols-12">
 			<div class="md:col-span-5">
 				<p class="font-display text-3xl">{BRAND}</p>
@@ -45,12 +47,12 @@
 				>
 					{FOOTER.navTitle}
 				</p>
-				<ul class="space-y-2.5">
+				<ul>
 					{#each nav as item (item.href)}
 						<li>
 							<a
 								href={item.href}
-								class="text-primary-foreground/80 transition-colors hover:text-primary-foreground"
+								class="inline-block py-1.5 text-primary-foreground/80 transition-colors hover:text-primary-foreground"
 								>{item.label}</a
 							>
 						</li>
@@ -62,20 +64,21 @@
 					{FOOTER.leadTitle}
 				</p>
 				<p class="mb-5 text-primary-foreground/80">{FOOTER.leadText}</p>
-				<a
+				<Button
 					href="/lead"
-					class="inline-flex items-center rounded-full bg-primary-foreground/10 px-5 py-2.5 text-sm font-medium transition-colors hover:bg-primary-foreground/20"
-					>{LEAD_CTA}</a
+					size="sm"
+					variant="secondary"
+					onclick={(event: MouseEvent) => openFromLink(event)}>{LEAD_CTA}</Button
 				>
 			</div>
 		</div>
 		<div
-			class="mt-14 flex flex-col items-center justify-between gap-3 border-t border-primary-foreground/15 pt-6 text-sm text-primary-foreground/80 sm:flex-row"
+			class="mt-10 flex flex-col items-start justify-between gap-3 border-t border-primary-foreground/15 pt-6 text-sm text-primary-foreground/80 sm:flex-row sm:items-center"
 		>
 			<p>© {year} {FOOTER.rights}</p>
-			<div class="flex flex-col items-center gap-2 sm:flex-row sm:gap-6">
-				<a href="/privacy" class="hover:text-primary-foreground">{FOOTER.privacy}</a>
-				<a href="/consent" class="hover:text-primary-foreground">{FOOTER.consent}</a>
+			<div class="flex flex-col items-start sm:flex-row sm:items-center sm:gap-6">
+				<a href="/privacy" class="py-2 hover:text-primary-foreground">{FOOTER.privacy}</a>
+				<a href="/consent" class="py-2 hover:text-primary-foreground">{FOOTER.consent}</a>
 			</div>
 		</div>
 	</div>

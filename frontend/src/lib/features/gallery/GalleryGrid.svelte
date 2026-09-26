@@ -25,6 +25,15 @@
 	let open = $state(false);
 	let index = $state(0);
 
+	// A grid reads left to right in admin order; two columns for 2 or 4 works leave no hole.
+	const columns = $derived(
+		items.length === 1
+			? 'max-w-3xl'
+			: items.length === 2 || items.length === 4
+				? 'sm:grid-cols-2'
+				: 'sm:grid-cols-2 lg:grid-cols-3'
+	);
+
 	function show(event: MouseEvent, position: number) {
 		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
 		// Without JS the link opens the widest variant itself.
@@ -35,25 +44,25 @@
 </script>
 
 <Section {id} {title} {subtitle} {tone}>
-	<ul class="columns-1 gap-5 sm:columns-2 md:gap-7 lg:columns-3">
+	<ul class="grid gap-4 md:gap-6 {columns}">
 		{#each items as item, position (item.id)}
-			<li class="mb-5 break-inside-avoid md:mb-7">
+			<li>
 				<a
 					href={item.image.url}
-					class="group relative block lift-hover overflow-hidden rounded-[1.5rem] bg-card focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+					class="group relative block aspect-[4/3] lift-hover overflow-hidden rounded-[1.5rem] bg-card"
 					onclick={(event) => show(event, position)}
 				>
 					<ResponsiveImage
 						image={item.image}
 						sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-						class="h-auto w-full transition-transform duration-700 group-hover:scale-[1.04]"
+						class="size-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
 					/>
 					<span
 						class="absolute inset-0 bg-linear-to-t from-primary/90 via-primary/10 to-transparent"
 						aria-hidden="true"
 					></span>
 					<span class="absolute inset-x-0 bottom-0 p-5 text-left">
-						<span class="block text-[11px] tracking-widest text-primary-foreground uppercase">
+						<span class="block text-xs tracking-widest text-primary-foreground uppercase">
 							{PRODUCT_KIND_LABELS[item.category]}
 						</span>
 						<span class="block font-display text-xl text-primary-foreground">

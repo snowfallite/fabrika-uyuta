@@ -14,7 +14,10 @@
 	let { image }: Props = $props();
 </script>
 
-<Section id="hero" class="relative flex items-center pt-24 pb-10 md:pt-28 lg:min-h-[100svh] lg:pb-16">
+<Section
+	id="hero"
+	class="relative flex items-center pt-24 pb-10 md:pt-28 lg:min-h-[100svh] lg:pb-16"
+>
 	<div class="grid items-center gap-8 lg:grid-cols-12 lg:gap-12">
 		<!-- On phones the photo comes first: the first screen shows the furniture, not only text. -->
 		<div class="relative order-first lg:order-last lg:col-span-6">

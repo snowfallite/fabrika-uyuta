@@ -13,10 +13,10 @@
 </script>
 
 <Section id="materials" title={MATERIALS.title} subtitle={MATERIALS.eyebrow} tone="muted">
-	<div class="grid gap-5 md:grid-cols-2 md:gap-7">
+	<div class="grid gap-4 md:grid-cols-2 md:gap-6">
 		{#each MATERIALS.items as material, index (material.slot)}
 			<article
-				class="group grid lift-hover gap-5 rounded-[1.75rem] p-5 glass sm:grid-cols-5"
+				class="grid gap-5 rounded-[1.75rem] p-5 glass sm:grid-cols-5"
 				use:reveal={index * 80}
 			>
 				<div class="aspect-[4/3] overflow-hidden rounded-2xl sm:col-span-2">
@@ -24,7 +24,7 @@
 						image={slots[material.slot]}
 						sizes="(min-width: 768px) 20vw, 100vw"
 						aspect="4/3"
-						class="size-full object-cover transition-transform duration-700 group-hover:scale-105"
+						class="size-full object-cover"
 					/>
 				</div>
 				<div class="flex flex-col justify-center sm:col-span-3">

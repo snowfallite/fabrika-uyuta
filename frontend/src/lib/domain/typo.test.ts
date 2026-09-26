@@ -35,7 +35,11 @@ describe('nbsp', () => {
 
 describe('typo', () => {
 	it('keeps the shape and maps nested strings', () => {
-		const out = typo({ title: 'Путь от заявки до готовой мебели', steps: [{ text: 'и в срок' }], n: 1 });
+		const out = typo({
+			title: 'Путь от заявки до готовой мебели',
+			steps: [{ text: 'и в срок' }],
+			n: 1
+		});
 		expect(out).toEqual({
 			title: `Путь от${NBSP}заявки до${NBSP}готовой мебели`,
 			steps: [{ text: `и${NBSP}в${NBSP}срок` }],
