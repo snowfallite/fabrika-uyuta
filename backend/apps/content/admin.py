@@ -27,6 +27,17 @@ class ImageAdminForm(forms.ModelForm):
         return upload
 
 
+def preview_html(obj: ImageFieldsMixin) -> SafeString | str:
+    variants = obj.image_variants or {}
+    if not variants:
+        return "—"
+    smallest = variants[min(variants, key=int)]
+    return format_html(
+        '<img src="{}" alt="" style="height:64px;width:auto;border-radius:8px">',
+        default_storage.url(smallest),
+    )
+
+
 class ImageAdminMixin(admin.ModelAdmin):
     """Uploads go through the image pipeline (tech.md, section 9); no business logic here."""
 
@@ -34,14 +45,7 @@ class ImageAdminMixin(admin.ModelAdmin):
 
     @admin.display(description="Превью")
     def image_preview(self, obj: ImageFieldsMixin) -> SafeString | str:
-        variants = obj.image_variants or {}
-        if not variants:
-            return "—"
-        smallest = variants[min(variants, key=int)]
-        return format_html(
-            '<img src="{}" alt="" style="height:64px;width:auto;border-radius:8px">',
-            default_storage.url(smallest),
-        )
+        return preview_html(obj)
 
     def save_model(
         self, request: HttpRequest, obj: ImageFieldsMixin, form: forms.ModelForm, change: bool
@@ -64,6 +68,23 @@ class ReferenceRowAdmin(admin.ModelAdmin):
         return False
 
 
+class GalleryItemInline(admin.TabularInline):
+    """Order and flags of a category's works; photos go through the gallery admin."""
+
+    model = GalleryItem
+    extra = 0
+    fields = ["preview", "title", "position", "is_published", "is_featured"]
+    readonly_fields = ["preview"]
+    show_change_link = True
+
+    @admin.display(description="Превью")
+    def preview(self, obj: GalleryItem) -> SafeString | str:
+        return preview_html(obj)
+
+    def has_add_permission(self, request: HttpRequest, obj: object = None) -> bool:
+        return False
+
+
 @admin.register(Category)
 class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
     """Five fixed categories (tech.md, S2-06): order and publication edit right in the list."""
@@ -78,12 +99,35 @@ class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
         ("SEO", {"fields": ["seo_title", "seo_description"]}),
         ("Показ", {"fields": ["position", "is_published"]}),
     ]
+    inlines = [GalleryItemInline]
 
 
 @admin.register(GalleryItem)
 class GalleryItemAdmin(ImageAdminMixin):
-    list_display = ["__str__", "image_preview", "category", "position", "is_published"]
+    list_display = [
+        "__str__",
+        "image_preview",
+        "category",
+        "position",
+        "is_published",
+        "is_featured",
+    ]
+    list_display_links = ["__str__"]
+    list_editable = ["position", "is_published", "is_featured"]
+    list_filter = ["category", "is_published", "is_featured"]
+    list_select_related = ["category"]
     readonly_fields = ["image_preview"]
+    fields = [
+        "category",
+        "image",
+        "image_preview",
+        "alt",
+        "title",
+        "caption",
+        "position",
+        "is_published",
+        "is_featured",
+    ]
 
 
 @admin.register(SiteImage)

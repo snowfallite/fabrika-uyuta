@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from apps.content.models import Category, SiteImage
+from apps.content.models import Category, GalleryItem, SiteImage
 from apps.content.services.images import to_image_asset
 from apps.core.enums import SiteImageSlot
 
@@ -20,9 +20,11 @@ def get_site_settings() -> dict[str, Any]:
     }
 
 
+FEATURED_LIMIT = 12
+
+
 def get_home_content() -> dict[str, Any]:
-    # featured: stub until S2-07.
-    return {"slots": _slots(), "categories": _categories(), "featured": []}
+    return {"slots": _slots(), "categories": _categories(), "featured": _featured()}
 
 
 def _category_summary(category: Category) -> dict[str, Any]:
@@ -49,3 +51,24 @@ def _slots() -> dict[str, dict[str, Any] | None]:
 def get_category_detail(slug: str) -> dict[str, Any] | None:
     # Stub until S2-08: every slug is unknown.
     return None
+
+
+def gallery_item(item: GalleryItem, category: Category) -> dict[str, Any] | None:
+    image = to_image_asset(item, item.title or category.title)
+    if image is None:
+        return None
+    return {
+        "id": item.pk,
+        "category": category.slug,
+        "title": item.title,
+        "caption": item.caption,
+        "image": image,
+    }
+
+
+def _featured() -> list[dict[str, Any]]:
+    items = GalleryItem.objects.filter(is_featured=True, is_published=True).select_related(
+        "category"
+    )[:FEATURED_LIMIT]
+    entries = (gallery_item(item, item.category) for item in items)
+    return [entry for entry in entries if entry is not None]
