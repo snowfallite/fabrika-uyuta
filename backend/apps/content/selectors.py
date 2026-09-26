@@ -49,8 +49,20 @@ def _slots() -> dict[str, dict[str, Any] | None]:
 
 
 def get_category_detail(slug: str) -> dict[str, Any] | None:
-    # Stub until S2-08: every slug is unknown.
-    return None
+    """A published category with its published works; None means 404."""
+    category = Category.objects.filter(slug=slug, is_published=True).first()
+    if category is None:
+        return None
+    works = (
+        gallery_item(work, category) for work in category.gallery_items.filter(is_published=True)
+    )
+    return {
+        **_category_summary(category),
+        "description": category.description,
+        "seo_title": category.seo_title or category.title,
+        "seo_description": category.seo_description or category.short_description,
+        "gallery": [work for work in works if work is not None],
+    }
 
 
 def gallery_item(item: GalleryItem, category: Category) -> dict[str, Any] | None:
