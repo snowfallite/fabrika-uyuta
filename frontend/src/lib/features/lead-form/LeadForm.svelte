@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { tick, untrack } from 'svelte';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import { Alert } from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -74,6 +75,12 @@
 		};
 	};
 
+	// A field's error goes away as soon as the visitor edits that field.
+	function clearError(event: Event) {
+		const name = (event.target as HTMLInputElement | null)?.name;
+		if (name && name in errors) errors = { ...errors, [name]: undefined };
+	}
+
 	function again() {
 		status = 'idle';
 		errors = {};
@@ -81,12 +88,22 @@
 </script>
 
 {#if status === 'success'}
-	<div class="flex flex-col items-start gap-6 py-6">
+	<!-- Keeps the panel tall: the page must not jump up under the visitor's finger. -->
+	<div class="flex min-h-[26rem] flex-col items-start justify-center gap-6">
+		<CircleCheck class="size-12 text-success" aria-hidden="true" />
 		<Alert tone="success">{LEAD_MESSAGES.success}</Alert>
 		<Button variant="secondary" size="sm" onclick={again}>{LEAD_MESSAGES.again}</Button>
 	</div>
 {:else}
-	<form method="POST" action="/lead" novalidate use:enhance={submit} class="space-y-7">
+	<form
+		method="POST"
+		action="/lead"
+		novalidate
+		use:enhance={submit}
+		oninput={clearError}
+		onchange={clearError}
+		class="space-y-6"
+	>
 		<Field id={id('name')} label={LEAD_FIELDS.name.label} required error={errors.name}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Input
