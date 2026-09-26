@@ -20,7 +20,7 @@
 	role={tone === 'error' ? 'alert' : 'status'}
 	class={cn(
 		'flex gap-3 rounded-2xl p-4 text-sm leading-relaxed',
-		tone === 'success' && 'bg-primary/10 text-primary',
+		tone === 'success' && 'border border-success/30 bg-success/10 text-success',
 		tone === 'error' && 'border border-destructive/40 bg-background text-destructive',
 		tone === 'info' && 'bg-secondary text-secondary-foreground'
 	)}

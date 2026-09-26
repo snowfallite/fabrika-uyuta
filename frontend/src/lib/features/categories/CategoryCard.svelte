@@ -12,7 +12,7 @@
 </script>
 
 <article
-	class="group relative aspect-[4/5] lift-hover overflow-hidden rounded-[1.75rem] bg-card focus-within:ring-3 focus-within:ring-ring/50"
+	class="group relative aspect-[4/5] lift-hover overflow-hidden rounded-[1.75rem] bg-card has-[h3_a:focus-visible]:outline-2 has-[h3_a:focus-visible]:outline-offset-3 has-[h3_a:focus-visible]:outline-ring"
 >
 	<ResponsiveImage
 		image={category.cover}
@@ -42,7 +42,7 @@
 		</div>
 		<a
 			href="/lead?product={category.slug}"
-			class="relative z-10 inline-flex w-fit items-center rounded-full px-5 py-2.5 text-sm font-medium text-primary glass transition-colors hover:bg-secondary/80"
+			class="relative z-10 inline-flex w-fit items-center rounded-full px-5 py-2.5 text-sm font-medium text-primary glass transition-colors hover:bg-secondary/80 focus-visible:outline-primary-foreground"
 			onclick={(event) => openFromLink(event, category.slug)}
 		>
 			{CATALOG.cardCta}

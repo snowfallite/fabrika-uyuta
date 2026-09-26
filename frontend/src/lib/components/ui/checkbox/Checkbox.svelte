@@ -23,7 +23,7 @@
 		type="checkbox"
 		bind:checked
 		{value}
-		class="mt-0.5 size-5 shrink-0 cursor-pointer accent-primary focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-invalid:outline-2 aria-invalid:outline-destructive"
+		class="mt-0.5 size-5 shrink-0 cursor-pointer accent-primary aria-invalid:outline-2 aria-invalid:outline-destructive"
 		{...rest}
 	/>
 	<span>{@render children()}</span>
