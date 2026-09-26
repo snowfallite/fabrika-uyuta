@@ -6,6 +6,7 @@
 	import type { NavItem } from '$lib/config/nav';
 	import { LEAD_CTA, MENU_TITLE } from '$lib/content/layout';
 	import { formatPhoneInput } from '$lib/domain/phone';
+	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import { cn } from '$lib/utils';
 
 	interface Props {
@@ -25,8 +26,9 @@
 	>
 		<Menu class="size-5" aria-hidden="true" />
 	</Sheet.Trigger>
-	<Sheet.Content side="right" class="w-[85%] p-6 pt-16">
-		<Sheet.Title class="sr-only">{MENU_TITLE}</Sheet.Title>
+	<!-- Scrolls on its own: in landscape the menu is taller than the screen. -->
+	<Sheet.Content side="right" class="w-[85%] overflow-y-auto overscroll-contain p-6 pt-5">
+		<Sheet.Title class="flex h-11 items-center pr-12">{MENU_TITLE}</Sheet.Title>
 		<nav aria-label={MENU_TITLE} class="flex flex-col gap-1">
 			{#each nav as item (item.href)}
 				<a
@@ -36,14 +38,19 @@
 				>
 			{/each}
 		</nav>
-		<div class="mt-4 flex flex-col gap-3 border-t border-border pt-6">
+		<div class="mt-2 flex flex-col gap-3 border-t border-border pt-5">
 			{#if phone}
-				<a href="tel:{phone}" class="flex items-center gap-2 px-3 font-medium text-primary">
+				<a href="tel:{phone}" class="flex items-center gap-2 px-3 py-2 font-medium text-primary">
 					<Phone class="size-4" aria-hidden="true" />{formatPhoneInput(phone)}
 				</a>
 			{/if}
-			<a href="/lead" class={buttonVariants({ size: 'sm' })} onclick={() => (open = false)}
-				>{LEAD_CTA}</a
+			<a
+				href="/lead"
+				class={buttonVariants({ size: 'sm' })}
+				onclick={(event) => {
+					open = false;
+					openFromLink(event);
+				}}>{LEAD_CTA}</a
 			>
 		</div>
 	</Sheet.Content>

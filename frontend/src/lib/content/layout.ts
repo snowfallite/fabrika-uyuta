@@ -2,6 +2,7 @@
 export const BRAND = 'Фабрика Уюта';
 export const LEAD_CTA = 'Оставить заявку';
 export const MENU_TITLE = 'Меню';
+export const CALL_LABEL = 'Позвонить';
 export const SKIP_LINK = 'Перейти к содержанию';
 
 export const FOOTER = {
