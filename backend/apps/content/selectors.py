@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from apps.content.models import SiteImage
+from apps.content.models import Category, SiteImage
 from apps.content.services.images import to_image_asset
 from apps.core.enums import SiteImageSlot
 
@@ -21,8 +21,21 @@ def get_site_settings() -> dict[str, Any]:
 
 
 def get_home_content() -> dict[str, Any]:
-    # categories: stub until S2-06; featured: stub until S2-07.
-    return {"slots": _slots(), "categories": [], "featured": []}
+    # featured: stub until S2-07.
+    return {"slots": _slots(), "categories": _categories(), "featured": []}
+
+
+def _category_summary(category: Category) -> dict[str, Any]:
+    return {
+        "slug": category.slug,
+        "title": category.title,
+        "short_description": category.short_description,
+        "cover": to_image_asset(category, category.title),
+    }
+
+
+def _categories() -> list[dict[str, Any]]:
+    return [_category_summary(c) for c in Category.objects.filter(is_published=True)]
 
 
 def _slots() -> dict[str, dict[str, Any] | None]:

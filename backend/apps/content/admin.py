@@ -66,8 +66,18 @@ class ReferenceRowAdmin(admin.ModelAdmin):
 
 @admin.register(Category)
 class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
+    """Five fixed categories (tech.md, S2-06): order and publication edit right in the list."""
+
     list_display = ["title", "image_preview", "slug", "position", "is_published"]
-    readonly_fields = ["image_preview"]
+    list_display_links = ["title"]
+    list_editable = ["position", "is_published"]
+    readonly_fields = ["slug", "image_preview"]
+    fieldsets = [
+        (None, {"fields": ["slug", "title", "short_description", "description"]}),
+        ("Обложка", {"fields": ["image", "image_preview", "alt"]}),
+        ("SEO", {"fields": ["seo_title", "seo_description"]}),
+        ("Показ", {"fields": ["position", "is_published"]}),
+    ]
 
 
 @admin.register(GalleryItem)
