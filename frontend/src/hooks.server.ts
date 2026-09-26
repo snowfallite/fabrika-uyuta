@@ -1,7 +1,8 @@
 import type { Handle } from '@sveltejs/kit';
 
-// Latin and Cyrillic faces render every page; the other subsets load on demand.
-const CRITICAL_FONT = /(manrope|cormorant-garamond)-(latin|cyrillic)-wght-normal/;
+// Russian text renders first, so only the Cyrillic faces are preloaded; Latin (digits,
+// punctuation) and the rest load on demand without competing with the hero photo.
+const CRITICAL_FONT = /(manrope|cormorant-garamond)-cyrillic-wght-normal/;
 
 export const handle: Handle = ({ event, resolve }) =>
 	resolve(event, {

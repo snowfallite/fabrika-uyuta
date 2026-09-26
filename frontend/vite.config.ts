@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
 	return {
 		envDir,
 		plugins: [tailwindcss(), sveltekit()],
+		// CSP allows fonts from 'self' only (tech.md, 10.2): no data: URIs for small subsets.
+		build: { assetsInlineLimit: 0 },
 		server: {
 			// Caddy routes these to Django in containers (tech.md, 16.4).
 			proxy: {
