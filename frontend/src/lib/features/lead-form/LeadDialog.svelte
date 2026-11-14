@@ -18,18 +18,22 @@
 
 <!-- Content mounts on open, so every opening starts with a clean form. -->
 <Dialog.Root bind:open={leadDialog.isOpen}>
-	<!-- Full screen on phones; the header with the close button stays put while the form scrolls. -->
-	<!-- The close button now comes first in the DOM; focus still starts in the first field (S2-03). -->
+	<!--
+		Two rows: the heading stays put, the form gets the rest. The form is wide enough
+		for two columns (LeadForm, @xl), so on a desktop it fits without a scrollbar; on a
+		short window only the form area scrolls. Full screen on phones.
+		The close button comes first in the DOM; focus still starts in the first field (S2-03).
+	-->
 	<Dialog.Content
 		showCloseButton={false}
 		onOpenAutoFocus={(event) => {
 			event.preventDefault();
 			document.getElementById('dialog-name')?.focus();
 		}}
-		class="pt-0 max-sm:inset-0 max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-0 max-sm:grid-rows-[auto_1fr] max-sm:rounded-none md:pt-0 [&:has([data-lead-success])_[data-slot=dialog-description]]:hidden"
+		class="grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-x-hidden overflow-y-hidden p-0 max-sm:inset-0 max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-0 max-sm:rounded-none sm:max-w-3xl md:p-0 [&:has([data-lead-success])_[data-slot=dialog-description]]:hidden"
 	>
 		<Dialog.Header
-			class="sticky top-0 z-10 -mx-7 flex-row items-start justify-between gap-4 bg-background px-7 pt-7 pb-2 md:-mx-10 md:px-10 md:pt-10"
+			class="flex-row items-start justify-between gap-4 border-b border-border/60 px-7 pt-7 pb-5 md:px-10 md:pt-8"
 		>
 			<div class="flex flex-col gap-2">
 				<Dialog.Title>{LEAD_PAGE.title}</Dialog.Title>
@@ -42,11 +46,16 @@
 				<X class="size-5" aria-hidden="true" />
 			</Dialog.Close>
 		</Dialog.Header>
-		<LeadForm
-			idPrefix="dialog"
-			product={leadDialog.product}
-			phone={settings.phone}
-			phoneDisplay={settings.phone_display}
-		/>
+		<!-- Scrolls only when the window is too short; a slim scrollbar in the border colour. -->
+		<div
+			class="[scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] overflow-y-auto overscroll-contain px-7 py-7 md:px-10 md:py-8"
+		>
+			<LeadForm
+				idPrefix="dialog"
+				product={leadDialog.product}
+				phone={settings.phone}
+				phoneDisplay={settings.phone_display}
+			/>
+		</div>
 	</Dialog.Content>
 </Dialog.Root>

@@ -97,66 +97,70 @@
 		use:enhance={submit}
 		oninput={clearError}
 		onchange={clearError}
-		class="space-y-6"
+		class="@container/lead space-y-6"
 	>
-		<Field id={id('name')} label={LEAD_FIELDS.name.label} required error={errors.name}>
-			{#snippet children({ id, describedBy, invalid })}
-				<Input
-					{id}
-					name="name"
-					bind:value={values.name}
-					required
-					maxlength={120}
-					autocomplete="name"
-					placeholder={LEAD_FIELDS.name.placeholder}
-					aria-invalid={invalid}
-					aria-describedby={describedBy}
-					autofocus={autofocusField === 'name'}
-				/>
-			{/snippet}
-		</Field>
-		<Field id={id('phone')} label={LEAD_FIELDS.phone.label} required error={errors.phone}>
-			{#snippet children({ id, describedBy, invalid })}
-				<PhoneInput
-					{id}
-					name="phone"
-					bind:value={values.phone}
-					required
-					aria-invalid={invalid}
-					aria-describedby={describedBy}
-					autofocus={autofocusField === 'phone'}
-				/>
-			{/snippet}
-		</Field>
-		<Field id={id('product')} label={LEAD_FIELDS.product.label} required error={errors.product}>
-			{#snippet children({ id, describedBy, invalid })}
-				<Select
-					{id}
-					name="product"
-					{options}
-					bind:value={values.product}
-					placeholder={LEAD_FIELDS.product.placeholder}
-					required
-					aria-invalid={invalid}
-					aria-describedby={describedBy}
-					autofocus={autofocusField === 'product'}
-				/>
-			{/snippet}
-		</Field>
-		<Field id={id('dimensions')} label={LEAD_FIELDS.dimensions.label} error={errors.dimensions}>
-			{#snippet children({ id, describedBy, invalid })}
-				<Input
-					{id}
-					name="dimensions"
-					bind:value={values.dimensions}
-					maxlength={300}
-					placeholder={LEAD_FIELDS.dimensions.placeholder}
-					aria-invalid={invalid}
-					aria-describedby={describedBy}
-					autofocus={autofocusField === 'dimensions'}
-				/>
-			{/snippet}
-		</Field>
+		<!-- A wide form (the dialog) pairs the short fields; a narrow one keeps one column. -->
+		<div class="grid gap-6 @xl/lead:grid-cols-2 @xl/lead:gap-x-8">
+			<Field id={id('name')} label={LEAD_FIELDS.name.label} required error={errors.name}>
+				{#snippet children({ id, describedBy, invalid })}
+					<Input
+						{id}
+						name="name"
+						bind:value={values.name}
+						required
+						maxlength={120}
+						autocomplete="name"
+						placeholder={LEAD_FIELDS.name.placeholder}
+						aria-invalid={invalid}
+						aria-describedby={describedBy}
+						autofocus={autofocusField === 'name'}
+					/>
+				{/snippet}
+			</Field>
+			<Field id={id('phone')} label={LEAD_FIELDS.phone.label} required error={errors.phone}>
+				{#snippet children({ id, describedBy, invalid })}
+					<PhoneInput
+						{id}
+						name="phone"
+						bind:value={values.phone}
+						required
+						aria-invalid={invalid}
+						aria-describedby={describedBy}
+						autofocus={autofocusField === 'phone'}
+					/>
+				{/snippet}
+			</Field>
+			<Field id={id('product')} label={LEAD_FIELDS.product.label} required error={errors.product}>
+				{#snippet children({ id, describedBy, invalid })}
+					<Select
+						{id}
+						name="product"
+						{options}
+						bind:value={values.product}
+						placeholder={LEAD_FIELDS.product.placeholder}
+						required
+						aria-invalid={invalid}
+						aria-describedby={describedBy}
+						autofocus={autofocusField === 'product'}
+					/>
+				{/snippet}
+			</Field>
+			<Field id={id('dimensions')} label={LEAD_FIELDS.dimensions.label} error={errors.dimensions}>
+				{#snippet children({ id, describedBy, invalid })}
+					<Input
+						{id}
+						name="dimensions"
+						bind:value={values.dimensions}
+						maxlength={300}
+						placeholder={LEAD_FIELDS.dimensions.placeholder}
+						aria-invalid={invalid}
+						aria-describedby={describedBy}
+						autofocus={autofocusField === 'dimensions'}
+					/>
+				{/snippet}
+			</Field>
+		</div>
+
 		<Field id={id('comment')} label={LEAD_FIELDS.comment.label} error={errors.comment}>
 			{#snippet children({ id, describedBy, invalid })}
 				<Textarea
@@ -171,25 +175,6 @@
 				/>
 			{/snippet}
 		</Field>
-		<Field id={id('consent')} label="" error={errors.consent}>
-			{#snippet children({ id, describedBy, invalid })}
-				<Checkbox
-					{id}
-					name="consent"
-					bind:checked={values.consent}
-					required
-					aria-invalid={invalid}
-					aria-describedby={describedBy}
-					autofocus={autofocusField === 'consent'}
-				>
-					{LEAD_FIELDS.consent.before}<a
-						href="/consent"
-						class="text-primary underline underline-offset-2">{LEAD_FIELDS.consent.link}</a
-					>
-				</Checkbox>
-			{/snippet}
-		</Field>
-
 		<!-- Honeypot: people never see it, bots fill it (tech.md, 12.1). -->
 		<div aria-hidden="true" class="absolute -left-[9999px] h-px w-px overflow-hidden">
 			<label for={id('website')}>Сайт</label>
@@ -208,8 +193,31 @@
 			<Alert tone="error">{errors.form}</Alert>
 		{/if}
 
-		<Button type="submit" class="w-full" loading={status === 'submitting'}>
-			{status === 'submitting' ? LEAD_MESSAGES.sending : LEAD_MESSAGES.submit}
-		</Button>
+		<!-- Consent stands beside the button on a wide form and above it on a narrow one. -->
+		<div
+			class="flex flex-col gap-6 @xl/lead:flex-row @xl/lead:items-center @xl/lead:justify-between @xl/lead:gap-10"
+		>
+			<Field id={id('consent')} label="" error={errors.consent}>
+				{#snippet children({ id, describedBy, invalid })}
+					<Checkbox
+						{id}
+						name="consent"
+						bind:checked={values.consent}
+						required
+						aria-invalid={invalid}
+						aria-describedby={describedBy}
+						autofocus={autofocusField === 'consent'}
+					>
+						{LEAD_FIELDS.consent.before}<a
+							href="/consent"
+							class="text-primary underline underline-offset-2">{LEAD_FIELDS.consent.link}</a
+						>
+					</Checkbox>
+				{/snippet}
+			</Field>
+			<Button type="submit" class="w-full @xl/lead:w-auto" loading={status === 'submitting'}>
+				{status === 'submitting' ? LEAD_MESSAGES.sending : LEAD_MESSAGES.submit}
+			</Button>
+		</div>
 	</form>
 {/if}
