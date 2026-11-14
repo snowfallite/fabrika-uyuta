@@ -65,6 +65,7 @@ GALLERY = [
 
 CONTACTS = {
     "phone": "+78172000000",
+    "max_phone": "+78172000001",
     "email": "info@example.ru",
     "address": "Вологда",
     "work_hours": "Пн–Пт, 9:00–18:00",

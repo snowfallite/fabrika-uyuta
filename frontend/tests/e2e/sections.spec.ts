@@ -16,6 +16,7 @@ const ANCHORS = [
 
 // seed_demo contacts.
 const PHONE = { href: 'tel:+78172000000', text: '+7 (817) 200-00-00' };
+const MAX_PHONE = '+7 (817) 200-00-01';
 
 test.describe('home: static sections and contacts', () => {
 	test('AC1: every template section is on the page in order', async ({ page }) => {
@@ -54,6 +55,15 @@ test.describe('home: static sections and contacts', () => {
 			const inHeader = page.getByRole('banner').getByRole('link', { name: PHONE.text });
 			await expect(inHeader).toHaveAttribute('href', PHONE.href);
 		}
+	});
+
+	// Scoped to the card: the phone card may carry the same number as a tel: link.
+	test('the MAX number shows in the contacts as text, not as a link', async ({ page }) => {
+		await page.goto('/');
+		const card = page.locator('#contacts').getByRole('listitem').filter({ hasText: 'MAX' });
+		await expect(card).toHaveCount(1);
+		await expect(card).toContainText(MAX_PHONE);
+		await expect(card.getByRole('link')).toHaveCount(0);
 	});
 
 	test('axe finds no serious issues on the whole home page', async ({ page }) => {
