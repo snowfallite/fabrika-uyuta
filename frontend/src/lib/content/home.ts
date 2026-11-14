@@ -78,6 +78,7 @@ export const CONTACTS = typo({
 	title: 'Свяжитесь с нами',
 	text: 'Позвоните, напишите или оставьте заявку: ответим в рабочее время.',
 	phone: 'Телефон',
+	max: 'MAX',
 	email: 'Email',
 	address: 'Адрес',
 	hours: 'Часы работы',

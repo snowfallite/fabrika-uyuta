@@ -6,6 +6,8 @@ import Contacts from './Contacts.svelte';
 const empty: SiteSettings = {
 	phone: '',
 	phone_display: '',
+	max_phone: '',
+	max_phone_display: '',
 	email: '',
 	address: '',
 	work_hours: '',
@@ -17,7 +19,7 @@ describe('Contacts', () => {
 	it('AC3: empty settings leave no contact cards, labels or undefined', async () => {
 		const screen = await render(Contacts, { settings: empty });
 		const text = screen.container.textContent ?? '';
-		for (const label of ['Телефон', 'Email', 'Адрес', 'Часы работы', 'Открыть на карте']) {
+		for (const label of ['Телефон', 'MAX', 'Email', 'Адрес', 'Часы работы', 'Открыть на карте']) {
 			expect(text).not.toContain(label);
 		}
 		expect(text).not.toContain('undefined');
@@ -53,5 +55,14 @@ describe('Contacts', () => {
 			.element(screen.getByRole('link', { name: 'Открыть на карте' }))
 			.toHaveAttribute('href', 'https://yandex.ru/maps/?text=Vologda');
 		await expect.element(screen.getByRole('link', { name: 'ВКонтакте' })).toBeVisible();
+	});
+
+	it('shows the MAX number as text, not as a link', async () => {
+		const screen = await render(Contacts, {
+			settings: { ...empty, max_phone: '+79990000001', max_phone_display: '+7 (999) 000-00-01' }
+		});
+		await expect.element(screen.getByText('MAX')).toBeVisible();
+		await expect.element(screen.getByText('+7 (999) 000-00-01')).toBeVisible();
+		expect(screen.container.querySelector('a[href*="79990000001"]')).toBeNull();
 	});
 });

@@ -7,6 +7,8 @@ import Header from './Header.svelte';
 const empty: SiteSettings = {
 	phone: '',
 	phone_display: '',
+	max_phone: '',
+	max_phone_display: '',
 	email: '',
 	address: '',
 	work_hours: '',

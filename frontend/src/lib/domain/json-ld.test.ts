@@ -5,6 +5,8 @@ import { furnitureStoreJsonLd } from './json-ld';
 const settings: SiteSettings = {
 	phone: '+78172000000',
 	phone_display: '+7 (817) 200-00-00',
+	max_phone: '',
+	max_phone_display: '',
 	email: '',
 	address: 'Вологда, </script><b>',
 	work_hours: '',

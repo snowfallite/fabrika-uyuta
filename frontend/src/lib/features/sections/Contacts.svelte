@@ -3,6 +3,7 @@
 	import Clock from '@lucide/svelte/icons/clock';
 	import Mail from '@lucide/svelte/icons/mail';
 	import MapPin from '@lucide/svelte/icons/map-pin';
+	import MessageCircle from '@lucide/svelte/icons/message-circle';
 	import Phone from '@lucide/svelte/icons/phone';
 	import { Button } from '$lib/components/ui/button';
 	import { Section } from '$lib/components/ui/section';
@@ -31,6 +32,14 @@
 				<Phone class="mb-4 size-6 text-primary" aria-hidden="true" />
 				<p class={label}>{CONTACTS.phone}</p>
 				<a href="tel:{settings.phone}" class="{value} hover:underline">{settings.phone_display}</a>
+			</li>
+		{/if}
+		{#if settings.max_phone}
+			<li class={card}>
+				<MessageCircle class="mb-4 size-6 text-primary" aria-hidden="true" />
+				<p class={label}>{CONTACTS.max}</p>
+				<!-- MAX has no profile URL keyed by number, so the number stays text (tech.md, v8). -->
+				<p class={value}>{settings.max_phone_display}</p>
 			</li>
 		{/if}
 		{#if settings.email}
