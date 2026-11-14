@@ -212,25 +212,33 @@ class SocialLinkInline(admin.TabularInline):
     formfield_overrides = HTTPS_URLS
 
 
+def clean_e164(raw: str) -> str:
+    """Contact numbers are stored in E.164 (tech.md, 12.3)."""
+    if not raw:
+        return ""
+    phone = normalize_phone(raw)
+    if phone is None:
+        raise ValidationError("Проверьте номер телефона")
+    return phone
+
+
 class SiteSettingsForm(forms.ModelForm):
     # Wider than the E.164 column: people type "+7 (817) 200-00-00".
     phone = forms.CharField(label="Телефон", max_length=32, required=False)
+    max_phone = forms.CharField(label="Номер в MAX", max_length=32, required=False)
     map_url = forms.URLField(
         label="Ссылка на карту", max_length=200, required=False, assume_scheme="https"
     )
 
     class Meta:
         model = SiteSettings
-        fields = ["phone", "email", "address", "work_hours", "map_url"]
+        fields = ["phone", "max_phone", "email", "address", "work_hours", "map_url"]
 
     def clean_phone(self) -> str:
-        raw = self.cleaned_data["phone"]
-        if not raw:
-            return ""
-        phone = normalize_phone(raw)
-        if phone is None:
-            raise ValidationError("Проверьте номер телефона")
-        return phone
+        return clean_e164(self.cleaned_data["phone"])
+
+    def clean_max_phone(self) -> str:
+        return clean_e164(self.cleaned_data["max_phone"])
 
 
 @admin.register(SiteSettings)

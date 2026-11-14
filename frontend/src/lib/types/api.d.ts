@@ -164,6 +164,8 @@ export interface components {
         SiteSettings: {
             phone: string;
             phone_display: string;
+            max_phone: string;
+            max_phone_display: string;
             email: string;
             address: string;
             work_hours: string;

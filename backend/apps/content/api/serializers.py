@@ -23,6 +23,8 @@ class SocialLinkSerializer(serializers.Serializer):
 class SiteSettingsSerializer(serializers.Serializer):
     phone = serializers.CharField()
     phone_display = serializers.CharField()
+    max_phone = serializers.CharField()
+    max_phone_display = serializers.CharField()
     email = serializers.CharField()
     address = serializers.CharField()
     work_hours = serializers.CharField()

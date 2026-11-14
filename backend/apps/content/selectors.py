@@ -16,6 +16,8 @@ def get_site_settings() -> dict[str, Any]:
     return {
         "phone": row.phone,
         "phone_display": format_phone_display(row.phone),
+        "max_phone": row.max_phone,
+        "max_phone_display": format_phone_display(row.max_phone),
         "email": row.email,
         "address": row.address,
         "work_hours": row.work_hours,

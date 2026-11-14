@@ -51,6 +51,7 @@ def test_site_settings_api_returns_contacts_and_links(
 ) -> None:
     row = SiteSettings.objects.get(id=1)
     row.phone = "+78172000000"
+    row.max_phone = "+79990000001"
     row.email = "info@example.ru"
     row.save()
     row.social_links.create(label="Второй", url="https://example.com/2", position=2)
@@ -62,6 +63,8 @@ def test_site_settings_api_returns_contacts_and_links(
     assert data == {
         "phone": "+78172000000",
         "phone_display": "+7 (817) 200-00-00",
+        "max_phone": "+79990000001",
+        "max_phone_display": "+7 (999) 000-00-01",
         "email": "info@example.ru",
         "address": "",
         "work_hours": "",
@@ -76,6 +79,7 @@ def test_site_settings_api_returns_contacts_and_links(
 def test_empty_settings_give_empty_strings(client: Client, settings: Any) -> None:
     data = api(client, settings)
     assert data["phone"] == data["phone_display"] == ""
+    assert data["max_phone"] == data["max_phone_display"] == ""
     assert data["social_links"] == []
 
 
@@ -88,6 +92,7 @@ def owner() -> Client:
 def form_data(**overrides: str) -> dict[str, str]:
     data = {
         "phone": "",
+        "max_phone": "",
         "email": "",
         "address": "",
         "work_hours": "",
@@ -122,3 +127,18 @@ def test_ac4_invalid_phone_is_not_saved() -> None:
     assert response.status_code == 200
     assert "Проверьте номер телефона" in response.content.decode()
     assert SiteSettings.objects.get(id=1).phone == ""
+
+
+def test_max_phone_is_normalized_on_save() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+    response = owner().post(url, form_data(max_phone="8 999 000 00 01"))
+    assert response.status_code == 302
+    assert SiteSettings.objects.get(id=1).max_phone == "+79990000001"
+
+
+def test_invalid_max_phone_is_not_saved() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+    response = owner().post(url, form_data(max_phone="12345"))
+    assert response.status_code == 200
+    assert "Проверьте номер телефона" in response.content.decode()
+    assert SiteSettings.objects.get(id=1).max_phone == ""

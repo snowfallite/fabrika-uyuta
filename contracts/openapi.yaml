@@ -363,6 +363,10 @@ components:
           type: string
         phone_display:
           type: string
+        max_phone:
+          type: string
+        max_phone_display:
+          type: string
         email:
           type: string
         address:
@@ -379,6 +383,8 @@ components:
       - address
       - email
       - map_url
+      - max_phone
+      - max_phone_display
       - phone
       - phone_display
       - social_links
