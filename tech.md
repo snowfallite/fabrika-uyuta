@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v8
-- Дата: 2026-11-14
+- Версия: v9
+- Дата: 2026-11-15
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v9 (2026-11-15): VK и MAX выделены в контактах, решение владельца. Новое поле `SiteSettings.vk_url` (ссылка на страницу ВКонтакте, пустое скрывает карточку) и ключ `vk_url` в DTO `SiteSettings`: `social_links` остаётся для прочих сетей, `seed_demo` пишет `vk_url` и ссылок не создаёт. Новые брендовые токены в hex, hsl не годится (округление сдвигает фирменный цвет): `--brand-vk` `#0077FF` (официальный SVG логотипа VK), `--brand-max` `#471AFF` и `--brand-max-accent` `#9500FF` (брендбук MAX, «Синий гигант» и «Пурпурная туманность»), `--brand-foreground` `#FFFFFF`. Знаки из официальных брендбуков лежат в `src/lib/icons/VkLogo.svelte` и `src/lib/icons/MaxLogo.svelte`, `MessageCircle` у MAX больше не нужен. Приложение А: карточки «ВКонтакте» и «MAX» идут брендовым блоком над сеткой контактов, текст на брендовом фоне не меньше 24 px (белый на `--brand-vk` даёт 4,1:1).
 - v8 (2026-11-14): контакты и юр. черновики, решение владельца. Новое поле `SiteSettings.max_phone` (E.164, пустое скрывает карточку) и ключи `max_phone`, `max_phone_display` в DTO `SiteSettings`: ссылки на профиль по номеру у MAX нет, номер показывается текстом без ссылки. Приложение А: подпись карточки «MAX», иконка `MessageCircle`. Черновик политики ПДн и согласия пишет сессия, плашка «Проект документа. Текст проверяет юрист.» и маркер `LEGAL_TEXT_PENDING` стоят до текста юриста.
 - v7 (2026-09-26): аудит внешнего вида (`.design-audit/REPORT.md`), решение владельца. Плашки hero («Материалы / ЛДСП и МДФ») и about («Индивидуально / под ваше пространство») убраны из приложения А. Токен `--input` отделён от `--border`: `hsl(30 7% 52%)`, граница поля 3,4:1 к фону (было 1,4:1). Новый токен `--success` `hsl(100 25% 32%)` для Alert `success`. Hero: `sizes="(min-width: 1024px) 50vw, 100vw"` вместо `100vw` (фото в половину ширины на десктопе). Плейсхолдер размеров короче: «Стена 3,2 м, высота 2,6 м» (обрезался на 360 px). Новые тексты UI: `aria-label` «Позвонить» у кнопки звонка в шапке на мобильных, счётчик лайтбокса `<n> / <всего>`.
 - v6 (2026-09-26): S2-02, расширение контракта примитивов: `autofocus?: boolean` у Input, Textarea, Select, Checkbox, PhoneInput. Без JS фокус на первое ошибочное поле (AC7) ставит только атрибут `autofocus`.
@@ -352,6 +353,7 @@ class SiteImage(ImageFieldsMixin):
 class SiteSettings(models.Model):
     phone = models.CharField("Телефон", max_length=16, blank=True)  # E.164, normalized on save
     max_phone = models.CharField("Номер в MAX", max_length=16, blank=True)  # E.164, no profile URL
+    vk_url = models.URLField("Ссылка ВКонтакте", blank=True)  # brand card, empty hides it
     email = models.EmailField(blank=True)
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)
@@ -473,6 +475,7 @@ type SiteSettings = {
   phone_display: string;      // "+7 (999) 123-45-67" or ""
   max_phone: string;          // MAX messenger number, E.164 or ""
   max_phone_display: string;  // "+7 (999) 123-45-67" or ""
+  vk_url: string;             // VK page URL or ""
   email: string;
   address: string;
   work_hours: string;
@@ -813,7 +816,7 @@ Layout (`src/lib/components/layout/`):
 - `SkipLink`: ссылка на `#main`.
 - `Seo` (S2-08): `{ title: string; description: string; path: string; image?: ImageAsset | null; noindex?: boolean }`. Title, description, canonical, OG в `<svelte:head>`.
 
-Токены: имена переменных shadcn-svelte в `src/app.css` (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--destructive`, `--border`, `--input`, `--ring`, `--radius`) и `--success` (v7), связка через `@theme inline`. Шрифты: `--font-sans`, `--font-display`. Тёмной темы нет.
+Токены: имена переменных shadcn-svelte в `src/app.css` (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--destructive`, `--border`, `--input`, `--ring`, `--radius`), `--success` (v7) и брендовые `--brand-vk`, `--brand-max`, `--brand-max-accent`, `--brand-foreground` (v9), связка через `@theme inline`. Шрифты: `--font-sans`, `--font-display`. Тёмной темы нет.
 
 Значения (S1-01, из `template/src/index.css`):
 
@@ -833,6 +836,10 @@ Layout (`src/lib/components/layout/`):
 | `--border` | `hsl(36 18% 82%)` | `#D9D3C9` |
 | `--input` | `hsl(30 7% 52%)` | `#8D857C` (v7: граница поля 3,4:1 к фону) |
 | `--success` | `hsl(100 25% 32%)` | `#4B663D` (v7: Alert `success`) |
+| `--brand-vk` | `#0077FF` | официальный логотип VK (v9: карточка «ВКонтакте») |
+| `--brand-max` | `#471AFF` | брендбук MAX, «Синий гигант» (v9: карточка «MAX») |
+| `--brand-max-accent` | `#9500FF` | брендбук MAX, «Пурпурная туманность» (v9: вторая точка градиента) |
+| `--brand-foreground` | `#FFFFFF` | брендбук MAX, «Белый свет» (v9: текст и знак на брендовом фоне) |
 | `--radius` | `0.9rem` | |
 | `--font-display` | `'Cormorant Garamond Variable', ui-serif, Georgia, serif` | заголовки и цифры, начертания 300..500 |
 | `--font-sans` | `'Manrope Variable', ui-sans-serif, system-ui, sans-serif` | текст и интерфейс |
@@ -842,7 +849,8 @@ Layout (`src/lib/components/layout/`):
 Правила UI:
 - Есть примитив: самописный аналог запрещён.
 - Цвета только через токены. Hex в компонентах запрещён.
-- Иконки: `@lucide/svelte` или SVG из шаблона в `src/lib/icons/`.
+- Брендовые токены (v9) живут только в карточках «ВКонтакте» и «MAX» секции контактов. Фирменный цвет не меняется, поэтому текст и знак на нём белые (`--brand-foreground`), а размер текста не меньше 24 px: белый на `--brand-vk` даёт 4,1:1 и проходит AA только как крупный.
+- Иконки: `@lucide/svelte` или SVG из шаблона в `src/lib/icons/`. Там же знаки брендов из официальных брендбуков (v9).
 - `/dev/ui` показывает каждый примитив во всех вариантах и состояниях.
 
 ## 12. Тексты и форматы формы
@@ -1020,7 +1028,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`) с фиктивными данными.
+- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`) с фиктивными данными.
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1552,7 +1560,7 @@ tech.md v<N>; touched: <sections> | none
 | Process | «Как мы работаем» / «Путь от заявки до готовой мебели»; 01 «Заявка»: «Вы оставляете контакты.»; 02 «Замер»: «Мастер приезжает на объект.»; 03 «Проект»: «Согласуем дизайн и смету.»; 04 «Производство»: «Изготавливаем изделие.»; 05 «Монтаж»: «Доставка и установка.» |
 | Advantages | «Почему выбирают нас» / «Подход, который виден в деталях»; 01 «Точные размеры»: «Мебель делается под ваши замеры.»; 02 «Свой цех»: «Контролируем качество на каждом этапе.»; 03 «Фурнитура»: «Надёжные механизмы и аккуратные детали.»; 04 «Монтаж»: «Доставим и соберём на месте.» |
 | LeadForm | «Заявка» / «Расскажите, какая мебель вам нужна» / «Оставьте контакты: мы свяжемся и обсудим детали вашего проекта.»; после успеха кнопка «Отправить ещё одну»; поля и сообщения: раздел 12 |
-| Contacts | «Контакты» / «Свяжитесь с нами» / «Позвоните, напишите или оставьте заявку: ответим в рабочее время.»; подписи карточек «Телефон», «MAX», «Email», «Адрес», «Часы работы»; номер MAX текстом без ссылки (v8); ссылка «Открыть на карте» (`map_url`); CTA «Заказать мебель» (`/lead`) |
+| Contacts | «Контакты» / «Свяжитесь с нами» / «Позвоните, напишите или оставьте заявку: ответим в рабочее время.»; брендовый блок над сеткой (v9): карточка-ссылка «ВКонтакте» (`vk_url`, знак и фон `--brand-vk`) и карточка «MAX» (номер текстом без ссылки, знак и градиент `--brand-max` → `--brand-max-accent`); подписи карточек сетки «Телефон», «Email», «Адрес», «Часы работы»; ссылка «Открыть на карте» (`map_url`); CTA «Заказать мебель» (`/lead`) |
 | Шапка | логотип «Фабрика Уюта»; CTA «Оставить заявку»; кнопка мобильного меню и заголовок Sheet «Меню»; кнопка звонка до `lg`: `aria-label` «Позвонить» (v7) |
 | SkipLink | «Перейти к содержанию» |
 | Подвал | «Фабрика Уюта»; «Мебель на заказ для дома и офиса. Кухни, шкафы, столы и системы хранения, изготовленные под ваше пространство.»; «Навигация»; «Заявка»: «Оставьте заявку, и мы обсудим детали вашего будущего изделия.» + «Оставить заявку»; «© <год> Фабрика Уюта. Все права защищены.»; «Политика обработки персональных данных», «Согласие на обработку персональных данных» |
@@ -1575,7 +1583,8 @@ SEO (S2-08, S2-11):
 
 Ассеты:
 - Логотип: текстовый, «Фабрика Уюта» шрифтом `--font-display`. Файла нет.
-- Иконки: inline SVG шаблона совпадают с Lucide (`Menu`, `ArrowRight`, `ArrowUpRight`, `Check`, `X`, `ChevronLeft`, `ChevronRight`, `CircleCheck`, `Send`, `Phone`, `Mail`, `MapPin`, `Clock`, `MessageCircle` (MAX, v8)), берутся из `@lucide/svelte`. `src/lib/icons/` не нужен.
+- Иконки: inline SVG шаблона совпадают с Lucide (`Menu`, `ArrowRight`, `ArrowUpRight`, `Check`, `X`, `ChevronLeft`, `ChevronRight`, `CircleCheck`, `Send`, `Phone`, `Mail`, `MapPin`, `Clock`), берутся из `@lucide/svelte`.
+- Знаки брендов (v9): `src/lib/icons/VkLogo.svelte` (белая монограмма официального логотипа VK, `vk.company/data/VK-logo/`) и `src/lib/icons/MaxLogo.svelte` (белый знак из брендбука MAX, `go.max.ru/brandbook`). Знаки монохромные, пропорции и форму путей не меняем, ставим только на брендовый фон карточек контактов.
 - Фото: файлов в шаблоне нет (hero и about ссылаются на Unsplash, остальное цветные заглушки). `seed_demo` генерирует картинки Pillow (15.3). Пустой слот или обложка: заглушка ResponsiveImage.
 - Шрифты: Cormorant Garamond (есть `cyrillic`), Manrope вместо Plus Jakarta Sans (у Plus Jakarta Sans только `cyrillic-ext`, русские буквы шли бы системным шрифтом). Пакеты в разделе 4.
 - Favicon и manifest: в шаблоне нет. S2-11 кладёт `static/favicon.svg` (буква «Ф» цветом `--primary` на `--background`) и `static/manifest.webmanifest`.
