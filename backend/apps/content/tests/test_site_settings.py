@@ -52,6 +52,7 @@ def test_site_settings_api_returns_contacts_and_links(
     row = SiteSettings.objects.get(id=1)
     row.phone = "+78172000000"
     row.max_phone = "+79990000001"
+    row.vk_url = "https://vk.com/fabrikauyuta"
     row.email = "info@example.ru"
     row.save()
     row.social_links.create(label="Второй", url="https://example.com/2", position=2)
@@ -65,6 +66,7 @@ def test_site_settings_api_returns_contacts_and_links(
         "phone_display": "+7 (817) 200-00-00",
         "max_phone": "+79990000001",
         "max_phone_display": "+7 (999) 000-00-01",
+        "vk_url": "https://vk.com/fabrikauyuta",
         "email": "info@example.ru",
         "address": "",
         "work_hours": "",
@@ -80,6 +82,7 @@ def test_empty_settings_give_empty_strings(client: Client, settings: Any) -> Non
     data = api(client, settings)
     assert data["phone"] == data["phone_display"] == ""
     assert data["max_phone"] == data["max_phone_display"] == ""
+    assert data["vk_url"] == ""
     assert data["social_links"] == []
 
 
@@ -93,6 +96,7 @@ def form_data(**overrides: str) -> dict[str, str]:
     data = {
         "phone": "",
         "max_phone": "",
+        "vk_url": "",
         "email": "",
         "address": "",
         "work_hours": "",

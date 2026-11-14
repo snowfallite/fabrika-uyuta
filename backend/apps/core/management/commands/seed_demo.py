@@ -66,6 +66,7 @@ GALLERY = [
 CONTACTS = {
     "phone": "+78172000000",
     "max_phone": "+78172000001",
+    "vk_url": "https://vk.com/",
     "email": "info@example.ru",
     "address": "Вологда",
     "work_hours": "Пн–Пт, 9:00–18:00",
@@ -148,8 +149,6 @@ class Command(BaseCommand):
             if not getattr(contacts, field):
                 setattr(contacts, field, value)
         contacts.save()
-        if not contacts.social_links.exists():
-            contacts.social_links.create(label="ВКонтакте", url="https://vk.com/", position=0)
 
     def _leads(self) -> None:
         now = timezone.now()

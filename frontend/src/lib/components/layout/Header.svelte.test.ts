@@ -9,6 +9,7 @@ const empty: SiteSettings = {
 	phone_display: '',
 	max_phone: '',
 	max_phone_display: '',
+	vk_url: '',
 	email: '',
 	address: '',
 	work_hours: '',

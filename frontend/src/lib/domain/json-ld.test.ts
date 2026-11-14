@@ -7,6 +7,7 @@ const settings: SiteSettings = {
 	phone_display: '+7 (817) 200-00-00',
 	max_phone: '',
 	max_phone_display: '',
+	vk_url: '',
 	email: '',
 	address: 'Вологда, </script><b>',
 	work_hours: '',

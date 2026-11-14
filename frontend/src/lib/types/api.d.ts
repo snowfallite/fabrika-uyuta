@@ -166,6 +166,7 @@ export interface components {
             phone_display: string;
             max_phone: string;
             max_phone_display: string;
+            vk_url: string;
             email: string;
             address: string;
             work_hours: string;

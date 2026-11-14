@@ -85,6 +85,8 @@ class SiteSettings(models.Model):
     phone = models.CharField("Телефон", max_length=16, blank=True)  # E.164, normalized on save
     # MAX has no profile URL keyed by number, so the contact is the number itself (tech.md, v8).
     max_phone = models.CharField("Номер в MAX", max_length=16, blank=True)  # E.164
+    # Brand card in the contacts section; empty hides it (tech.md, v9).
+    vk_url = models.URLField("Ссылка ВКонтакте", blank=True)
     email = models.EmailField(blank=True)
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)

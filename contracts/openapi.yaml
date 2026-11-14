@@ -367,6 +367,8 @@ components:
           type: string
         max_phone_display:
           type: string
+        vk_url:
+          type: string
         email:
           type: string
         address:
@@ -388,6 +390,7 @@ components:
       - phone
       - phone_display
       - social_links
+      - vk_url
       - work_hours
     SocialLink:
       type: object

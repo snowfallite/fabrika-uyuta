@@ -75,7 +75,9 @@ def test_ac2_seed_fills_everything_with_pipeline_images(media_root: Path) -> Non
     contacts = SiteSettings.objects.get(id=1)
     assert contacts.phone and contacts.email and contacts.address and contacts.work_hours
     assert contacts.max_phone
-    assert contacts.social_links.count() == 1
+    # VK is its own field since v9; social_links stays for other networks.
+    assert contacts.vk_url
+    assert contacts.social_links.count() == 0
     statuses = sorted(Lead.objects.values_list("sheet_status", flat=True))
     assert statuses == sorted([SheetStatus.PENDING, SheetStatus.SENT, SheetStatus.FAILED])
 

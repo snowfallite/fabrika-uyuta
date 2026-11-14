@@ -25,6 +25,7 @@ class SiteSettingsSerializer(serializers.Serializer):
     phone_display = serializers.CharField()
     max_phone = serializers.CharField()
     max_phone_display = serializers.CharField()
+    vk_url = serializers.CharField()
     email = serializers.CharField()
     address = serializers.CharField()
     work_hours = serializers.CharField()
