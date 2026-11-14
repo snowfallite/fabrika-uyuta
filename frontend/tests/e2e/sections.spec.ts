@@ -17,6 +17,7 @@ const ANCHORS = [
 // seed_demo contacts.
 const PHONE = { href: 'tel:+78172000000', text: '+7 (817) 200-00-00' };
 const MAX_PHONE = '+7 (817) 200-00-01';
+const VK_URL = 'https://vk.com/';
 
 test.describe('home: static sections and contacts', () => {
 	test('AC1: every template section is on the page in order', async ({ page }) => {
@@ -64,6 +65,13 @@ test.describe('home: static sections and contacts', () => {
 		await expect(card).toHaveCount(1);
 		await expect(card).toContainText(MAX_PHONE);
 		await expect(card.getByRole('link')).toHaveCount(0);
+	});
+
+	test('the VK card links to the page from the settings', async ({ page }) => {
+		await page.goto('/');
+		const link = page.locator('#contacts').getByRole('link', { name: 'ВКонтакте' });
+		await expect(link).toHaveAttribute('href', VK_URL);
+		await expect(link).toHaveAttribute('target', '_blank');
 	});
 
 	test('axe finds no serious issues on the whole home page', async ({ page }) => {

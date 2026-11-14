@@ -24,6 +24,11 @@
 	--border: hsl(36 18% 82%);
 	--input: hsl(30 7% 52%);
 	--success: hsl(100 25% 32%);
+	/* Brand colours of VK and MAX, hex as their brandbooks give it (tech.md, v9). */
+	--brand-vk: #0077ff;
+	--brand-max: #471aff;
+	--brand-max-accent: #9500ff;
+	--brand-foreground: #ffffff;
 	--ring: hsl(27 22% 33%);
 	--radius: 0.9rem;
 }
@@ -50,6 +55,10 @@
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-success: var(--success);
+	--color-brand-vk: var(--brand-vk);
+	--color-brand-max: var(--brand-max);
+	--color-brand-max-accent: var(--brand-max-accent);
+	--color-brand-foreground: var(--brand-foreground);
 	--color-ring: var(--ring);
 
 	--radius-sm: calc(var(--radius) - 4px);

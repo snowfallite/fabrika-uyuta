@@ -20,7 +20,15 @@ describe('Contacts', () => {
 	it('AC3: empty settings leave no contact cards, labels or undefined', async () => {
 		const screen = await render(Contacts, { settings: empty });
 		const text = screen.container.textContent ?? '';
-		for (const label of ['Телефон', 'MAX', 'Email', 'Адрес', 'Часы работы', 'Открыть на карте']) {
+		for (const label of [
+			'Телефон',
+			'ВКонтакте',
+			'MAX',
+			'Email',
+			'Адрес',
+			'Часы работы',
+			'Открыть на карте'
+		]) {
 			expect(text).not.toContain(label);
 		}
 		expect(text).not.toContain('undefined');
@@ -46,7 +54,7 @@ describe('Contacts', () => {
 				phone_display: '+7 (817) 200-00-00',
 				address: 'Вологда',
 				map_url: 'https://yandex.ru/maps/?text=Vologda',
-				social_links: [{ label: 'ВКонтакте', url: 'https://vk.com/' }]
+				social_links: [{ label: 'Одноклассники', url: 'https://ok.ru/' }]
 			}
 		});
 		await expect
@@ -55,7 +63,17 @@ describe('Contacts', () => {
 		await expect
 			.element(screen.getByRole('link', { name: 'Открыть на карте' }))
 			.toHaveAttribute('href', 'https://yandex.ru/maps/?text=Vologda');
-		await expect.element(screen.getByRole('link', { name: 'ВКонтакте' })).toBeVisible();
+		await expect.element(screen.getByRole('link', { name: 'Одноклассники' })).toBeVisible();
+	});
+
+	it('the VK card links to the page from the settings', async () => {
+		const screen = await render(Contacts, {
+			settings: { ...empty, vk_url: 'https://vk.com/fabrikauyuta' }
+		});
+		const link = screen.getByRole('link', { name: 'ВКонтакте' });
+		await expect.element(link).toHaveAttribute('href', 'https://vk.com/fabrikauyuta');
+		await expect.element(link).toHaveAttribute('target', '_blank');
+		await expect.element(link).toHaveAttribute('rel', 'noopener external');
 	});
 
 	it('shows the MAX number as text, not as a link', async () => {

@@ -3,12 +3,13 @@
 	import Clock from '@lucide/svelte/icons/clock';
 	import Mail from '@lucide/svelte/icons/mail';
 	import MapPin from '@lucide/svelte/icons/map-pin';
-	import MessageCircle from '@lucide/svelte/icons/message-circle';
 	import Phone from '@lucide/svelte/icons/phone';
 	import { Button } from '$lib/components/ui/button';
 	import { Section } from '$lib/components/ui/section';
 	import { CONTACTS } from '$lib/content/home';
 	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
+	import MaxLogo from '$lib/icons/MaxLogo.svelte';
+	import VkLogo from '$lib/icons/VkLogo.svelte';
 	import type { SiteSettings } from '$lib/types';
 
 	interface Props {
@@ -21,25 +22,49 @@
 	const label = 'mb-1.5 text-xs font-medium tracking-widest text-muted-foreground uppercase';
 	// Sans for data: phone digits and hours stay legible and easy to copy.
 	const value = 'text-lg font-medium break-words text-primary';
+	// Brand cards (tech.md, 11): white on the brand colour, text from 24px up,
+	// because white on --brand-vk gives 4.1:1 and passes AA as large text only.
+	const brandCard = 'flex h-full items-center rounded-[1.5rem] p-6 text-brand-foreground';
+	const brandName = 'text-2xl leading-tight font-medium';
 </script>
 
 <Section id="contacts" title={CONTACTS.title} subtitle={CONTACTS.eyebrow} tone="muted">
 	<p class="-mt-4 mb-8 max-w-xl leading-relaxed text-muted-foreground">{CONTACTS.text}</p>
 	<!-- Empty settings fields hide their cards (tech.md, S2-10 AC3). -->
+	{#if settings.vk_url || settings.max_phone}
+		<ul class="mb-4 grid gap-4 sm:grid-cols-2 md:mb-6 md:gap-6">
+			{#if settings.vk_url}
+				<li>
+					<a
+						href={settings.vk_url}
+						class="{brandCard} lift-hover gap-2 bg-brand-vk focus-visible:outline-brand-foreground"
+						rel="noopener external"
+						target="_blank"
+					>
+						<VkLogo class="size-16 shrink-0" />
+						<span class={brandName}>{CONTACTS.vk}</span>
+						<ArrowUpRight class="ml-auto size-7 shrink-0" aria-hidden="true" />
+					</a>
+				</li>
+			{/if}
+			{#if settings.max_phone}
+				<li class="{brandCard} gap-5 bg-linear-to-br from-brand-max to-brand-max-accent">
+					<MaxLogo class="ml-2 size-9 shrink-0" />
+					<div>
+						<p class={brandName}>{CONTACTS.max}</p>
+						<!-- MAX has no profile URL keyed by number, so the number stays text (tech.md, v8). -->
+						<p class="text-xl">{settings.max_phone_display}</p>
+					</div>
+				</li>
+			{/if}
+		</ul>
+	{/if}
 	<ul class="grid gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
 		{#if settings.phone}
 			<li class={card}>
 				<Phone class="mb-4 size-6 text-primary" aria-hidden="true" />
 				<p class={label}>{CONTACTS.phone}</p>
 				<a href="tel:{settings.phone}" class="{value} hover:underline">{settings.phone_display}</a>
-			</li>
-		{/if}
-		{#if settings.max_phone}
-			<li class={card}>
-				<MessageCircle class="mb-4 size-6 text-primary" aria-hidden="true" />
-				<p class={label}>{CONTACTS.max}</p>
-				<!-- MAX has no profile URL keyed by number, so the number stays text (tech.md, v8). -->
-				<p class={value}>{settings.max_phone_display}</p>
 			</li>
 		{/if}
 		{#if settings.email}
