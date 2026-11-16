@@ -9,7 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
-- v11 (2026-11-17): уведомления о новых заявках по почте, решение владельца. Письмо со всеми полями заявки уходит на адреса из нового поля `SiteSettings.notify_emails` (админка, пусто отключает письма): получателей меняет контент-менеджер без деплоя, в DTO `SiteSettings` поле не входит. Доставку ведёт тот же `run_sheets_worker` вторым outbox-джобом (раздел 24): новые поля `Lead.notify_status` (перечисление `NotifyStatus`: `pending`, `sent`, `failed`, `off`), `notify_attempts`, `notify_next_attempt_at`, `notify_last_error`, `notify_sent_at`, индекс `lead_notify_due_idx`, ограничение `lead_notified_has_sent_at`, право `retry_notify` и действие админки «Повторить уведомление». Новая переменная `.env`: `LEAD_NOTIFY_MAX_ATTEMPTS` (6, около 15 минут ретраев). Правка 13.1: ПДн живут и в письме оператору, поэтому 13.2 требует назвать SMTP-провайдера в политике и согласии, а провайдер за пределами РФ даёт трансграничную передачу. Письма о заявках ушли из раздела 23 в скоуп задачей S2-13, мессенджеры и CRM остаются вне v1.
+- v11 (2026-11-17): уведомления о новых заявках по почте, решение владельца. Письмо со всеми полями заявки уходит на адреса из нового поля `SiteSettings.notify_emails` (админка, пусто отключает письма): получателей меняет контент-менеджер без деплоя, в DTO `SiteSettings` поле не входит. Доставку ведёт тот же `run_sheets_worker` вторым outbox-джобом (раздел 24): новые поля `Lead.notify_status` (перечисление `NotifyStatus`: `pending`, `sent`, `failed`, `off`; по умолчанию `off`, в очередь заявку ставит `create_lead`, поэтому после миграции письма по архиву заявок не уходят), `notify_attempts`, `notify_next_attempt_at`, `notify_last_error`, `notify_sent_at`, индекс `lead_notify_due_idx`, ограничение `lead_notified_has_sent_at`, право `retry_notify` и действие админки «Повторить уведомление». Новая переменная `.env`: `LEAD_NOTIFY_MAX_ATTEMPTS` (6, около 15 минут ретраев). Правка 13.1: ПДн живут и в письме оператору, поэтому 13.2 требует назвать SMTP-провайдера в политике и согласии, а провайдер за пределами РФ даёт трансграничную передачу. Письма о заявках ушли из раздела 23 в скоуп задачей S2-13, мессенджеры и CRM остаются вне v1.
 - v10 (2026-11-16): подготовка к деплою, решение владельца. Production разворачивается единым `compose.prod.yml` (caddy, db, release, backend, worker, frontend): образы собираются на VPS из репозитория, GHCR, внешняя сеть `edge` и отдельный compose для edge Caddy не нужны. Staging убран, окружений три: dev, e2e, production. Деплой запускает владелец на сервере через `deploy/deploy.sh`, CI на GitHub только проверяет PR; `deploy/edge/`, `deploy/compose.yml`, `deploy-staging.yml` и `release.yml` удалены, проверка `LEGAL_TEXT_PENDING` переехала в `deploy.sh`. Новые переменные `.env`: `DOMAIN` (домен сайта) и `ACME_EMAIL` (почта для Let's Encrypt). Каталог `template/` вынесен из репозитория в архив владельца: вёрстка уже перенесена в компоненты, значения токенов и типографика записаны в разделе 11. Добавлен `README.md`.
 - v9 (2026-11-15): VK и MAX выделены в контактах, решение владельца. Новое поле `SiteSettings.vk_url` (ссылка на страницу ВКонтакте, пустое скрывает карточку) и ключ `vk_url` в DTO `SiteSettings`: `social_links` остаётся для прочих сетей, `seed_demo` пишет `vk_url` и ссылок не создаёт. Новые брендовые токены в hex, hsl не годится (округление сдвигает фирменный цвет): `--brand-vk` `#0077FF` (официальный SVG логотипа VK), `--brand-max` `#471AFF` и `--brand-max-accent` `#9500FF` (брендбук MAX, «Синий гигант» и «Пурпурная туманность»), `--brand-foreground` `#FFFFFF`. Знаки из официальных брендбуков лежат в `src/lib/icons/VkLogo.svelte` и `src/lib/icons/MaxLogo.svelte`, `MessageCircle` у MAX больше не нужен. Приложение А: карточки «ВКонтакте» и «MAX» идут брендовым блоком над сеткой контактов, текст на брендовом фоне не меньше 24 px (белый на `--brand-vk` даёт 4,1:1).
 - v8 (2026-11-14): контакты и юр. черновики, решение владельца. Новое поле `SiteSettings.max_phone` (E.164, пустое скрывает карточку) и ключи `max_phone`, `max_phone_display` в DTO `SiteSettings`: ссылки на профиль по номеру у MAX нет, номер показывается текстом без ссылки. Приложение А: подпись карточки «MAX», иконка `MessageCircle`. Черновик политики ПДн и согласия пишет сессия, плашка «Проект документа. Текст проверяет юрист.» и маркер `LEGAL_TEXT_PENDING` стоят до текста юриста.
@@ -297,7 +297,7 @@ class NotifyStatus(models.TextChoices):
     PENDING = "pending", "Ожидает отправки"
     SENT = "sent", "Отправлено"
     FAILED = "failed", "Ошибка отправки"
-    OFF = "off", "Получатели не заданы"
+    OFF = "off", "Не отправляется"
 ```
 
 ```python
@@ -415,9 +415,8 @@ class Lead(models.Model):
     sheet_alerted_at = models.DateTimeField(null=True, blank=True)  # alerts, section 8.4
 
     # Second outbox: the email to the managers, section 24.
-    notify_status = models.CharField(
-        max_length=16, choices=NotifyStatus.choices, default=NotifyStatus.PENDING
-    )
+    # Default off: create_lead queues new leads, rows that predate the feature stay out.
+    notify_status = models.CharField(max_length=16, choices=NotifyStatus.choices, default=NotifyStatus.OFF)
     notify_attempts = models.PositiveSmallIntegerField(default=0)
     notify_next_attempt_at = models.DateTimeField(default=timezone.now)
     notify_last_error = models.CharField(max_length=500, blank=True)  # smtp code + class, never PII
@@ -1573,7 +1572,7 @@ tech.md v<N>; touched: <sections> | none
 - AC2: `notify_lead` дважды для одной заявки → одно письмо.
 - AC3: SMTP недоступен → `pending`, `attempts + 1`, `notify_next_attempt_at` в пределах `[now + 0,8·base, now + 1,2·base]`, где `base = min(30·2^(n−1), 3600)`; после `LEAD_NOTIFY_MAX_ATTEMPTS` → `failed`.
 - AC4: `SMTPRecipientsRefused` → `failed` сразу, `notify_last_error` содержит код SMTP и класс ошибки, адресов и ПДн в нём нет.
-- AC5: `notify_emails` пусто → `notify_status=off`, письма нет, попытки не растут.
+- AC5: `notify_emails` пусто → `notify_status=off`, письма нет, попытки не растут. Заявка, созданная до миграции (`off`), письма не вызывает.
 - AC6: тело письма содержит ФИО, телефон, вид, размеры, комментарий, источник, дату и ссылку на карточку; пустые поля строк не дают; в теме и логах ПДн нет.
 - AC7: действие «Повторить уведомление»: `failed` и `off` → `pending`, `attempts=0`, `notify_last_error=""`; `sent` и `pending` действие не меняет; право у группы «Заявки», группа «Контент» заявок не видит.
 - AC8: невалидный адрес в `notify_emails` не сохраняется; `GET /api/v1/site-settings/` и `openapi.yaml` поля `notify_emails` не содержат.
@@ -1637,6 +1636,7 @@ tech.md v<N>; touched: <sections> | none
   3. `send_mail` на всех получателей. Успех: `sent`, `notify_sent_at=now`, `notify_last_error=""`.
   4. `SMTPRecipientsRefused`, `SMTPSenderRefused`, `SMTPAuthenticationError`, `SMTPNotSupportedError`: `attempts += 1`, сразу `failed`. Это ошибка настройки, ретрай её не исправит.
   5. Прочие `SMTPException` и `OSError`: `attempts += 1`. `attempts >= LEAD_NOTIFY_MAX_ATTEMPTS`: `failed`. Иначе `notify_next_attempt_at = now + backoff_seconds(attempts, rng)`. Функция та же, что у таблицы (8.4), живёт в `apps/leads/retry.py`.
+- Очередь наполняет только `create_lead`: поле по умолчанию `off`, поэтому заявки, созданные до включения уведомлений, писем не вызывают. Поднять такую заявку можно действием «Повторить уведомление».
 - Переходы статусов: `pending → sent`, `pending → pending` (ретрай), `pending → failed`, `pending → off`, `failed → pending` и `off → pending` (админ-действие «Повторить уведомление»: `attempts=0`, `next_attempt_at=now`, `notify_last_error=""`). Других переходов нет.
 - Идемпотентность: блокировка и проверка статуса дают одно письмо на заявку. Сорванный коммит после удачного `send_mail` повторит письмо: у SMTP нет запроса «есть ли уже такая строка», а дубль письма безвреден, в отличие от дубля строки в таблице.
 - Очереди независимы: недоступный SMTP не задерживает доставку в таблицу и наоборот.
