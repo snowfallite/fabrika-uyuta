@@ -15,6 +15,12 @@ x-backend: &backend
     APP_ENV: production
     POSTGRES_HOST: db
     MEDIA_ROOT: /data/media
+    # Everything below follows from DOMAIN, so .env keeps only secrets and choices.
+    # 127.0.0.1 answers the healthcheck, backend answers SvelteKit over the network.
+    DJANGO_ALLOWED_HOSTS: ${DOMAIN:?set DOMAIN in .env},backend,127.0.0.1
+    DJANGO_CSRF_TRUSTED_ORIGINS: https://${DOMAIN}
+    # The worker puts this in front of the admin link in alert emails (8.4).
+    PUBLIC_SITE_URL: https://${DOMAIN}
   volumes:
     - media:/data/media
     - ./google-sa.json:/run/secrets/google-sa.json:ro

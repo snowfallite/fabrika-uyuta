@@ -1085,7 +1085,7 @@ Branch protection на `main`: только через PR; обязательн�
 Подготовка VPS, один раз:
 1. Docker с плагином compose; DNS-запись `<domain>` на IP сервера; порты 80 и 443 открыты.
 2. `git clone https://github.com/<owner>/fabrika-uyuta.git /opt/fabrika/app`.
-3. `/opt/fabrika/app/.env`: копия `.env.example` с production-значениями (раздел 14). Минимум: `APP_ENV=production`, `DOMAIN`, `ACME_EMAIL`, `DJANGO_SECRET_KEY`, `INTERNAL_API_TOKEN` (от 32 символов), `DJANGO_ADMIN_PATH` не `admin/`, `DJANGO_DEBUG=false`, `ENABLE_TEST_ENDPOINTS=false`, пароль Postgres.
+3. `/opt/fabrika/app/.env`: копия `.env.example` с production-значениями (раздел 14). Заполнить: `DOMAIN`, `ACME_EMAIL`, `POSTGRES_PASSWORD`, `DJANGO_SECRET_KEY`, `INTERNAL_API_TOKEN` (от 32 символов), `DJANGO_DEBUG=false`, `DJANGO_ADMIN_PATH` не `admin/`, `ENABLE_TEST_ENDPOINTS=false`, `CONSENT_VERSION`, при боевой таблице `SHEETS_BACKEND=google` с `GOOGLE_SERVICE_ACCOUNT_FILE=/run/secrets/google-sa.json` и `GOOGLE_SPREADSHEET_ID`, при алертах `ALERT_EMAIL` и `EMAIL_*`. Хосты, CSRF-источники и адрес сайта выводит compose из `DOMAIN` (16.5).
 4. `/opt/fabrika/app/google-sa.json`: ключ сервисного аккаунта, если `SHEETS_BACKEND=google`.
 5. `deploy/deploy.sh`, затем `manage.py createsuperuser` в контейнере backend.
 
@@ -1118,7 +1118,8 @@ Caddy стоит в том же `compose.prod.yml`, что и остальные
 - Образы собираются из репозитория там, где запускаются: `compose.prod.yml` и `compose.e2e.yml` объявляют `build` с контекстом в корне. Реестра нет, `docker login` не нужен.
 - backend: `python:3.13-slim`, uv, `uv sync --frozen --no-dev`, `collectstatic` на сборке, пользователь без root. Роли: web `gunicorn config.wsgi -k gthread -w 2 --threads 4 -t 120 -b 0.0.0.0:8000`; worker `python manage.py run_sheets_worker` (`stop_grace_period: 30s`); release `python manage.py release`.
 - frontend: `node:24-slim`, сборка pnpm, `node build`, пользователь без root, `PORT=3000`.
-- `compose.prod.yml`: caddy, db, release (одноразовый, `service_completed_successfully` для остальных), backend, worker, frontend; тома `pgdata`, `media`, `caddy-data`, `caddy-config`; окружение из `.env` рядом с файлом, `APP_ENV=production`, `MEDIA_ROOT=/data/media`, `ORIGIN=https://${DOMAIN}`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`; наружу открыты только порты Caddy.
+- `compose.prod.yml`: caddy, db, backend, worker, frontend и одноразовый `release` в профиле `release` (в `up` он не входит, его запускает `deploy.sh` через `run --rm`); тома `pgdata`, `media`, `caddy-data`, `caddy-config`; наружу открыты только порты Caddy.
+- Окружение production: `.env` рядом с `compose.prod.yml` держит секреты и решения, остальное задаёт compose. Из `DOMAIN` выводятся `DJANGO_ALLOWED_HOSTS` (`<domain>,backend,127.0.0.1`: первый для посетителей, второй для SvelteKit, третий для healthcheck), `DJANGO_CSRF_TRUSTED_ORIGINS`, `PUBLIC_SITE_URL` (ссылка на админку в письмах-алертах, 8.4) и `ORIGIN`. Compose также ставит `APP_ENV=production`, `PUBLIC_APP_ENV=production`, `MEDIA_ROOT=/data/media`, `POSTGRES_HOST=db`, `API_INTERNAL_URL=http://backend:8000`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`. Значения этих переменных в `.env` на production не влияют.
 - `compose.e2e.yml`: те же образы из Dockerfile, тот же release-шаг; Caddy на `localhost:8080` (`Caddyfile.e2e`); backend публикует `8000` только для тестового эндпоинта; `APP_ENV=e2e`, `DJANGO_DEBUG=false`, `ORIGIN=http://localhost:8080`, `LEAD_THROTTLE_RATE=1000/hour`, `ENABLE_TEST_ENDPOINTS=true`, `SHEETS_BACKEND=fake`, `SHEETS_POLL_SECONDS=1`; backend и worker делят том `/data` (media, фейковая таблица).
 
 ### 16.6 Ограничения Claude Code (`.claude/settings.json`)

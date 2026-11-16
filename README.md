@@ -122,26 +122,31 @@ git clone https://github.com/snowfallite/fabrika-uyuta.git /opt/fabrika/app
 cd /opt/fabrika/app && cp .env.example .env
 ```
 
-Заполните `.env`. Минимум для production:
+Заполните `.env`. Руками задаются только эти строки, по порядку файла:
 
 | Переменная | Значение |
 |---|---|
-| `APP_ENV` | `production` |
-| `DOMAIN` | домен сайта, например `fabrika-uyuta.ru` |
-| `ACME_EMAIL` | почта для уведомлений Let's Encrypt |
+| `DOMAIN` | домен сайта без схемы и слэша, например `fabrika-uyuta.ru` |
+| `ACME_EMAIL` | ваша почта: на неё Let's Encrypt пишет об истечении сертификата |
 | `POSTGRES_PASSWORD` | длинный случайный пароль |
-| `DJANGO_SECRET_KEY` | случайная строка, не dev-значение |
+| `DJANGO_SECRET_KEY` | случайная строка от 50 символов |
 | `DJANGO_DEBUG` | `false` |
-| `DJANGO_ALLOWED_HOSTS` | `<домен>,backend,127.0.0.1` |
-| `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://<домен>`, иначе вход в админку отклонится |
 | `DJANGO_ADMIN_PATH` | секретный путь со слэшем на конце, не `admin/` |
 | `INTERNAL_API_TOKEN` | случайная строка от 32 символов |
+| `CONSENT_VERSION` | дата версии текста согласия, например `2026-12-01` |
 | `ENABLE_TEST_ENDPOINTS` | `false` |
-| `PUBLIC_APP_ENV` | `production`, иначе `robots.txt` запретит индексацию |
-| `SHEETS_BACKEND` | `google` для боевой таблицы, `fake` для прогона без Google |
-| `GOOGLE_SERVICE_ACCOUNT_FILE` | `/run/secrets/google-sa.json` |
-| `GOOGLE_SPREADSHEET_ID` | ID таблицы заказчика |
+| `SHEETS_BACKEND` | `google` для боевой таблицы, `fake` чтобы запустить сайт без Google |
+| `GOOGLE_SERVICE_ACCOUNT_FILE` | `/run/secrets/google-sa.json` при `SHEETS_BACKEND=google` |
+| `GOOGLE_SPREADSHEET_ID` | ID таблицы заказчика из её URL |
 | `ALERT_EMAIL`, `EMAIL_*` | письма о застрявших заявках; пустой `ALERT_EMAIL` выключает алерты |
+
+Секреты удобно сгенерировать на сервере:
+
+```bash
+openssl rand -base64 48 && openssl rand -hex 24
+```
+
+Остальное `compose.prod.yml` подставляет сам, и значения этих строк в `.env` на production не влияют: `APP_ENV`, `PUBLIC_APP_ENV`, `POSTGRES_HOST`, `MEDIA_ROOT`, `API_INTERNAL_URL`, `ADDRESS_HEADER`, `XFF_DEPTH`, а из `DOMAIN` выводятся `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `PUBLIC_SITE_URL` и `ORIGIN`. Блок `# e2e` в production не нужен.
 
 Ключ сервисного аккаунта положите рядом: `/opt/fabrika/app/google-sa.json`. Файл и `.env` в `.gitignore`, `git pull` их не трогает.
 
