@@ -248,3 +248,21 @@ def test_build_message_keeps_the_subject_free_of_the_lead(name: str, comment: st
         assert name in message.body
     if not comment.strip():
         assert "Комментарий" not in message.body
+
+
+def test_ac10_production_without_smtp_keeps_the_lead_and_the_log_clean(
+    settings: Any, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings.APP_ENV = "production"
+    settings.EMAIL_HOST = ""
+    lead = queued(comment="секретное пожелание")
+
+    with caplog.at_level("INFO", logger="apps.leads.notify"):
+        assert notify_lead(lead.pk, timezone.now(), RNG) is NotifyOutcome.RETRY
+
+    assert not mail.outbox
+    lead.refresh_from_db()
+    assert lead.notify_status == NotifyStatus.PENDING
+    assert "SmtpNotConfigured" in lead.notify_last_error
+    for secret in (lead.name, lead.phone, lead.comment):
+        assert secret not in caplog.text

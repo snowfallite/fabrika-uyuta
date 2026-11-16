@@ -40,6 +40,10 @@ PERMANENT_ERRORS = (
 )
 
 
+class SmtpNotConfigured(Exception):
+    """Production without EMAIL_HOST: the console backend would print the lead itself."""
+
+
 class NotifyOutcome(enum.StrEnum):
     SENT = "sent"
     RETRY = "retry"
@@ -105,6 +109,9 @@ def notify_lead(lead_id: int, now: datetime, rng: random.Random) -> NotifyOutcom
             attempt += 1
             message = build_message(lead, ZoneInfo(settings.SHEETS_TIMEZONE), card_url(lead))
             try:
+                if not settings.EMAIL_HOST and settings.APP_ENV == "production":
+                    # The console backend writes the lead into the log (tech.md, 13.1, 24.1).
+                    raise SmtpNotConfigured
                 send_mail(
                     subject=message.subject,
                     message=message.body,
@@ -113,7 +120,7 @@ def notify_lead(lead_id: int, now: datetime, rng: random.Random) -> NotifyOutcom
                 )
             except PERMANENT_ERRORS as exc:
                 outcome = _fail(lead, exc)
-            except (SMTPException, OSError) as exc:
+            except (SmtpNotConfigured, SMTPException, OSError) as exc:
                 outcome = _retry(lead, exc, now, rng)
             except Exception as exc:
                 logger.exception(
