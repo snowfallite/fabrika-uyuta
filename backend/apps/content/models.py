@@ -91,6 +91,8 @@ class SiteSettings(models.Model):
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)
     map_url = models.URLField("Ссылка на карту", blank=True)
+    # Where new leads are emailed (tech.md, 24.1). Internal: never part of the DTO.
+    notify_emails = models.TextField("Куда присылать заявки", blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
