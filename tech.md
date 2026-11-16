@@ -1564,8 +1564,8 @@ tech.md v<N>; touched: <sections> | none
 
 ### S2-13 Уведомления о новых заявках по почте
 - Цель: менеджер получает письмо с полями новой заявки; адреса получателей задаются в админке без деплоя.
-- Бэкенд: `NotifyStatus` в `apps/core/enums.py`, поля уведомления в `Lead`, `SiteSettings.notify_emails`, `apps/leads/notify.py` (`parse_recipients`, `build_message`, `notify_lead`, `run_notify_batch`), `apps/leads/retry.py` (`backoff_seconds` переезжает из `worker.py`), партия уведомлений в `run_cycle`, `apps/leads/services/notify_retry.py`, колонка, фильтр и действие в `LeadAdmin`, поле и валидация адресов в `SiteSettingsAdmin`, право `retry_notify` в группе «Заявки», `seed_demo`.
-- Фронтенд: ничего. DTO, `openapi.yaml` и типы не меняются.
+- Бэкенд: `NotifyStatus` в `apps/core/enums.py`, поля уведомления в `Lead`, `SiteSettings.notify_emails`, `apps/leads/notify.py` (`parse_recipients`, `build_message`, `notify_lead`, `run_notify_batch`), `apps/leads/retry.py` (`backoff_seconds` переезжает из `worker.py`), партия уведомлений в `run_cycle`, `apps/leads/services/notify_retry.py`, колонка, фильтр и действие в `LeadAdmin`, поле и валидация адресов в `SiteSettingsAdmin`, право `retry_notify` в группе «Заявки», `seed_demo`, `LEAD_NOTIFY_MAX_ATTEMPTS` в `config/settings.py`.
+- Фронтенд: только черновики `/privacy` и `/consent`, где назван новый получатель ПДн (13.2). DTO, `openapi.yaml` и типы не меняются. Раздел «Заявки и Google-таблица» в `README.md` описывает письма.
 - Контракты: 6, 7 (внутреннее поле вне DTO), 13.1, 13.2, 14, 15.2, 15.3, 24.
 - Зависит от: S2-01, S2-05.
 - AC1: заявка создана, в `notify_emails` два адреса, один цикл воркера → одно письмо на оба адреса, тема и тело по 24.2, `notify_status=sent`, `notify_sent_at` заполнен.
