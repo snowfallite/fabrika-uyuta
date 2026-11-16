@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v9
-- Дата: 2026-11-15
+- Версия: v10
+- Дата: 2026-11-16
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v10 (2026-11-16): подготовка к деплою, решение владельца. Production разворачивается единым `compose.prod.yml` (caddy, db, release, backend, worker, frontend): образы собираются на VPS из репозитория, GHCR, внешняя сеть `edge` и отдельный compose для edge Caddy не нужны. Staging убран, окружений три: dev, e2e, production. Деплой запускает владелец на сервере через `deploy/deploy.sh`, CI на GitHub только проверяет PR; `deploy/edge/`, `deploy/compose.yml`, `deploy-staging.yml` и `release.yml` удалены, проверка `LEGAL_TEXT_PENDING` переехала в `deploy.sh`. Новые переменные `.env`: `DOMAIN` (домен сайта) и `ACME_EMAIL` (почта для Let's Encrypt). Каталог `template/` вынесен из репозитория в архив владельца: вёрстка уже перенесена в компоненты, значения токенов и типографика записаны в разделе 11. Добавлен `README.md`.
 - v9 (2026-11-15): VK и MAX выделены в контактах, решение владельца. Новое поле `SiteSettings.vk_url` (ссылка на страницу ВКонтакте, пустое скрывает карточку) и ключ `vk_url` в DTO `SiteSettings`: `social_links` остаётся для прочих сетей, `seed_demo` пишет `vk_url` и ссылок не создаёт. Новые брендовые токены в hex, hsl не годится (округление сдвигает фирменный цвет): `--brand-vk` `#0077FF` (официальный SVG логотипа VK), `--brand-max` `#471AFF` и `--brand-max-accent` `#9500FF` (брендбук MAX, «Синий гигант» и «Пурпурная туманность»), `--brand-foreground` `#FFFFFF`. Знаки из официальных брендбуков лежат в `src/lib/icons/VkLogo.svelte` и `src/lib/icons/MaxLogo.svelte`, `MessageCircle` у MAX больше не нужен. Приложение А: карточки «ВКонтакте» и «MAX» идут брендовым блоком над сеткой контактов, текст на брендовом фоне не меньше 24 px (белый на `--brand-vk` даёт 4,1:1).
 - v8 (2026-11-14): контакты и юр. черновики, решение владельца. Новое поле `SiteSettings.max_phone` (E.164, пустое скрывает карточку) и ключи `max_phone`, `max_phone_display` в DTO `SiteSettings`: ссылки на профиль по номеру у MAX нет, номер показывается текстом без ссылки. Приложение А: подпись карточки «MAX», иконка `MessageCircle`. Черновик политики ПДн и согласия пишет сессия, плашка «Проект документа. Текст проверяет юрист.» и маркер `LEGAL_TEXT_PENDING` стоят до текста юриста.
 - v7 (2026-09-26): аудит внешнего вида (`.design-audit/REPORT.md`), решение владельца. Плашки hero («Материалы / ЛДСП и МДФ») и about («Индивидуально / под ваше пространство») убраны из приложения А. Токен `--input` отделён от `--border`: `hsl(30 7% 52%)`, граница поля 3,4:1 к фону (было 1,4:1). Новый токен `--success` `hsl(100 25% 32%)` для Alert `success`. Hero: `sizes="(min-width: 1024px) 50vw, 100vw"` вместо `100vw` (фото в половину ширины на десктопе). Плейсхолдер размеров короче: «Стена 3,2 м, высота 2,6 м» (обрезался на 360 px). Новые тексты UI: `aria-label` «Позвонить» у кнопки звонка в шапке на мобильных, счётчик лайтбокса `<n> / <всего>`.
@@ -157,7 +158,7 @@ frontend/src/lib/components/ui/**
 Браузер
   │ HTTPS
   ▼
-Caddy
+Caddy (сервис того же compose, TLS от Let's Encrypt)
   ├─ /api/*                                    → 404
   ├─ /media/*                                  → файлы из тома media (read-only)
   ├─ /<DJANGO_ADMIN_PATH>*, /django-static/*   → backend:8000
@@ -183,26 +184,26 @@ Postgres 18 ◄── worker (образ backend, run_sheets_worker) ──► G
 Структура:
 ```
 /
+├─ README.md                   # установка, разработка, деплой
 ├─ tech.md                     # ядро
 ├─ CLAUDE.md                   # импорт ядра в Claude Code
 ├─ Makefile                    # единые команды (15.4)
 ├─ .env.example                # единый файл окружения для бэка и фронта
 ├─ compose.yml                 # dev: db, backend, worker
 ├─ compose.e2e.yml             # полный стек из Dockerfile для E2E
+├─ compose.prod.yml            # production: caddy, db, release, backend, worker, frontend
 ├─ .claude/settings.json       # правила доступа Claude Code (16.6)
-├─ .github/workflows/          # ci.yml, deploy-staging.yml, release.yml
-├─ template/                   # шаблон сайта: только чтение, образец вёрстки
+├─ .github/workflows/ci.yml    # гейт на PR, деплоя в CI нет
 ├─ contracts/
 │  ├─ openapi.yaml             # генерируется, руками не править
 │  └─ fixtures/phone-cases.json
 ├─ scripts/contract_guard.py, scripts/test_contract_guard.py
 ├─ docs/adr/                   # ADR по решениям о контрактах (19.2)
 ├─ deploy/
-│  ├─ compose.yml              # стек на VPS, образы из GHCR
 │  ├─ deploy.sh, smoke.sh, backup.sh, RESTORE.md
-│  ├─ caddy/site.caddy         # сниппет маршрутизации, общий для всех окружений
-│  ├─ caddy/Caddyfile.e2e
-│  └─ edge/compose.yml, edge/Caddyfile
+│  ├─ caddy/Caddyfile          # production: домен, TLS, маршрутизация
+│  ├─ caddy/Caddyfile.e2e      # e2e: localhost:8080
+│  └─ caddy/site.caddy         # сниппет маршрутизации, общий для e2e и production
 ├─ backend/
 │  ├─ pyproject.toml, uv.lock, Dockerfile, manage.py
 │  ├─ config/settings.py, urls.py, wsgi.py
@@ -920,7 +921,7 @@ Layout (`src/lib/components/layout/`):
 ### 13.1 Безопасность
 
 - API только внутренний: Caddy отдаёт 404 на `/api/*`, Django требует `X-Internal-Token`.
-- Админка: путь из `DJANGO_ADMIN_PATH` (в staging и production не `admin/`); django-axes: 5 неудачных входов → блокировка на час по паре логин + IP, IP из `X-Forwarded-For` с одним доверенным прокси; стандартные валидаторы паролей; только HTTPS: `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SECURE_PROXY_SSL_HEADER`, `CSRF_TRUSTED_ORIGINS`.
+- Админка: путь из `DJANGO_ADMIN_PATH` (в production не `admin/`); django-axes: 5 неудачных входов → блокировка на час по паре логин + IP, IP из `X-Forwarded-For` с одним доверенным прокси; стандартные валидаторы паролей; только HTTPS: `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE`, `SECURE_PROXY_SSL_HEADER`, `CSRF_TRUSTED_ORIGINS`.
 - Загрузки: тело запроса к админке до 200 МБ (Caddy), файл до 20 МБ, пакет до 20 файлов, лимит пикселей Pillow (раздел 9).
 - Заголовки на Caddy: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, HSTS только в production. CSP сайта: 10.2.
 - Google Sheets: `valueInputOption=RAW` (formula injection).
@@ -943,11 +944,15 @@ Layout (`src/lib/components/layout/`):
 - Системная проверка `apps/core/checks.py` (уровень Error) валит `check --deploy` при `APP_ENV` в `staging` или `production`, если: `DJANGO_DEBUG=true`; `DJANGO_SECRET_KEY` пуст или равен dev-значению; `INTERNAL_API_TOKEN` короче 32 символов или равен dev-значению; `DJANGO_ADMIN_PATH=admin/`; `ENABLE_TEST_ENDPOINTS=true`; `SHEETS_BACKEND=google` без `GOOGLE_*`.
 - Фронтенд читает окружение только через `$env/dynamic/*`.
 - Makefile подключает корневой `.env` (`-include .env`, `export`).
-- Dev-compose переопределяет только `POSTGRES_HOST=db`. Staging, production и e2e задают окружение в compose, пути данных в `/data`.
+- Dev-compose переопределяет только `POSTGRES_HOST=db`. E2E задаёт окружение в compose, пути данных в `/data`. Production читает `.env` рядом с `compose.prod.yml` (на VPS это `/opt/fabrika/app/.env`), `MEDIA_ROOT=/data/media` приходит из compose.
 
 ```dotenv
 # common
-APP_ENV=dev                               # dev | e2e | staging | production
+APP_ENV=dev                               # dev | e2e | production
+
+# vps; Caddy reads them from this file, empty outside production
+DOMAIN=
+ACME_EMAIL=
 
 # postgres
 POSTGRES_DB=fabrika
@@ -1002,7 +1007,7 @@ E2E_BASE_URL=http://localhost:8080
 E2E_API_URL=http://localhost:8000
 ```
 
-Файлы на VPS: `/opt/fabrika/<env>/.env`, `/opt/fabrika/<env>/google-sa.json` (монтируется read-only в `/run/secrets/google-sa.json`).
+Файлы на VPS: `/opt/fabrika/app/.env` и `/opt/fabrika/app/google-sa.json` рядом с `compose.prod.yml` в клоне репозитория. Оба в `.gitignore`, `git pull` их не трогает. Ключ монтируется read-only в `/run/secrets/google-sa.json`.
 
 ## 15. Миграции, справочники, сид, команды
 
@@ -1056,8 +1061,7 @@ E2E_API_URL=http://localhost:8000
 |---|---|---|---|---|
 | dev | локально | `localhost:5173` | `seed_demo` | fake |
 | e2e | CI, `make e2e` | `localhost:8080` | `seed_demo` | fake (файл) |
-| staging | мёрдж в `main` | `stage.<domain>`, basic auth, noindex | `seed_demo` + ручные | google, тестовая таблица |
-| production | тег `v*.*.*` | `<domain>` | реальные | google, таблица заказчика |
+| production | `deploy/deploy.sh` на VPS | `<domain>` | реальные | google, таблица заказчика |
 
 ### 16.2 Гейт на PR (`.github/workflows/ci.yml`, без деплоя)
 
@@ -1070,42 +1074,51 @@ E2E_API_URL=http://localhost:8000
 - `e2e` (с S1-10): `docker compose -f compose.e2e.yml up --build --wait`, `seed_demo`, Playwright (Chromium: 1440 px и 360 px), отчёт артефактом при падении.
 - `contract-guard`: `pytest scripts/`, затем `python scripts/contract_guard.py` (раздел 3).
 
-Игнор-листы: `template/` исключён из prettier, eslint, knip, tsconfig, svelte-check, ruff и Docker-контекста. `contracts/openapi.yaml` и `api.d.ts` исключены из prettier и eslint. knip игнорирует экспорты `src/lib/components/ui/**` и `src/lib/types/api.d.ts`.
+Игнор-листы: `contracts/openapi.yaml` и `api.d.ts` исключены из prettier и eslint. knip игнорирует экспорты `src/lib/components/ui/**` и `src/lib/types/api.d.ts`.
 
 Branch protection на `main`: только через PR; обязательные проверки `front`, `back`, `drift`, `contract-guard` с S1-03, `e2e` с S1-10; squash merge; обязательных аппрувов нет (один разработчик); ветка удаляется после мёрджа.
 
 ### 16.3 Деплой
 
-- `deploy-staging.yml` (push в `main`): сборка `ghcr.io/<owner>/fabrika-backend:<sha>` и `ghcr.io/<owner>/fabrika-frontend:<sha>`, push в GHCR, `rsync` папки `deploy/` на VPS в `/opt/fabrika/app/`, SSH, `deploy.sh staging <sha>`, `smoke.sh https://stage.<domain>`.
-- `release.yml` (тег `v*.*.*`): образы не пересобираются, коммит тега уже собран, ретег `<sha>` → `<tag>`. Перед деплоем поиск `LEGAL_TEXT_PENDING` в `frontend/src`: найден → стоп. Затем `deploy.sh production <tag>` и `smoke.sh`. Одобрение: тег ставит только владелец; если план GitHub даёт required reviewers для приватных репозиториев, добавить Environment `production` с одобрением. `workflow_dispatch` с входом `tag` для отката.
-- `deploy/deploy.sh <env> <tag>`:
-  1. `docker compose -p fabrika-<env> --env-file /opt/fabrika/<env>/.env pull`;
-  2. `docker compose ... run --rm backend python manage.py release`: `check --deploy`, `migrate --noinput`, `createcachetable`, `sync_reference_data`, `sheets_check` (при `SHEETS_BACKEND=google`). Ошибка: выход 1, старые контейнеры продолжают работать;
-  3. `up -d --remove-orphans`;
-  4. ждать healthy до 120 с: backend `/healthz` (БД и heartbeat воркера), frontend `/healthz`. Не дождались: выход 1.
-- Откат: `deploy.sh <env> <предыдущий tag>`. Работает, потому что миграции только расширяющие (15.1).
-- Первый деплой staging: владелец вручную запускает `seed_demo`.
-- GitHub Secrets: `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `STAGING_BASIC_AUTH` (`user:password` для smoke staging); GitHub Variable `DOMAIN`. `deploy.sh` берёт `GHCR_OWNER` из окружения. На VPS один раз `docker login ghcr.io` токеном с `read:packages`.
+Деплой запускает владелец на VPS. GitHub Actions только проверяет PR (16.2): доступа к серверу и секретов у CI нет, реестра образов тоже.
 
-### 16.4 Edge Caddy и маршрутизация
+Подготовка VPS, один раз:
+1. Docker с плагином compose; DNS-запись `<domain>` на IP сервера; порты 80 и 443 открыты.
+2. `git clone https://github.com/<owner>/fabrika-uyuta.git /opt/fabrika/app`.
+3. `/opt/fabrika/app/.env`: копия `.env.example` с production-значениями (раздел 14). Минимум: `APP_ENV=production`, `DOMAIN`, `ACME_EMAIL`, `DJANGO_SECRET_KEY`, `INTERNAL_API_TOKEN` (от 32 символов), `DJANGO_ADMIN_PATH` не `admin/`, `DJANGO_DEBUG=false`, `ENABLE_TEST_ENDPOINTS=false`, пароль Postgres.
+4. `/opt/fabrika/app/google-sa.json`: ключ сервисного аккаунта, если `SHEETS_BACKEND=google`.
+5. `deploy/deploy.sh`, затем `manage.py createsuperuser` в контейнере backend.
 
-Один Caddy на VPS (`deploy/edge/`), внешняя Docker-сеть `edge`. В сети `edge` сервисы стека получают алиасы `<project>-backend` и `<project>-frontend`, где `<project>` это `fabrika-production`, `fabrika-staging` или `e2e`. Тома media стеков подключены к edge Caddy как external read-only в `/srv/<project>/media`. Маршрутизация в сниппете `deploy/caddy/site.caddy` с аргументами: префикс проекта и путь админки. Его же импортирует `Caddyfile.e2e`.
+Релиз: `git pull` в `/opt/fabrika/app`, затем `deploy/deploy.sh`:
+1. поиск `LEGAL_TEXT_PENDING` в `frontend/src`: найден → стоп, деплой не идёт (13.2);
+2. `docker compose -f compose.prod.yml build`;
+3. `docker compose -f compose.prod.yml run --rm release`: `check --deploy`, `migrate --noinput`, `createcachetable`, `sync_reference_data`, `sheets_check` (при `SHEETS_BACKEND=google`). Ошибка: выход 1, старые контейнеры продолжают работать;
+4. `up -d --remove-orphans --wait --wait-timeout 300`: ждёт healthy backend `/healthz` (БД и heartbeat воркера) и frontend `/healthz`. Не дождались: выход 1;
+5. `smoke.sh https://<domain>`.
+
+Откат: `git checkout <предыдущий тег или коммит>` и снова `deploy.sh`. Работает, потому что миграции только расширяющие (15.1).
+
+Сборке фронта нужно около 2 ГБ оперативной памяти. На сервере меньшего размера владелец включает swap до первого деплоя.
+
+### 16.4 Caddy и маршрутизация
+
+Caddy стоит в том же `compose.prod.yml`, что и остальные сервисы: внешней сети и второго compose-файла нет. Он слушает 80 и 443, берёт сертификат Let's Encrypt на `{$DOMAIN}` с почтой `{$ACME_EMAIL}` и монтирует том media read-only в `/srv/media`. Маршрутизацию задаёт сниппет `deploy/caddy/site.caddy` с одним аргументом: путь админки. Сниппет импортируют оба Caddyfile: `deploy/caddy/Caddyfile` (production) и `deploy/caddy/Caddyfile.e2e` (e2e на `localhost:8080`).
 
 | Путь | Куда | Примечание |
 |---|---|---|
 | `/api/*` | `respond 404` | API только внутренний |
-| `/media/*` | `file_server` из `/srv/<project>/media` | `Cache-Control: public, max-age=31536000, immutable` |
-| `/<DJANGO_ADMIN_PATH>*`, `/django-static/*` | `reverse_proxy <project>-backend:8000` | `request_body max_size 200MB` |
-| остальное | `reverse_proxy <project>-frontend:3000` | |
+| `/media/*` | `file_server` из `/srv/media` | `Cache-Control: public, max-age=31536000, immutable` |
+| `/<DJANGO_ADMIN_PATH>*`, `/django-static/*` | `reverse_proxy backend:8000` | `request_body max_size 200MB` |
+| остальное | `reverse_proxy frontend:3000` | |
 
-Везде: `encode zstd gzip`, заголовки из 13.1, `header -Server`. Production: HSTS. Staging: `basic_auth`, `X-Robots-Tag: noindex, nofollow`.
-
-Edge Caddy читает `/opt/fabrika/edge/.env`: `DOMAIN`, `ACME_EMAIL`, `PRODUCTION_ADMIN_PATH`, `STAGING_ADMIN_PATH`, `STAGING_BASIC_AUTH_USER`, `STAGING_BASIC_AUTH_HASH` (bcrypt из `caddy hash-password`, в одинарных кавычках). Один раз на VPS: `docker network create edge`, `docker volume create fabrika-staging_media`, `docker volume create fabrika-production_media`.
+Везде: `encode zstd gzip`, заголовки из 13.1, `header -Server`. Production добавляет HSTS. Сертификаты и внутреннее состояние Caddy лежат в томах `caddy-data` и `caddy-config`: при пересоздании контейнера сертификат не перевыпускается.
 
 ### 16.5 Образы
 
+- Образы собираются из репозитория там, где запускаются: `compose.prod.yml` и `compose.e2e.yml` объявляют `build` с контекстом в корне. Реестра нет, `docker login` не нужен.
 - backend: `python:3.13-slim`, uv, `uv sync --frozen --no-dev`, `collectstatic` на сборке, пользователь без root. Роли: web `gunicorn config.wsgi -k gthread -w 2 --threads 4 -t 120 -b 0.0.0.0:8000`; worker `python manage.py run_sheets_worker` (`stop_grace_period: 30s`); release `python manage.py release`.
 - frontend: `node:24-slim`, сборка pnpm, `node build`, пользователь без root, `PORT=3000`.
+- `compose.prod.yml`: caddy, db, release (одноразовый, `service_completed_successfully` для остальных), backend, worker, frontend; тома `pgdata`, `media`, `caddy-data`, `caddy-config`; окружение из `.env` рядом с файлом, `APP_ENV=production`, `MEDIA_ROOT=/data/media`, `ORIGIN=https://${DOMAIN}`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`; наружу открыты только порты Caddy.
 - `compose.e2e.yml`: те же образы из Dockerfile, тот же release-шаг; Caddy на `localhost:8080` (`Caddyfile.e2e`); backend публикует `8000` только для тестового эндпоинта; `APP_ENV=e2e`, `DJANGO_DEBUG=false`, `ORIGIN=http://localhost:8080`, `LEAD_THROTTLE_RATE=1000/hour`, `ENABLE_TEST_ENDPOINTS=true`, `SHEETS_BACKEND=fake`, `SHEETS_POLL_SECONDS=1`; backend и worker делят том `/data` (media, фейковая таблица).
 
 ### 16.6 Ограничения Claude Code (`.claude/settings.json`)
@@ -1115,7 +1128,6 @@ S1-02 создаёт файл с `deny` и строкой `Edit(/tech.md)` в `a
 {
   "permissions": {
     "deny": [
-      "Edit(/template/**)",
       "Edit(/backend/apps/*/migrations/**)",
       "Edit(/contracts/openapi.yaml)",
       "Edit(/frontend/src/lib/types/api.d.ts)",
@@ -1206,7 +1218,7 @@ tech.md v<N>; touched: <sections> | none
 - AC2: <test name>
 
 ## UI
-<staging URL or screenshots, UI slices only>
+<screenshots, UI slices only>
 ```
 
 ### 18.4 Комментарии и проза
@@ -1227,7 +1239,7 @@ tech.md v<N>; touched: <sections> | none
 - [ ] Контракты не выдуманы: в теле PR версия tech.md; изменение контракта сопровождается бампом.
 - [ ] UI: работает на 360 px и 1440 px, axe чистый, у формы проверен путь без JS.
 - [ ] Нет ПДн в логах.
-- [ ] После мёрджа слайс проверен на staging.
+- [ ] После деплоя слайс проверен на `<domain>`.
 
 ### 19.2 Чек-лист ревью (механический, по каждому пункту)
 
@@ -1255,16 +1267,16 @@ tech.md v<N>; touched: <sections> | none
 | Что | Кто | Блокирует | До готовности |
 |---|---|---|---|
 | Проект GCP, Sheets API, сервисный аккаунт, JSON-ключ | владелец | S2-04 на staging | фейк |
-| Тестовая таблица для staging, доступ сервисному аккаунту | владелец | S2-04 | фейк |
+| Тестовая таблица для проверки, доступ сервисному аккаунту | владелец | S2-04 | фейк |
 | Таблица заказчика с заголовками 8.1, доступ сервисному аккаунту | заказчик | S2-12 | тестовая таблица |
 | Доступность `sheets.googleapis.com` с VPS | владелец | S2-04 | фейк |
 | VPS (в РФ, если действует 152-ФЗ), Docker | владелец | S1-10 | локально |
-| Домен и DNS: `<domain>`, `stage.<domain>` | заказчик, владелец | S1-10 | IP |
+| Домен и DNS: `<domain>` | заказчик, владелец | S1-10 | IP |
 | Политика ПДн, текст согласия, уведомления в РКН (обработка, трансграничная передача) | заказчик, юрист | S2-11, S2-12 | маркер `LEGAL_TEXT_PENDING` |
 | Контент: логотип, фото работ, тексты, контакты | заказчик | S2-06..S2-10 на живых данных | `seed_demo` |
 | SMTP для алертов | владелец | S2-05 | console email backend |
 | S3-совместимое хранилище в РФ для бэкапов | владелец | S2-12 | локальные бэкапы |
-| Шаблон сайта в `template/` | владелец | S1-01 | нет |
+| Шаблон сайта (архив владельца, вне репозитория с v10) | владелец | S1-01 | нет |
 
 ## 21. Стадия 1: каркас
 
@@ -1355,14 +1367,15 @@ tech.md v<N>; touched: <sections> | none
 - AC4: `GET /api/v1/home/` делает не больше 4 запросов к БД.
 - Тесты: pytest (слоты, fallback alt, AC4 через `django_assert_max_num_queries`); компонентный `Hero.svelte.test.ts` (AC2: image и null); Playwright `home.spec.ts` (AC1, AC3 через `PerformanceObserver` для LCP).
 
-### S1-10 Деплой на staging
-- Dockerfile бэка и фронта (16.5), frontend `/healthz`, `deploy/compose.yml`, `deploy/deploy.sh`, `deploy/smoke.sh`, edge Caddy с `site.caddy`, `compose.e2e.yml` и `Caddyfile.e2e`, `deploy-staging.yml`, `release.yml` (подготовлен, первый запуск в S2-12), джоба `e2e` в CI и в обязательных проверках.
-- AC1: мёрдж в `main` → образы в GHCR → staging обновлён автоматически; `https://stage.<domain>` за basic auth, `X-Robots-Tag: noindex`, `robots.txt` с `Disallow: /`.
+### S1-10 Деплой на VPS
+- Dockerfile бэка и фронта (16.5), frontend `/healthz`, `compose.prod.yml`, `deploy/deploy.sh`, `deploy/smoke.sh`, Caddy с `site.caddy`, `compose.e2e.yml` и `Caddyfile.e2e`, джоба `e2e` в CI и в обязательных проверках.
+- AC1: `deploy.sh` на VPS собирает образы, прогоняет release-шаг и поднимает стек; `https://<domain>` отвечает 200, `robots.txt` вне production запрещает индексацию.
 - AC2: маршрутизация по 16.4: снаружи `/api/v1/home/` → 404; путь админки → Django; первый `/media/` URL со страницы отдаётся Caddy с `immutable`.
 - AC3: release-шаг выполняет `migrate`, `createcachetable`, `sync_reference_data`; упавшая миграция прерывает деплой, старые контейнеры работают.
-- AC4: `deploy.sh staging <предыдущий sha>` откатывает staging.
+- AC4: `git checkout <предыдущий тег>` и `deploy.sh` откатывают сайт.
 - AC5: джоба `e2e` гоняет в CI все E2E из S1-05..S1-09.
 - Тесты: `smoke.sh` проверяет AC2 после каждого деплоя; AC5 в CI; AC3 и AC4 вручную, лог в PR.
+- v10: деплой переведён на единый `compose.prod.yml` со сборкой на VPS, staging и GHCR убраны (16.3).
 
 ### S1-11 Чек-лист «Каркас готов»
 
@@ -1504,7 +1517,7 @@ tech.md v<N>; touched: <sections> | none
 ### S2-12 Запуск в production
 - Production на VPS, домен, таблица заказчика, SMTP, бэкапы (`deploy/backup.sh`: ночной `pg_dump -Fc` и архив media, 14 дней локально и копия в S3-совместимое хранилище в РФ), `deploy/RESTORE.md`, внешний мониторинг `https://<domain>/healthz`, пользователи админки (владелец: суперпользователь; контент-менеджер: группа «Контент»; менеджер: группа «Заявки»), тег `v1.0.0`.
 - Зависит от: S2-01..S2-11; long-lead: юр. тексты и уведомления в РКН, таблица заказчика, домен.
-- AC1: `release.yml` выкатывает тег в production; staging и production изолированы (БД, media, таблицы, секреты).
+- AC1: `deploy.sh` на VPS поднимает стек из `compose.prod.yml`; сайт доступен по `https://<domain>`, сертификат от Let's Encrypt, наружу открыт только Caddy.
 - AC2: Lighthouse mobile ≥ 90 во всех четырёх категориях для `/` и одной `/catalog/<slug>`.
 - AC3: бэкап создаётся каждую ночь; восстановление на чистых контейнерах из последнего бэкапа возвращает заявки и media, шаги в `deploy/RESTORE.md`.
 - AC4: тестовая заявка в production появляется в таблице заказчика, затем удаляется из БД и таблицы.
