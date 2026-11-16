@@ -7,6 +7,7 @@ from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
+from django.core.validators import validate_email
 from django.db import models
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -26,6 +27,9 @@ from apps.content.models import (
 from apps.content.services.batch_upload import MAX_FILES, upload_gallery_batch
 from apps.content.services.images import clear_image, ingest_image, validate_image_file
 from apps.core.phone import normalize_phone
+
+# The field lives here, its format belongs to the notifier (tech.md, 24.1).
+from apps.leads.notify import parse_recipients
 
 
 class ImageAdminForm(forms.ModelForm):
@@ -232,16 +236,40 @@ class SiteSettingsForm(forms.ModelForm):
     map_url = forms.URLField(
         label="Ссылка на карту", max_length=200, required=False, assume_scheme="https"
     )
+    notify_emails = forms.CharField(
+        label="Куда присылать заявки",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Адреса через запятую. Пусто: письма о новых заявках не отправляются.",
+    )
 
     class Meta:
         model = SiteSettings
-        fields = ["phone", "max_phone", "vk_url", "email", "address", "work_hours", "map_url"]
+        fields = [
+            "phone",
+            "max_phone",
+            "vk_url",
+            "email",
+            "address",
+            "work_hours",
+            "map_url",
+            "notify_emails",
+        ]
 
     def clean_phone(self) -> str:
         return clean_e164(self.cleaned_data["phone"])
 
     def clean_max_phone(self) -> str:
         return clean_e164(self.cleaned_data["max_phone"])
+
+    def clean_notify_emails(self) -> str:
+        addresses = parse_recipients(self.cleaned_data["notify_emails"])
+        for address in addresses:
+            try:
+                validate_email(address)
+            except ValidationError:
+                raise ValidationError(f"Проверьте адрес: {address}") from None
+        return ", ".join(addresses)
 
 
 @admin.register(SiteSettings)

@@ -9,7 +9,7 @@ from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.core.enums import SheetStatus
+from apps.core.enums import NotifyStatus, SheetStatus
 from apps.leads.models import Lead
 from apps.leads.tests.factories import make_lead
 
@@ -106,3 +106,46 @@ def test_ac6_nobody_adds_or_edits_and_only_superusers_delete() -> None:
     assert Lead.objects.filter(pk=lead.pk).exists()
     assert owner.post(delete_url, {"post": "yes"}).status_code == 302
     assert not Lead.objects.filter(pk=lead.pk).exists()
+
+
+def notify_retry(client: Client, *leads: Lead) -> None:
+    response = client.post(
+        reverse(CHANGELIST),
+        {"action": "retry_notify", "_selected_action": [lead.pk for lead in leads]},
+    )
+    assert response.status_code == 302
+
+
+def test_ac7_leads_group_retries_a_notification() -> None:
+    client = staff_in("Заявки")
+    lead = make_lead(
+        notify_status=NotifyStatus.FAILED,
+        notify_attempts=6,
+        notify_last_error="550 SMTPRecipientsRefused",
+    )
+
+    notify_retry(client, lead)
+
+    lead.refresh_from_db()
+    assert lead.notify_status == NotifyStatus.PENDING
+    assert (lead.notify_attempts, lead.notify_last_error) == (0, "")
+
+
+def test_ac7_notify_retry_touches_only_failed_and_off_leads() -> None:
+    now = timezone.now()
+    failed = make_lead(notify_status=NotifyStatus.FAILED, notify_attempts=6)
+    off = make_lead(notify_status=NotifyStatus.OFF)
+    pending = make_lead(notify_status=NotifyStatus.PENDING, notify_attempts=2)
+    sent = make_lead(notify_status=NotifyStatus.SENT, notify_sent_at=now)
+
+    notify_retry(superuser(), failed, off, pending, sent)
+
+    for lead in (failed, off):
+        lead.refresh_from_db()
+        assert lead.notify_status == NotifyStatus.PENDING
+        assert lead.notify_attempts == 0
+        assert lead.notify_next_attempt_at >= now
+    pending.refresh_from_db()
+    assert (pending.notify_status, pending.notify_attempts) == (NotifyStatus.PENDING, 2)
+    sent.refresh_from_db()
+    assert sent.notify_status == NotifyStatus.SENT

@@ -101,6 +101,7 @@ def form_data(**overrides: str) -> dict[str, str]:
         "address": "",
         "work_hours": "",
         "map_url": "",
+        "notify_emails": "",
         "social_links-TOTAL_FORMS": "0",
         "social_links-INITIAL_FORMS": "0",
     }
@@ -146,3 +147,30 @@ def test_invalid_max_phone_is_not_saved() -> None:
     assert response.status_code == 200
     assert "Проверьте номер телефона" in response.content.decode()
     assert SiteSettings.objects.get(id=1).max_phone == ""
+
+
+def test_ac8_recipients_are_cleaned_up_on_save() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+
+    raw = " b@example.ru;a@example.ru\nb@example.ru "
+
+    response = owner().post(url, form_data(notify_emails=raw))
+
+    assert response.status_code == 302
+    assert SiteSettings.objects.get(id=1).notify_emails == "b@example.ru, a@example.ru"
+
+
+def test_ac8_broken_recipient_is_not_saved() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+
+    response = owner().post(url, form_data(notify_emails="manager@example.ru, сломанный"))
+
+    assert response.status_code == 200
+    assert "Проверьте адрес: сломанный" in response.content.decode()
+    assert SiteSettings.objects.get(id=1).notify_emails == ""
+
+
+def test_ac8_recipients_stay_out_of_the_api(client: Client, settings: Any) -> None:
+    SiteSettings.objects.filter(id=1).update(notify_emails="manager@example.ru")
+
+    assert "notify_emails" not in api(client, settings)
