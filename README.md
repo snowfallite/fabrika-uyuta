@@ -138,7 +138,9 @@ cd /opt/fabrika/app && cp .env.example .env
 | `SHEETS_BACKEND` | `google` для боевой таблицы, `fake` чтобы запустить сайт без Google |
 | `GOOGLE_SERVICE_ACCOUNT_FILE` | `/run/secrets/google-sa.json` при `SHEETS_BACKEND=google` |
 | `GOOGLE_SPREADSHEET_ID` | ID таблицы заказчика из её URL |
-| `ALERT_EMAIL`, `EMAIL_*` | письма о застрявших заявках; пустой `ALERT_EMAIL` выключает алерты |
+| `ALERT_EMAIL`, `EMAIL_*` | письма о застрявших заявках; пустой `ALERT_EMAIL` выключает алерты, пустой `EMAIL_HOST` пишет их в лог воркера |
+
+Почта для алертов работает только по неявному SSL: `EMAIL_PORT=465` и `EMAIL_USE_SSL=true`. Переменной для STARTTLS в контракте нет, поэтому порт 587 не подойдёт. В `EMAIL_HOST_PASSWORD` нужен пароль приложения: обычный пароль от ящика провайдеры для SMTP не принимают. `DEFAULT_FROM_EMAIL` должен совпадать с ящиком из `EMAIL_HOST_USER`, иначе провайдер отклонит отправку.
 
 Секреты удобно сгенерировать на сервере:
 
