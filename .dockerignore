@@ -1,6 +1,7 @@
 .git
 .env
-template
+google-sa.json
+_archive
 **/node_modules
 **/.venv
 **/__pycache__

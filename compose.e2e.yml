@@ -6,7 +6,7 @@ x-backend-env: &backend-env
   APP_ENV: e2e
   DJANGO_DEBUG: "false"
   DJANGO_SECRET_KEY: e2e-insecure-secret-key-not-for-production
-  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,e2e-backend
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
   DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8080
   DJANGO_ADMIN_PATH: admin/
   INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?set INTERNAL_API_TOKEN in .env}
@@ -65,9 +65,6 @@ services:
     depends_on:
       release:
         condition: service_completed_successfully
-    networks:
-      default:
-        aliases: [e2e-backend]
 
   worker:
     image: fabrika-backend:e2e
@@ -101,9 +98,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      default:
-        aliases: [e2e-frontend]
 
   caddy:
     image: caddy:2
@@ -112,7 +106,7 @@ services:
     volumes:
       - ./deploy/caddy/Caddyfile.e2e:/etc/caddy/Caddyfile:ro
       - ./deploy/caddy/site.caddy:/etc/caddy/site.caddy:ro
-      - data:/srv/e2e:ro
+      - data:/srv:ro
     depends_on:
       frontend:
         condition: service_healthy

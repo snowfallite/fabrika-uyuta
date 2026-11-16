@@ -1,4 +1,6 @@
 .env
+google-sa.json
+_archive/
 backend/var/
 backend/staticfiles/
 node_modules

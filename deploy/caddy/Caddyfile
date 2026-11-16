@@ -1,0 +1,11 @@
+# Production site (tech.md, 16.4). Values come from .env next to compose.prod.yml.
+{
+	email {$ACME_EMAIL}
+}
+
+import /etc/caddy/site.caddy
+
+{$DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	import fabrika {$DJANGO_ADMIN_PATH}
+}

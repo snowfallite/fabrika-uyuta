@@ -1,0 +1,110 @@
+# Production stack on the VPS (tech.md, 16.3): Caddy, Postgres, Django, worker, SvelteKit.
+# One file, one command, run from the repository clone in /opt/fabrika/app:
+#   git pull && deploy/deploy.sh
+# Settings live in .env next to this file (.env.example is the template); .env and
+# google-sa.json stay out of git. Only Caddy publishes ports.
+name: fabrika
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  image: fabrika-backend:local
+  env_file: .env
+  environment:
+    APP_ENV: production
+    POSTGRES_HOST: db
+    MEDIA_ROOT: /data/media
+  volumes:
+    - media:/data/media
+    - ./google-sa.json:/run/secrets/google-sa.json:ro
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:18
+    env_file: .env
+    volumes:
+      # postgres:18 keeps PGDATA in /var/lib/postgresql/18/docker (tech.md, section 4).
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # One-shot deploy step: deploy.sh runs it before touching the running containers,
+  # so a failed check or migration leaves the live site as it is. The profile keeps
+  # it out of `up`.
+  release:
+    <<: *backend
+    command: ["python", "manage.py", "release"]
+    restart: "no"
+    profiles: ["release"]
+
+  backend:
+    <<: *backend
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+
+  worker:
+    <<: *backend
+    command: ["python", "manage.py", "run_sheets_worker"]
+    stop_grace_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: fabrika-frontend:local
+    env_file: .env
+    environment:
+      APP_ENV: production
+      PUBLIC_APP_ENV: production
+      API_INTERNAL_URL: http://backend:8000
+      # adapter-node behind Caddy: without ORIGIN the CSRF check rejects form actions.
+      ORIGIN: https://${DOMAIN:?set DOMAIN in .env}
+      PUBLIC_SITE_URL: https://${DOMAIN}
+      ADDRESS_HEADER: X-Forwarded-For
+      XFF_DEPTH: "1"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/caddy/site.caddy:/etc/caddy/site.caddy:ro
+      - media:/srv/media:ro
+      # Certificates survive a container rebuild, so Let's Encrypt is not asked again.
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  media:
+  caddy-data:
+  caddy-config:

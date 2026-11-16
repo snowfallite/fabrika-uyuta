@@ -1,27 +1,44 @@
 #!/usr/bin/env sh
-# Deploy one environment (tech.md, 16.3): deploy.sh <staging|production> <tag>
-# Needs GHCR_OWNER in the environment (lowercase GitHub owner). Rollback: run with an older tag.
+# Deploy production on the VPS (tech.md, 16.3). Run it from the repository clone:
+#   cd /opt/fabrika/app && git pull && deploy/deploy.sh
+# Settings come from .env next to compose.prod.yml. Rollback: check out an older
+# tag or commit and run this again; migrations only ever extend the schema (15.1).
 set -eu
 
-env_name="${1:?usage: deploy.sh <staging|production> <tag>}"
-tag="${2:?usage: deploy.sh <staging|production> <tag>}"
-case "$env_name" in staging | production) ;; *) echo "unknown environment: $env_name" >&2; exit 1 ;; esac
-: "${GHCR_OWNER:?set GHCR_OWNER}"
+root="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$root"
 
-export TAG="$tag" STACK="fabrika-$env_name" ENV_DIR="/opt/fabrika/$env_name" GHCR_OWNER
-here="$(cd "$(dirname "$0")" && pwd)"
-compose() { docker compose -p "$STACK" -f "$here/compose.yml" --env-file "$ENV_DIR/.env" "$@"; }
+[ -f .env ] || {
+	echo "no .env next to compose.prod.yml: cp .env.example .env and fill it in" >&2
+	exit 1
+}
 
-docker network create edge >/dev/null 2>&1 || true
+# Legal texts must be final before the site goes live (tech.md, 13.2).
+if grep -rl "LEGAL_TEXT_PENDING" frontend/src >/dev/null 2>&1; then
+	echo "LEGAL_TEXT_PENDING found, production stays as it is:" >&2
+	grep -rl "LEGAL_TEXT_PENDING" frontend/src >&2
+	exit 1
+fi
 
-echo "==> pull $tag"
-compose pull
+# Without the file Docker would mount a directory over the key path.
+[ -e google-sa.json ] || : >google-sa.json
+
+compose() { docker compose -f compose.prod.yml "$@"; }
+
+echo "==> build"
+compose build
 
 # A failed release step exits here; the running containers stay untouched.
 echo "==> release: checks, migrations, cache table, reference data"
-compose run --rm backend python manage.py release
+compose run --rm release
 
 echo "==> up"
-compose up -d --remove-orphans --wait --wait-timeout 120
+compose up -d --remove-orphans --wait --wait-timeout 300
 
-echo "==> $STACK runs $tag"
+domain="$(sed -n 's/^DOMAIN=//p' .env | head -n 1)"
+if [ -n "$domain" ]; then
+	echo "==> smoke"
+	deploy/smoke.sh "https://$domain"
+fi
+
+echo "==> production runs $(git rev-parse --short HEAD)"

@@ -1,5 +1,5 @@
-# Routing shared by every environment (tech.md, 16.4).
-# Usage inside a site block: import fabrika <project> <admin path>, e.g. import fabrika e2e admin/
+# Routing shared by e2e and production (tech.md, 16.4).
+# Usage inside a site block: import fabrika <admin path>, e.g. import fabrika admin/
 (fabrika) {
 	encode zstd gzip
 
@@ -15,22 +15,22 @@
 		respond 404
 	}
 
-	# Media paths carry a uuid and never change.
+	# Media paths carry a uuid and never change; the volume is mounted at /srv/media.
 	handle /media/* {
-		root * /srv/{args[0]}
+		root * /srv
 		header Cache-Control "public, max-age=31536000, immutable"
 		file_server
 	}
 
-	@django path /{args[1]}* /django-static/*
+	@django path /{args[0]}* /django-static/*
 	handle @django {
 		request_body {
 			max_size 200MB
 		}
-		reverse_proxy {args[0]}-backend:8000
+		reverse_proxy backend:8000
 	}
 
 	handle {
-		reverse_proxy {args[0]}-frontend:3000
+		reverse_proxy frontend:3000
 	}
 }
