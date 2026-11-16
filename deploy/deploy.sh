@@ -8,6 +8,13 @@ set -eu
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
+# Compose v1 (the hyphenated docker-compose) understands neither `name` nor profiles.
+docker compose version >/dev/null 2>&1 || {
+	echo "docker compose v2 not found. The stack needs the compose plugin, not the old" >&2
+	echo "hyphenated docker-compose. Install it: curl -fsSL https://get.docker.com | sh" >&2
+	exit 1
+}
+
 [ -f .env ] || {
 	echo "no .env next to compose.prod.yml: cp .env.example .env and fill it in" >&2
 	exit 1
