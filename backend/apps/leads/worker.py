@@ -18,6 +18,8 @@ from django.utils import timezone
 from apps.core.enums import SheetStatus
 from apps.leads.alerts import check_alerts
 from apps.leads.models import Lead
+from apps.leads.notify import run_notify_batch
+from apps.leads.retry import backoff_seconds
 from apps.leads.sheets.client import (
     SheetsClient,
     SheetsError,
@@ -37,14 +39,6 @@ class Outcome(enum.StrEnum):
     RETRY = "retry"
     FAILED = "failed"
     SKIPPED = "skipped"
-
-
-def backoff_seconds(n: int, rng: random.Random) -> float:
-    """Delay before retry n (n >= 1): 30 s doubling up to an hour, with +-20% jitter."""
-    if n < 1:
-        raise ValueError("n starts at 1")
-    # 30 * 2**7 already passes the 3600 cap; the clamp keeps big n cheap.
-    return min(30 * (1 << min(n - 1, 7)), 3600) * rng.uniform(0.8, 1.2)
 
 
 def sync_lead(lead_id: int, client: SheetsClient, now: datetime, rng: random.Random) -> Outcome:
@@ -90,7 +84,7 @@ def run_cycle(
     stop: threading.Event | None = None,
     now: Callable[[], datetime] = timezone.now,
 ) -> int:
-    """One pass over due leads, oldest first; returns how many were picked up."""
+    """One pass for the sheet, then one for the notifications; returns the sheet leads taken."""
     due = (
         Lead.objects.filter(sheet_status=SheetStatus.PENDING, sheet_next_attempt_at__lte=now())
         .order_by("sheet_next_attempt_at")
@@ -103,6 +97,9 @@ def run_cycle(
         sync_lead(lead_id, client, now(), rng)
         heartbeat(now())
         picked += 1
+    heartbeat(now())
+    # Independent queue: an unreachable SMTP never holds up the sheet (tech.md, 24.3).
+    run_notify_batch(now(), rng, stop)
     heartbeat(now())
     check_alerts(now())
     return picked

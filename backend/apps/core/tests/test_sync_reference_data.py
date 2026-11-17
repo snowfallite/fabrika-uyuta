@@ -46,4 +46,4 @@ def test_ac3_groups_get_their_permissions() -> None:
     leads = set(Group.objects.get(name="Заявки").permissions.values_list("codename", flat=True))
     for model in ["category", "galleryitem", "siteimage", "sitesettings", "sociallink"]:
         assert {f"add_{model}", f"change_{model}", f"delete_{model}", f"view_{model}"} <= content
-    assert leads == {"view_lead", "retry_sheet_sync"}
+    assert leads == {"view_lead", "retry_sheet_sync", "retry_notify"}

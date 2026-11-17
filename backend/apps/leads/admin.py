@@ -4,6 +4,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.leads.models import Lead
+from apps.leads.services.notify_retry import retry_notify
 from apps.leads.services.sheet_retry import retry_sheet_sync
 
 
@@ -18,11 +19,12 @@ class LeadAdmin(admin.ModelAdmin):
         "product",
         "sheet_status",
         "sheet_attempts",
+        "notify_status",
     ]
-    list_filter = ["sheet_status", "product", "created_at"]
+    list_filter = ["sheet_status", "notify_status", "product", "created_at"]
     search_fields = ["name", "phone"]
     date_hierarchy = "created_at"
-    actions = ["retry_sheet_sync"]
+    actions = ["retry_sheet_sync", "retry_notify"]
     readonly_fields = [field.name for field in Lead._meta.fields]
 
     def has_add_permission(self, request: HttpRequest) -> bool:
@@ -41,3 +43,11 @@ class LeadAdmin(admin.ModelAdmin):
     def retry_sheet_sync(self, request: HttpRequest, queryset: QuerySet[Lead]) -> None:
         count = retry_sheet_sync(queryset.values_list("pk", flat=True), timezone.now())
         self.message_user(request, f"Повторная отправка запланирована: {count}.")
+
+    def has_retry_notify_permission(self, request: HttpRequest) -> bool:
+        return bool(request.user.has_perm("leads.retry_notify"))
+
+    @admin.action(description="Повторить уведомление", permissions=["retry_notify"])
+    def retry_notify(self, request: HttpRequest, queryset: QuerySet[Lead]) -> None:
+        count = retry_notify(queryset.values_list("pk", flat=True), timezone.now())
+        self.message_user(request, f"Повторное уведомление запланировано: {count}.")

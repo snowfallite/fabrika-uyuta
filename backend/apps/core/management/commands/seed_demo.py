@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from apps.content.models import Category, GalleryItem, ImageFieldsMixin, SiteImage, SiteSettings
 from apps.content.services.images import clear_image, ingest_image
-from apps.core.enums import ProductKind, SheetStatus, SiteImageSlot
+from apps.core.enums import NotifyStatus, ProductKind, SheetStatus, SiteImageSlot
 from apps.leads.models import Lead
 
 ALLOWED_ENVS = {"dev", "e2e", "staging"}
@@ -71,6 +71,8 @@ CONTACTS = {
     "address": "Вологда",
     "work_hours": "Пн–Пт, 9:00–18:00",
     "map_url": "https://yandex.ru/maps/?text=%D0%92%D0%BE%D0%BB%D0%BE%D0%B3%D0%B4%D0%B0",
+    # Reserved TLD: a demo stack never mails a real mailbox (tech.md, 24.1).
+    "notify_emails": "manager@example.test",
 }
 
 # Fixed ids keep the demo leads idempotent, the fake sheet included.
@@ -170,6 +172,14 @@ class Command(BaseCommand):
                     if status == SheetStatus.FAILED
                     else 0,
                     "sheet_last_error": "403 SheetsPermanentError"
+                    if status == SheetStatus.FAILED
+                    else "",
+                    "notify_status": NotifyStatus(status),
+                    "notify_sent_at": now if status == SheetStatus.SENT else None,
+                    "notify_attempts": settings.LEAD_NOTIFY_MAX_ATTEMPTS
+                    if status == SheetStatus.FAILED
+                    else 0,
+                    "notify_last_error": "550 SMTPRecipientsRefused"
                     if status == SheetStatus.FAILED
                     else "",
                 },

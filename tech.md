@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v10
-- Дата: 2026-11-16
+- Версия: v11
+- Дата: 2026-11-17
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v11 (2026-11-17): уведомления о новых заявках по почте, решение владельца. Письмо со всеми полями заявки уходит на адреса из нового поля `SiteSettings.notify_emails` (админка, пусто отключает письма): получателей меняет контент-менеджер без деплоя, в DTO `SiteSettings` поле не входит. Доставку ведёт тот же `run_sheets_worker` вторым outbox-джобом (раздел 24): новые поля `Lead.notify_status` (перечисление `NotifyStatus`: `pending`, `sent`, `failed`, `off`; по умолчанию `off`, в очередь заявку ставит `create_lead`, поэтому после миграции письма по архиву заявок не уходят), `notify_attempts`, `notify_next_attempt_at`, `notify_last_error`, `notify_sent_at`, индекс `lead_notify_due_idx`, ограничение `lead_notified_has_sent_at`, право `retry_notify` и действие админки «Повторить уведомление». Новая переменная `.env`: `LEAD_NOTIFY_MAX_ATTEMPTS` (6, около 15 минут ретраев). Правка 13.1: ПДн живут и в письме оператору, поэтому 13.2 требует назвать SMTP-провайдера в политике и согласии, а провайдер за пределами РФ даёт трансграничную передачу. Письма о заявках ушли из раздела 23 в скоуп задачей S2-13, мессенджеры и CRM остаются вне v1.
 - v10 (2026-11-16): подготовка к деплою, решение владельца. Production разворачивается единым `compose.prod.yml` (caddy, db, release, backend, worker, frontend): образы собираются на VPS из репозитория, GHCR, внешняя сеть `edge` и отдельный compose для edge Caddy не нужны. Staging убран, окружений три: dev, e2e, production. Деплой запускает владелец на сервере через `deploy/deploy.sh`, CI на GitHub только проверяет PR; `deploy/edge/`, `deploy/compose.yml`, `deploy-staging.yml` и `release.yml` удалены, проверка `LEGAL_TEXT_PENDING` переехала в `deploy.sh`. Новые переменные `.env`: `DOMAIN` (домен сайта) и `ACME_EMAIL` (почта для Let's Encrypt). Каталог `template/` вынесен из репозитория в архив владельца: вёрстка уже перенесена в компоненты, значения токенов и типографика записаны в разделе 11. Добавлен `README.md`.
 - v9 (2026-11-15): VK и MAX выделены в контактах, решение владельца. Новое поле `SiteSettings.vk_url` (ссылка на страницу ВКонтакте, пустое скрывает карточку) и ключ `vk_url` в DTO `SiteSettings`: `social_links` остаётся для прочих сетей, `seed_demo` пишет `vk_url` и ссылок не создаёт. Новые брендовые токены в hex, hsl не годится (округление сдвигает фирменный цвет): `--brand-vk` `#0077FF` (официальный SVG логотипа VK), `--brand-max` `#471AFF` и `--brand-max-accent` `#9500FF` (брендбук MAX, «Синий гигант» и «Пурпурная туманность»), `--brand-foreground` `#FFFFFF`. Знаки из официальных брендбуков лежат в `src/lib/icons/VkLogo.svelte` и `src/lib/icons/MaxLogo.svelte`, `MessageCircle` у MAX больше не нужен. Приложение А: карточки «ВКонтакте» и «MAX» идут брендовым блоком над сеткой контактов, текст на брендовом фоне не меньше 24 px (белый на `--brand-vk` даёт 4,1:1).
 - v8 (2026-11-14): контакты и юр. черновики, решение владельца. Новое поле `SiteSettings.max_phone` (E.164, пустое скрывает карточку) и ключи `max_phone`, `max_phone_display` в DTO `SiteSettings`: ссылки на профиль по номеру у MAX нет, номер показывается текстом без ссылки. Приложение А: подпись карточки «MAX», иконка `MessageCircle`. Черновик политики ПДн и согласия пишет сессия, плашка «Проект документа. Текст проверяет юрист.» и маркер `LEGAL_TEXT_PENDING` стоят до текста юриста.
@@ -31,7 +32,7 @@
 - Задача: одна задача = одна ветка = один PR (разделы 21, 22).
 - Владелец: человек, который ведёт проект. Совмещает тимлида и разработчика.
 - Плейсхолдеры: `<domain>` (домен сайта), `<owner>` (владелец репозитория на GitHub), `ABC` (ключ команды в Linear).
-- Карта: 1 проект, 2 режим работы, 3 контракты, 4 стек, 5 архитектура, 6 БД, 7 API, 8 Google Sheets, 9 изображения, 10 фронтенд, 11 UI-примитивы, 12 форма, 13 безопасность и 152-ФЗ, 14 конфиг, 15 миграции и сид, 16 CI/CD, 17 тесты, 18 конвенции, 19 DoD и ревью, 20 long-lead, 21 стадия 1, 22 стадия 2, 23 вне скоупа, приложение А.
+- Карта: 1 проект, 2 режим работы, 3 контракты, 4 стек, 5 архитектура, 6 БД, 7 API, 8 Google Sheets, 9 изображения, 10 фронтенд, 11 UI-примитивы, 12 форма, 13 безопасность и 152-ФЗ, 14 конфиг, 15 миграции и сид, 16 CI/CD, 17 тесты, 18 конвенции, 19 DoD и ревью, 20 long-lead, 21 стадия 1, 22 стадия 2, 23 вне скоупа, 24 уведомления о заявках, приложение А.
 
 ## 1. Проект
 
@@ -212,7 +213,7 @@ Postgres 18 ◄── worker (образ backend, run_sheets_worker) ──► G
 │  └─ apps/
 │     ├─ core/                 # enums, env, checks, phone, text, внутренний токен, healthz; команды release, sync_reference_data, seed_demo
 │     ├─ content/              # категории, галерея, картинки сайта, контакты, пайплайн изображений
-│     └─ leads/                # заявки, API создания, Sheets-клиенты, воркер, алерты, sheets_check
+│     └─ leads/                # заявки, API создания, Sheets-клиенты, воркер, уведомления, алерты, sheets_check
 └─ frontend/
    ├─ package.json, Dockerfile, svelte.config.js, vite.config.ts, knip.json, components.json
    ├─ src/app.css, src/app.html, src/hooks.server.ts
@@ -290,6 +291,13 @@ class SheetStatus(models.TextChoices):
     PENDING = "pending", "Ожидает отправки"
     SENT = "sent", "Отправлена"
     FAILED = "failed", "Ошибка отправки"
+
+
+class NotifyStatus(models.TextChoices):
+    PENDING = "pending", "Ожидает отправки"
+    SENT = "sent", "Отправлено"
+    FAILED = "failed", "Ошибка отправки"
+    OFF = "off", "Не отправляется"
 ```
 
 ```python
@@ -359,6 +367,8 @@ class SiteSettings(models.Model):
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)
     map_url = models.URLField("Ссылка на карту", blank=True)
+    # Where new leads are emailed, section 24. Internal: never part of the SiteSettings DTO.
+    notify_emails = models.TextField("Куда присылать заявки", blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -404,14 +414,30 @@ class Lead(models.Model):
     sheet_synced_at = models.DateTimeField(null=True, blank=True)
     sheet_alerted_at = models.DateTimeField(null=True, blank=True)  # alerts, section 8.4
 
+    # Second outbox: the email to the managers, section 24.
+    # Default off: create_lead queues new leads, rows that predate the feature stay out.
+    notify_status = models.CharField(max_length=16, choices=NotifyStatus.choices, default=NotifyStatus.OFF)
+    notify_attempts = models.PositiveSmallIntegerField(default=0)
+    notify_next_attempt_at = models.DateTimeField(default=timezone.now)
+    notify_last_error = models.CharField(max_length=500, blank=True)  # smtp code + class, never PII
+    notify_sent_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["-created_at"]
-        permissions = [("retry_sheet_sync", "Может повторить отправку в таблицу")]
+        permissions = [
+            ("retry_sheet_sync", "Может повторить отправку в таблицу"),
+            ("retry_notify", "Может повторить уведомление"),
+        ]
         indexes = [
             models.Index(
                 fields=["sheet_next_attempt_at"],
                 name="lead_sheet_due_idx",
                 condition=models.Q(sheet_status="pending"),
+            ),
+            models.Index(
+                fields=["notify_next_attempt_at"],
+                name="lead_notify_due_idx",
+                condition=models.Q(notify_status="pending"),
             ),
             models.Index(fields=["created_at"], name="lead_created_idx"),
         ]
@@ -423,6 +449,10 @@ class Lead(models.Model):
             models.CheckConstraint(
                 condition=~models.Q(sheet_status="sent") | models.Q(sheet_synced_at__isnull=False),
                 name="lead_sent_has_synced_at",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(notify_status="sent") | models.Q(notify_sent_at__isnull=False),
+                name="lead_notified_has_sent_at",
             ),
         ]
 ```
@@ -452,6 +482,7 @@ class Lead(models.Model):
 - JSON, поля в snake_case. TS-типы генерируются без переименования.
 - Ошибки в формате DRF по умолчанию: 400 `{"<field>": ["msg"], "non_field_errors": ["msg"]}`, 403/404/429 `{"detail": "msg"}`. Тексты 400: раздел 12.1.
 - GET-ответы: `Cache-Control: no-store`.
+- Внутренние поля моделей наружу не отдаются: `SiteSettings.notify_emails` (раздел 24) в DTO не входит.
 - `{slug}` в пути: строка; неизвестный или скрытый slug даёт 404.
 - drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; `ENUM_NAME_OVERRIDES` фиксирует `ProductKindEnum` (из `ProductKind.choices`) и `CategorySlugEnum` (из `CATEGORY_SLUG_CHOICES`); поля вида и категории в схеме ссылаются на эти enum, не на `string`; схема безопасности apiKey в заголовке `X-Internal-Token`.
 
@@ -616,6 +647,7 @@ def get_sheets_client() -> SheetsClient: ...  # by SHEETS_BACKEND: "fake" | "goo
   - в письме нет ПДн;
   - ошибка SMTP: лог без ПДн, `sheet_alerted_at` не ставится, следующая попытка не раньше чем через 5 минут;
   - `ALERT_EMAIL` пуст: алерты выключены.
+- В том же цикле воркер разбирает очередь уведомлений о новых заявках (раздел 24): очереди независимы, недоступный SMTP не задерживает доставку в таблицу.
 - `python manage.py sheets_check`: читает A1:H1, сравнивает с `HEADERS`. Расхождение или нет доступа: exit 1 с понятным сообщением. Запускается в release-шаге, если `SHEETS_BACKEND=google`.
 
 ### 8.5 Настройка таблицы (один раз)
@@ -925,7 +957,7 @@ Layout (`src/lib/components/layout/`):
 - Загрузки: тело запроса к админке до 200 МБ (Caddy), файл до 20 МБ, пакет до 20 файлов, лимит пикселей Pillow (раздел 9).
 - Заголовки на Caddy: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, HSTS только в production. CSP сайта: 10.2.
 - Google Sheets: `valueInputOption=RAW` (formula injection).
-- ПДн (ФИО, телефон, комментарий) живут только в Postgres, Google-таблице и админке. В логах, ошибках, алертах, `sheet_last_error` и фикстурах их нет. В тестах только фиктивные данные.
+- ПДн (ФИО, телефон, комментарий) живут только в Postgres, Google-таблице, админке и письме о новой заявке на адреса оператора (раздел 24). В логах, ошибках, алертах о сбоях, темах писем, `sheet_last_error`, `notify_last_error` и фикстурах их нет. В тестах только фиктивные данные.
 - Секреты: только env и файлы секретов на VPS, GitHub Secrets. В репозитории их нет. `.env` в `.gitignore`.
 
 ### 13.2 152-ФЗ (если оператор в РФ; владелец сверяет с юристом заказчика)
@@ -934,6 +966,7 @@ Layout (`src/lib/components/layout/`):
 - Google-таблица получает уже собранные данные: это трансграничная передача. Заказчик подаёт уведомление в Роскомнадзор до запуска, политика и согласие упоминают передачу в Google. Без подтверждения заказчика production с `SHEETS_BACKEND=google` не запускается (S2-12).
 - С 1 сентября 2025 согласие на обработку ПДн оформляется отдельным документом. Страница `/consent`, чекбокс по умолчанию выключен, в заявке хранятся `consent_version` и `consent_at`.
 - Политика обработки ПДн: страница `/privacy`.
+- Письмо о новой заявке (раздел 24) несёт ПДн, поэтому SMTP-провайдер становится обработчиком: политика и согласие называют его, адреса получателей принадлежат оператору. Провайдер за пределами РФ даёт трансграничную передачу и требует того же уведомления в РКН, что и Google-таблица: владелец берёт SMTP в РФ либо подаёт уведомление до запуска.
 - На сайте нет иностранных счётчиков, шрифтовых CDN, капч и встраиваемых карт. Шрифты self-hosted. Карта: ссылка `map_url`, не iframe. Публичный сайт не ставит cookies, баннер не нужен.
 - Финальные юр. тексты даёт заказчик или юрист. По решению владельца от 2026-11-14 сессия пишет черновик политики ПДн и согласия: компонент показывает Alert `tone="info"` с текстом «Проект документа. Текст проверяет юрист.», маркер `LEGAL_TEXT_PENDING` остаётся в компоненте, `deploy.sh` с маркером останавливается и production не выкатывает (16.3). Реквизиты оператора и срок хранения сессия не выдумывает: в черновике они стоят в квадратных скобках заглушками, заказчик заменяет их на свои. Текст юриста приходит: заменить тело компонента, заполнить заглушки, снять комментарий с маркером и Alert, поднять `CONSENT_VERSION`.
 
@@ -993,6 +1026,9 @@ EMAIL_HOST_PASSWORD=
 EMAIL_USE_SSL=true
 DEFAULT_FROM_EMAIL=
 
+# lead notifications (S2-13); recipients live in the admin: SiteSettings.notify_emails
+LEAD_NOTIFY_MAX_ATTEMPTS=6
+
 # sveltekit
 API_INTERNAL_URL=http://localhost:8000
 PUBLIC_SITE_URL=http://localhost:5173
@@ -1025,7 +1061,7 @@ E2E_API_URL=http://localhost:8000
 - 5 строк `Category`: `slug` из `CATEGORY_SLUG_CHOICES`, `title` = метка, `position` = порядок в enum;
 - 4 строки `SiteImage` (пустые слоты);
 - `SiteSettings` с `id=1`;
-- группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`).
+- группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`, `leads.retry_notify`).
 
 Запускается в release-шаге и в `make seed`.
 
@@ -1033,7 +1069,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`) с фиктивными данными.
+- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` совпадает со статусом таблицы) с фиктивными данными.
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1526,18 +1562,88 @@ tech.md v<N>; touched: <sections> | none
 - AC6: мониторинг шлёт алерт, если `/healthz` недоступен или отвечает 503 дольше 5 минут (падение фронта, бэка, БД или воркера).
 - Тесты: `smoke.sh` против production; отчёт Lighthouse в PR; AC3 и AC6 вручную, лог в PR.
 
+### S2-13 Уведомления о новых заявках по почте
+- Цель: менеджер получает письмо с полями новой заявки; адреса получателей задаются в админке без деплоя.
+- Бэкенд: `NotifyStatus` в `apps/core/enums.py`, поля уведомления в `Lead`, `SiteSettings.notify_emails`, `apps/leads/notify.py` (`parse_recipients`, `build_message`, `notify_lead`, `run_notify_batch`), `apps/leads/retry.py` (`backoff_seconds` переезжает из `worker.py`), партия уведомлений в `run_cycle`, `apps/leads/services/notify_retry.py`, колонка, фильтр и действие в `LeadAdmin`, поле и валидация адресов в `SiteSettingsAdmin`, право `retry_notify` в группе «Заявки», `seed_demo`, `LEAD_NOTIFY_MAX_ATTEMPTS` в `config/settings.py`.
+- Фронтенд: только черновики `/privacy` и `/consent`, где назван новый получатель ПДн (13.2). DTO, `openapi.yaml` и типы не меняются. Раздел «Заявки и Google-таблица» в `README.md` описывает письма.
+- Контракты: 6, 7 (внутреннее поле вне DTO), 13.1, 13.2, 14, 15.2, 15.3, 24.
+- Зависит от: S2-01, S2-05.
+- AC1: заявка создана, в `notify_emails` два адреса, один цикл воркера → одно письмо на оба адреса, тема и тело по 24.2, `notify_status=sent`, `notify_sent_at` заполнен.
+- AC2: `notify_lead` дважды для одной заявки → одно письмо.
+- AC3: SMTP недоступен → `pending`, `attempts + 1`, `notify_next_attempt_at` в пределах `[now + 0,8·base, now + 1,2·base]`, где `base = min(30·2^(n−1), 3600)`; после `LEAD_NOTIFY_MAX_ATTEMPTS` → `failed`.
+- AC4: `SMTPRecipientsRefused` → `failed` сразу, `notify_last_error` содержит код SMTP и класс ошибки, адресов и ПДн в нём нет.
+- AC5: `notify_emails` пусто → `notify_status=off`, письма нет, попытки не растут. Заявка, созданная до миграции (`off`), письма не вызывает.
+- AC6: тело письма содержит ФИО, телефон, вид, размеры, комментарий, источник, дату и ссылку на карточку; пустые поля строк не дают; в теме и логах ПДн нет.
+- AC7: действие «Повторить уведомление»: `failed` и `off` → `pending`, `attempts=0`, `notify_last_error=""`; `sent` и `pending` действие не меняет; право у группы «Заявки», группа «Контент» заявок не видит.
+- AC8: невалидный адрес в `notify_emails` не сохраняется; `GET /api/v1/site-settings/` и `openapi.yaml` поля `notify_emails` не содержат.
+- AC9: SMTP лежит, таблица отвечает → в одном цикле заявка получает `sheet_status=sent` и `notify_status=pending`.
+- AC10: `APP_ENV=production` с пустым `EMAIL_HOST` → письма нет, ПДн в логах нет, заявка в ретрае, `notify_last_error` содержит `SmtpNotConfigured`.
+- Тесты: Hypothesis на `parse_recipients` (идемпотентна, без пустых и дублей, порядок сохранён) и `build_message` (тема без ПДн, непустые поля в теле, пустые без строк); Hypothesis stateful на переходы 24.3 (операции «успех», «SMTP упал», «ошибка настройки», «повтор из админки», «нет получателей», «время +N минут»; инварианты: только переходы 24.3, у `sent` есть `notify_sent_at`, без нового перехода заявка не даёт второго письма); pytest на AC1..AC9 с `mail.outbox`.
+
 ## 23. Вне скоупа v1
 
 - Редактирование текстов секций в админке: тексты в коде по шаблону.
 - Мультиязычность, тёмная тема.
 - Аналитика и счётчики: только российские сервисы и после юр. проверки, через `CONTRACT GAP`.
 - Капча: при спаме добавить российскую капчу через `CONTRACT GAP`.
-- Уведомления в мессенджеры, интеграция с CRM. Для оповещения менеджеров о новых строках подходят встроенные уведомления Google Таблиц.
+- Уведомления в мессенджеры, интеграция с CRM. Письма менеджерам о новых заявках в скоупе с v11: задача S2-13, контракт в разделе 24.
 - Онлайн-калькулятор стоимости.
 - Загрузка HEIC.
 - Автоудаление старых заявок: срок хранения согласовать с заказчиком.
 - Транспорт реального времени.
 
+
+## 24. Уведомления о новых заявках
+
+Решение владельца от 2026-11-17: менеджер узнаёт о заявке из письма, а не только из Google-таблицы. Postgres остаётся источником истины, письмо и таблица это две независимые проекции.
+
+### 24.1 Получатели
+
+- Адреса лежат в `SiteSettings.notify_emails` (раздел 6): админка, поле «Куда присылать заявки», адреса через запятую, точку с запятой или перевод строки.
+- `parse_recipients(raw) -> list[str]` в `apps/leads/notify.py`: чистая функция, режет по этим разделителям, убирает пробелы и дубли, порядок сохраняет.
+- Форма админки проверяет каждый адрес (`validate_email`): невалидный адрес не сохраняется, сообщение называет плохой адрес.
+- Поле пустое: письма не отправляются, заявка получает `notify_status=off`. Владелец заполнил поле позже: письма уходят по новым заявкам, старые поднимает действие «Повторить уведомление».
+- Транспорт: `EMAIL_*` из раздела 14, те же настройки, что у алертов 8.4. `EMAIL_HOST` пуст: console backend, письмо печатается в лог (dev и e2e).
+- В production с пустым `EMAIL_HOST` воркер письмо не печатает: console backend вывел бы ПДн в лог, что запрещает 13.1. Заявка уходит в ретрай, после исчерпания попыток получает `failed` и `notify_last_error=SmtpNotConfigured`, видна в админке и поднимается действием «Повторить уведомление».
+- Все адреса стоят в одном письме в поле To: получатели видят друг друга. Это внутренняя рассылка оператора.
+
+### 24.2 Письмо
+
+- Тема: `Фабрика Уюта: новая заявка, <метка ProductKind>`. ПДн в теме нет: темы попадают в журналы почтовых систем.
+- Тело: по строке на поле, пустые поля пропускаются.
+
+```text
+Дата: 2026-11-17 14:20
+ФИО: Иванов Иван Иванович
+Телефон: +7 (999) 123-45-67
+Что заказать: Кухни под заказ
+Размеры: Стена 3,2 м, высота 2,6 м
+Комментарий: МДФ, белый, к марту
+Источник: /catalog/kitchens
+
+Карточка в админке: https://<domain>/<DJANGO_ADMIN_PATH>leads/lead/<id>/change/
+```
+
+- Дата в `SHEETS_TIMEZONE`, формат `YYYY-MM-DD HH:MM`. Телефон через `format_phone_display` (12.3).
+- `build_message(lead, tz, admin_url) -> LeadMessage`: чистая функция, `LeadMessage` это `NamedTuple` с полями `subject` и `body`. Ссылку собирает вызывающий код из `PUBLIC_SITE_URL` и `reverse`.
+- Текст письма русский. Письмо только текстовое: HTML-версии нет.
+
+### 24.3 Джоба `leads.notify_lead` (второй outbox)
+
+- Очередь: строки `leads_lead` с `notify_status=pending` и `notify_next_attempt_at <= now()`.
+- Процесс тот же, `run_sheets_worker`: `run_cycle` после партии таблицы берёт до 10 заявок этой очереди, затем проверяет алерты 8.4. Отдельного сервиса в compose нет.
+- Обработчик `notify_lead(lead_id, now, rng) -> NotifyOutcome` в `apps/leads/notify.py`:
+  1. Заблокировать заявку через `select_for_update(skip_locked=True)`. Статус не `pending`: ничего не делать.
+  2. Получателей нет: `off`, попытки не растут.
+  3. `send_mail` на всех получателей. Успех: `sent`, `notify_sent_at=now`, `notify_last_error=""`.
+  4. `SMTPRecipientsRefused`, `SMTPSenderRefused`, `SMTPAuthenticationError`, `SMTPNotSupportedError`: `attempts += 1`, сразу `failed`. Это ошибка настройки, ретрай её не исправит.
+  5. Прочие `SMTPException` и `OSError`: `attempts += 1`. `attempts >= LEAD_NOTIFY_MAX_ATTEMPTS`: `failed`. Иначе `notify_next_attempt_at = now + backoff_seconds(attempts, rng)`. Функция та же, что у таблицы (8.4), живёт в `apps/leads/retry.py`.
+- Очередь наполняет только `create_lead`: поле по умолчанию `off`, поэтому заявки, созданные до включения уведомлений, писем не вызывают. Поднять такую заявку можно действием «Повторить уведомление».
+- Переходы статусов: `pending → sent`, `pending → pending` (ретрай), `pending → failed`, `pending → off`, `failed → pending` и `off → pending` (админ-действие «Повторить уведомление»: `attempts=0`, `next_attempt_at=now`, `notify_last_error=""`). Других переходов нет.
+- Идемпотентность: блокировка и проверка статуса дают одно письмо на заявку. Сорванный коммит после удачного `send_mail` повторит письмо: у SMTP нет запроса «есть ли уже такая строка», а дубль письма безвреден, в отличие от дубля строки в таблице.
+- Очереди независимы: недоступный SMTP не задерживает доставку в таблицу и наоборот.
+- Логи: `lead=<public_id> notify_attempt=<n> outcome=<sent|retry|failed|off>`. Без ФИО, телефона, комментария. В `notify_last_error` только код SMTP и класс ошибки.
+- Админка: колонка «Уведомление», фильтр по статусу, действие «Повторить уведомление» под правом `leads.retry_notify` (группа «Заявки», 15.2).
 
 ## Приложение А. Карта шаблона (итог S1-01, v2)
 

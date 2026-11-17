@@ -38,6 +38,8 @@ SHEETS_POLL_SECONDS = env_int("SHEETS_POLL_SECONDS", 5)
 SHEETS_MAX_ATTEMPTS = env_int("SHEETS_MAX_ATTEMPTS", 12)
 
 ALERT_EMAIL = env_str("ALERT_EMAIL", "")
+# Recipients of lead notifications live in the admin: SiteSettings.notify_emails (tech.md, 24.1).
+LEAD_NOTIFY_MAX_ATTEMPTS = env_int("LEAD_NOTIFY_MAX_ATTEMPTS", 6)
 EMAIL_HOST = env_str("EMAIL_HOST", "")
 EMAIL_PORT = env_int("EMAIL_PORT", 465)
 EMAIL_HOST_USER = env_str("EMAIL_HOST_USER", "")

@@ -15,10 +15,11 @@ from hypothesis import strategies as st
 
 from apps.core.enums import SheetStatus
 from apps.leads.models import Lead
+from apps.leads.retry import backoff_seconds
 from apps.leads.sheets.fake import FailureKind, FakeSheetsClient
 from apps.leads.sheets.row import validate_row
 from apps.leads.tests.factories import make_lead
-from apps.leads.worker import Outcome, backoff_seconds, run_cycle, sync_lead
+from apps.leads.worker import Outcome, run_cycle, sync_lead
 
 
 def rng() -> random.Random:

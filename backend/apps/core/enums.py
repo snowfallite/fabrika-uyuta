@@ -25,3 +25,10 @@ class SheetStatus(models.TextChoices):
     PENDING = "pending", "Ожидает отправки"
     SENT = "sent", "Отправлена"
     FAILED = "failed", "Ошибка отправки"
+
+
+class NotifyStatus(models.TextChoices):
+    PENDING = "pending", "Ожидает отправки"
+    SENT = "sent", "Отправлено"
+    FAILED = "failed", "Ошибка отправки"
+    OFF = "off", "Не отправляется"
