@@ -33,7 +33,7 @@ class Command(BaseCommand):
             group.permissions.set(
                 Permission.objects.filter(
                     content_type__app_label="leads",
-                    codename__in=["view_lead", "retry_sheet_sync", "retry_notify"],
+                    codename__in=["view_lead", "retry_sheet_sync", "retry_notify", "retry_max"],
                 )
             )
         self.stdout.write("Reference data is in place.")

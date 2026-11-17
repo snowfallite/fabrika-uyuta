@@ -10,6 +10,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv
 
+# MAX serves a Russian Trusted Root CA chain that certifi rejects. Only the messenger client
+# verifies against this bundle, through MAX_CA_BUNDLE; the system store stays untouched (25.2).
+COPY deploy/certs/russian-trusted-root-ca.pem /etc/ssl/certs/russian-trusted-root-ca.pem
+
 WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project

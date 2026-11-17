@@ -24,4 +24,6 @@ def create_lead(data: dict[str, Any], now: datetime) -> Lead:
         sheet_next_attempt_at=now,
         notify_status=NotifyStatus.PENDING,
         notify_next_attempt_at=now,
+        max_status=NotifyStatus.PENDING,
+        max_next_attempt_at=now,
     )

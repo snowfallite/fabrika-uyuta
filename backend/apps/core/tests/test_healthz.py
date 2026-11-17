@@ -7,6 +7,7 @@ import pytest
 from django.core.cache import cache
 from django.test import Client
 
+from apps.leads.messenger.fake import FakeMessengerClient
 from apps.leads.sheets.fake import FakeSheetsClient
 from apps.leads.worker import HEARTBEAT_KEY, run_cycle
 
@@ -25,7 +26,7 @@ def test_ac7_heartbeat_older_than_120s_is_degraded(client: Client) -> None:
 
 
 def test_ac7_ok_after_a_worker_cycle(client: Client) -> None:
-    run_cycle(FakeSheetsClient(), random.Random(1))  # noqa: S311
+    run_cycle(FakeSheetsClient(), FakeMessengerClient(), random.Random(1))  # noqa: S311
     response = client.get("/healthz")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

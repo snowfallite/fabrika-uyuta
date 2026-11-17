@@ -18,6 +18,9 @@ SAFE_PRODUCTION: dict[str, Any] = {
     "SHEETS_BACKEND": "google",
     "GOOGLE_SERVICE_ACCOUNT_FILE": Path("/run/secrets/google-sa.json"),
     "GOOGLE_SPREADSHEET_ID": "sheet-id",
+    "MAX_BACKEND": "max",
+    "MAX_BOT_TOKEN": "bot-token",
+    "MAX_CA_BUNDLE": "/etc/ssl/certs/russian-trusted-root-ca.pem",
 }
 
 UNSAFE = [
@@ -29,6 +32,8 @@ UNSAFE = [
     ("ENABLE_TEST_ENDPOINTS", True),
     ("GOOGLE_SERVICE_ACCOUNT_FILE", None),
     ("GOOGLE_SPREADSHEET_ID", ""),
+    ("MAX_BOT_TOKEN", ""),
+    ("MAX_CA_BUNDLE", ""),
 ]
 
 

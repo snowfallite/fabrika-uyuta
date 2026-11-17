@@ -22,6 +22,8 @@ x-backend-env: &backend-env
   SHEETS_BACKEND: fake
   SHEETS_FAKE_PATH: /data/fake-sheet.jsonl
   SHEETS_POLL_SECONDS: "1"
+  MAX_BACKEND: fake
+  MAX_FAKE_PATH: /data/fake-max.jsonl
   PUBLIC_SITE_URL: http://localhost:8080
 
 services:

@@ -18,6 +18,7 @@ FROZEN = (
     "backend/apps/*/migrations/**",
     "backend/apps/core/enums.py",
     "backend/apps/leads/sheets/row.py",
+    "backend/apps/leads/messenger/text.py",
     "frontend/src/lib/types/**",
     "frontend/src/lib/server/api.ts",
     "frontend/src/lib/components/ui/**",
