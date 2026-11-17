@@ -242,6 +242,11 @@ class SiteSettingsForm(forms.ModelForm):
         widget=forms.Textarea(attrs={"rows": 2}),
         help_text="Адреса через запятую. Пусто: письма о новых заявках не отправляются.",
     )
+    max_chat_id = forms.IntegerField(
+        label="Чат в MAX для заявок",
+        required=False,
+        help_text="Узнать id: manage.py max_bind_chat. Пусто: заявки в MAX не пересылаются.",
+    )
 
     class Meta:
         model = SiteSettings
@@ -254,6 +259,7 @@ class SiteSettingsForm(forms.ModelForm):
             "work_hours",
             "map_url",
             "notify_emails",
+            "max_chat_id",
         ]
 
     def clean_phone(self) -> str:

@@ -149,3 +149,41 @@ def test_ac7_notify_retry_touches_only_failed_and_off_leads() -> None:
     assert (pending.notify_status, pending.notify_attempts) == (NotifyStatus.PENDING, 2)
     sent.refresh_from_db()
     assert sent.notify_status == NotifyStatus.SENT
+
+
+def max_retry(client: Client, *leads: Lead) -> None:
+    response = client.post(
+        reverse(CHANGELIST),
+        {"action": "retry_max", "_selected_action": [lead.pk for lead in leads]},
+    )
+    assert response.status_code == 302
+
+
+def test_ac7_leads_group_retries_a_chat_message() -> None:
+    client = staff_in("Заявки")
+    lead = make_lead(
+        max_status=NotifyStatus.FAILED,
+        max_attempts=6,
+        max_last_error="403 MessengerPermanentError",
+    )
+
+    max_retry(client, lead)
+
+    lead.refresh_from_db()
+    assert lead.max_status == NotifyStatus.PENDING
+    assert (lead.max_attempts, lead.max_last_error) == (0, "")
+
+
+def test_ac7_max_retry_touches_only_failed_and_off_leads() -> None:
+    now = timezone.now()
+    failed = make_lead(max_status=NotifyStatus.FAILED, max_attempts=6)
+    off = make_lead(max_status=NotifyStatus.OFF)
+    sent = make_lead(max_status=NotifyStatus.SENT, max_sent_at=now)
+
+    max_retry(staff_in("Заявки"), failed, off, sent)
+
+    for lead in (failed, off):
+        lead.refresh_from_db()
+        assert lead.max_status == NotifyStatus.PENDING
+    sent.refresh_from_db()
+    assert sent.max_status == NotifyStatus.SENT

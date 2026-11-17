@@ -102,6 +102,7 @@ def form_data(**overrides: str) -> dict[str, str]:
         "work_hours": "",
         "map_url": "",
         "notify_emails": "",
+        "max_chat_id": "",
         "social_links-TOTAL_FORMS": "0",
         "social_links-INITIAL_FORMS": "0",
     }
@@ -174,3 +175,18 @@ def test_ac8_recipients_stay_out_of_the_api(client: Client, settings: Any) -> No
     SiteSettings.objects.filter(id=1).update(notify_emails="manager@example.ru")
 
     assert "notify_emails" not in api(client, settings)
+
+
+def test_the_chat_id_is_saved_from_the_admin() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+
+    response = owner().post(url, form_data(max_chat_id="-12307927"))
+
+    assert response.status_code == 302
+    assert SiteSettings.objects.get(id=1).max_chat_id == -12307927
+
+
+def test_ac8_the_chat_stays_out_of_the_api(client: Client, settings: Any) -> None:
+    SiteSettings.objects.filter(id=1).update(max_chat_id=-12307927)
+
+    assert "max_chat_id" not in api(client, settings)

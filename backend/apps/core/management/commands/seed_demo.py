@@ -73,6 +73,7 @@ CONTACTS = {
     "map_url": "https://yandex.ru/maps/?text=%D0%92%D0%BE%D0%BB%D0%BE%D0%B3%D0%B4%D0%B0",
     # Reserved TLD: a demo stack never mails a real mailbox (tech.md, 24.1).
     "notify_emails": "manager@example.test",
+    "max_chat_id": -1000000001,
 }
 
 # Fixed ids keep the demo leads idempotent, the fake sheet included.
@@ -175,6 +176,7 @@ class Command(BaseCommand):
                     if status == SheetStatus.FAILED
                     else "",
                     "notify_status": NotifyStatus(status),
+                    "max_status": NotifyStatus(status),
                     "notify_sent_at": now if status == SheetStatus.SENT else None,
                     "notify_attempts": settings.LEAD_NOTIFY_MAX_ATTEMPTS
                     if status == SheetStatus.FAILED
