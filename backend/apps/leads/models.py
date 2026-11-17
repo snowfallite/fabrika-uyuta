@@ -39,11 +39,23 @@ class Lead(models.Model):
     notify_last_error = models.CharField("Ошибка уведомления", max_length=500, blank=True)
     notify_sent_at = models.DateTimeField("Уведомление отправлено", null=True, blank=True)
 
+    # Third outbox: the message to the MAX group chat (tech.md, 25). Same rule as the email:
+    # create_lead queues new leads, rows that predate the feature stay out.
+    max_status = models.CharField(
+        "MAX", max_length=16, choices=NotifyStatus.choices, default=NotifyStatus.OFF
+    )
+    max_attempts = models.PositiveSmallIntegerField("Попытки отправки в MAX", default=0)
+    max_next_attempt_at = models.DateTimeField("Следующая отправка в MAX", default=timezone.now)
+    # HTTP status or MAX error code plus the error class, never PII and never the token.
+    max_last_error = models.CharField("Ошибка отправки в MAX", max_length=500, blank=True)
+    max_sent_at = models.DateTimeField("Отправлена в MAX", null=True, blank=True)
+
     class Meta:
         ordering = ["-created_at"]
         permissions = [
             ("retry_sheet_sync", "Может повторить отправку в таблицу"),
             ("retry_notify", "Может повторить уведомление"),
+            ("retry_max", "Может повторить отправку в MAX"),
         ]
         indexes = [
             models.Index(
@@ -55,6 +67,11 @@ class Lead(models.Model):
                 fields=["notify_next_attempt_at"],
                 name="lead_notify_due_idx",
                 condition=models.Q(notify_status="pending"),
+            ),
+            models.Index(
+                fields=["max_next_attempt_at"],
+                name="lead_max_due_idx",
+                condition=models.Q(max_status="pending"),
             ),
             models.Index(fields=["created_at"], name="lead_created_idx"),
         ]
@@ -70,6 +87,10 @@ class Lead(models.Model):
             models.CheckConstraint(
                 condition=~models.Q(notify_status="sent") | models.Q(notify_sent_at__isnull=False),
                 name="lead_notified_has_sent_at",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(max_status="sent") | models.Q(max_sent_at__isnull=False),
+                name="lead_max_sent_has_sent_at",
             ),
         ]
         verbose_name = "Заявка"

@@ -93,6 +93,8 @@ class SiteSettings(models.Model):
     map_url = models.URLField("Ссылка на карту", blank=True)
     # Where new leads are emailed (tech.md, 24.1). Internal: never part of the DTO.
     notify_emails = models.TextField("Куда присылать заявки", blank=True)
+    # MAX group chat that receives new leads (tech.md, 25.1). Internal: never part of the DTO.
+    max_chat_id = models.BigIntegerField("Чат в MAX для заявок", null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
