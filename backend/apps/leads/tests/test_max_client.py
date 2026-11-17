@@ -36,8 +36,22 @@ def test_ac9_send_posts_the_text_to_the_chat() -> None:
     assert "chat_id=-12307927" in str(request.url)
     body = request.body
     assert isinstance(body, bytes | str)
-    # No "format" key: a comment that looks like markup stays inert (tech.md, 13.1).
-    assert json.loads(body) == {"text": "Новая заявка: =1+1"}
+    # S2-15 AC1: html markup comes from the template, lead values arrive escaped (tech.md, 13.1).
+    assert json.loads(body) == {"text": "Новая заявка: =1+1", "format": "html"}
+
+
+@responses.activate
+def test_ac4_send_passes_the_keyboard_through() -> None:
+    responses.post(f"{API}/messages", json={}, status=200)
+    keyboard: list[dict[str, object]] = [
+        {"type": "inline_keyboard", "payload": {"buttons": [[{"type": "clipboard"}]]}}
+    ]
+
+    client().send(-1, "текст", keyboard)
+
+    body = responses.calls[0].request.body
+    assert isinstance(body, bytes | str)
+    assert json.loads(body)["attachments"] == keyboard
 
 
 def test_ac9_the_session_verifies_against_the_given_bundle() -> None:

@@ -18,7 +18,7 @@ from apps.leads.messenger.client import (
     MessengerPermanentError,
     MessengerRetryableError,
 )
-from apps.leads.messenger.text import build_text
+from apps.leads.messenger.text import build_keyboard, build_text
 from apps.leads.models import Lead
 from apps.leads.retry import backoff_seconds
 
@@ -60,7 +60,11 @@ def send_lead(
         else:
             attempt += 1
             try:
-                client.send(chat_id, build_text(lead, ZoneInfo(settings.SHEETS_TIMEZONE)))
+                client.send(
+                    chat_id,
+                    build_text(lead, ZoneInfo(settings.SHEETS_TIMEZONE)),
+                    build_keyboard(lead),
+                )
             except MessengerPermanentError as exc:
                 outcome = _fail(lead, exc)
             except MessengerRetryableError as exc:
