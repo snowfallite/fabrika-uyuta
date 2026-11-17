@@ -1,6 +1,6 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v11
+- Версия: v12
 - Дата: 2026-11-17
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v12 (2026-11-17): пересылка новых заявок в групповой чат MAX, решение владельца. Бот только пишет в чат: вебхука, публичного эндпоинта, команд и кнопок нет, входящие события MAX не принимаются (раздел 25). Чат задаёт владелец в админке новым полем `SiteSettings.max_chat_id` (пусто отключает пересылку, в DTO `SiteSettings` поле не входит, как `notify_emails`). Доставку ведёт тот же `run_sheets_worker` третьим outbox-джобом: новые поля `Lead.max_status` (перечисление `NotifyStatus`, по умолчанию `off`, в очередь заявку ставит `create_lead`), `max_attempts`, `max_next_attempt_at`, `max_last_error`, `max_sent_at`, индекс `lead_max_due_idx`, ограничение `lead_max_sent_has_sent_at`, право `retry_max` и действие админки «Повторить отправку в MAX». Новые переменные `.env`: `MAX_BACKEND`, `MAX_API_URL`, `MAX_BOT_TOKEN`, `MAX_CA_BUNDLE`, `MAX_FAKE_PATH`, `LEAD_MESSENGER_MAX_ATTEMPTS` (6). `MAX_CA_BUNDLE` обязателен при `MAX_BACKEND=max`: `platform-api2.max.ru` отдаёт сертификат Минцифры, бандл certifi его не принимает, поэтому образ бэкенда несёт корневой сертификат из `deploy/certs/`. Правка 13.1: ПДн живут и в чате MAX; 13.2 называет MAX обработчиком, трансграничной передачи он не даёт (MAX LLC, РФ). Уведомления в мессенджеры ушли из раздела 23 в скоуп задачей S2-14, интеграция с CRM остаётся вне v1.
 - v11 (2026-11-17): уведомления о новых заявках по почте, решение владельца. Письмо со всеми полями заявки уходит на адреса из нового поля `SiteSettings.notify_emails` (админка, пусто отключает письма): получателей меняет контент-менеджер без деплоя, в DTO `SiteSettings` поле не входит. Доставку ведёт тот же `run_sheets_worker` вторым outbox-джобом (раздел 24): новые поля `Lead.notify_status` (перечисление `NotifyStatus`: `pending`, `sent`, `failed`, `off`; по умолчанию `off`, в очередь заявку ставит `create_lead`, поэтому после миграции письма по архиву заявок не уходят), `notify_attempts`, `notify_next_attempt_at`, `notify_last_error`, `notify_sent_at`, индекс `lead_notify_due_idx`, ограничение `lead_notified_has_sent_at`, право `retry_notify` и действие админки «Повторить уведомление». Новая переменная `.env`: `LEAD_NOTIFY_MAX_ATTEMPTS` (6, около 15 минут ретраев). Правка 13.1: ПДн живут и в письме оператору, поэтому 13.2 требует назвать SMTP-провайдера в политике и согласии, а провайдер за пределами РФ даёт трансграничную передачу. Письма о заявках ушли из раздела 23 в скоуп задачей S2-13, мессенджеры и CRM остаются вне v1.
 - v10 (2026-11-16): подготовка к деплою, решение владельца. Production разворачивается единым `compose.prod.yml` (caddy, db, release, backend, worker, frontend): образы собираются на VPS из репозитория, GHCR, внешняя сеть `edge` и отдельный compose для edge Caddy не нужны. Staging убран, окружений три: dev, e2e, production. Деплой запускает владелец на сервере через `deploy/deploy.sh`, CI на GitHub только проверяет PR; `deploy/edge/`, `deploy/compose.yml`, `deploy-staging.yml` и `release.yml` удалены, проверка `LEGAL_TEXT_PENDING` переехала в `deploy.sh`. Новые переменные `.env`: `DOMAIN` (домен сайта) и `ACME_EMAIL` (почта для Let's Encrypt). Каталог `template/` вынесен из репозитория в архив владельца: вёрстка уже перенесена в компоненты, значения токенов и типографика записаны в разделе 11. Добавлен `README.md`.
 - v9 (2026-11-15): VK и MAX выделены в контактах, решение владельца. Новое поле `SiteSettings.vk_url` (ссылка на страницу ВКонтакте, пустое скрывает карточку) и ключ `vk_url` в DTO `SiteSettings`: `social_links` остаётся для прочих сетей, `seed_demo` пишет `vk_url` и ссылок не создаёт. Новые брендовые токены в hex, hsl не годится (округление сдвигает фирменный цвет): `--brand-vk` `#0077FF` (официальный SVG логотипа VK), `--brand-max` `#471AFF` и `--brand-max-accent` `#9500FF` (брендбук MAX, «Синий гигант» и «Пурпурная туманность»), `--brand-foreground` `#FFFFFF`. Знаки из официальных брендбуков лежат в `src/lib/icons/VkLogo.svelte` и `src/lib/icons/MaxLogo.svelte`, `MessageCircle` у MAX больше не нужен. Приложение А: карточки «ВКонтакте» и «MAX» идут брендовым блоком над сеткой контактов, текст на брендовом фоне не меньше 24 px (белый на `--brand-vk` даёт 4,1:1).
@@ -32,7 +33,7 @@
 - Задача: одна задача = одна ветка = один PR (разделы 21, 22).
 - Владелец: человек, который ведёт проект. Совмещает тимлида и разработчика.
 - Плейсхолдеры: `<domain>` (домен сайта), `<owner>` (владелец репозитория на GitHub), `ABC` (ключ команды в Linear).
-- Карта: 1 проект, 2 режим работы, 3 контракты, 4 стек, 5 архитектура, 6 БД, 7 API, 8 Google Sheets, 9 изображения, 10 фронтенд, 11 UI-примитивы, 12 форма, 13 безопасность и 152-ФЗ, 14 конфиг, 15 миграции и сид, 16 CI/CD, 17 тесты, 18 конвенции, 19 DoD и ревью, 20 long-lead, 21 стадия 1, 22 стадия 2, 23 вне скоупа, 24 уведомления о заявках, приложение А.
+- Карта: 1 проект, 2 режим работы, 3 контракты, 4 стек, 5 архитектура, 6 БД, 7 API, 8 Google Sheets, 9 изображения, 10 фронтенд, 11 UI-примитивы, 12 форма, 13 безопасность и 152-ФЗ, 14 конфиг, 15 миграции и сид, 16 CI/CD, 17 тесты, 18 конвенции, 19 DoD и ревью, 20 long-lead, 21 стадия 1, 22 стадия 2, 23 вне скоупа, 24 уведомления о заявках, 25 пересылка в MAX, приложение А.
 
 ## 1. Проект
 
@@ -77,6 +78,7 @@
 | Перечисления | 6 | `backend/apps/core/enums.py` |
 | HTTP API v1 | 7 | `contracts/openapi.yaml` (генерируется) |
 | Строка Google Sheets и джоба | 8 | `backend/apps/leads/sheets/row.py` |
+| Текст сообщения в MAX и джоба | 25 | `backend/apps/leads/messenger/text.py` |
 | Изображения: DTO и пайплайн | 9 | `ImageAsset` в `openapi.yaml`, `backend/apps/content/services/images.py` |
 | Общие TS-типы и API-клиент | 10 | `frontend/src/lib/types/`, `frontend/src/lib/server/api.ts` |
 | UI-примитивы и их пропсы | 11 | `frontend/src/lib/components/ui/` |
@@ -109,6 +111,7 @@ contracts/**
 backend/apps/*/migrations/**
 backend/apps/core/enums.py
 backend/apps/leads/sheets/row.py
+backend/apps/leads/messenger/text.py
 frontend/src/lib/types/**
 frontend/src/lib/server/api.ts
 frontend/src/lib/components/ui/**
@@ -369,6 +372,8 @@ class SiteSettings(models.Model):
     map_url = models.URLField("Ссылка на карту", blank=True)
     # Where new leads are emailed, section 24. Internal: never part of the SiteSettings DTO.
     notify_emails = models.TextField("Куда присылать заявки", blank=True)
+    # MAX group chat for new leads, section 25. Internal: never part of the SiteSettings DTO.
+    max_chat_id = models.BigIntegerField("Чат в MAX для заявок", null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -422,11 +427,19 @@ class Lead(models.Model):
     notify_last_error = models.CharField(max_length=500, blank=True)  # smtp code + class, never PII
     notify_sent_at = models.DateTimeField(null=True, blank=True)
 
+    # Third outbox: the message to the MAX group chat, section 25. Same default off rule.
+    max_status = models.CharField(max_length=16, choices=NotifyStatus.choices, default=NotifyStatus.OFF)
+    max_attempts = models.PositiveSmallIntegerField(default=0)
+    max_next_attempt_at = models.DateTimeField(default=timezone.now)
+    max_last_error = models.CharField(max_length=500, blank=True)  # status or code + class, never PII
+    max_sent_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["-created_at"]
         permissions = [
             ("retry_sheet_sync", "Может повторить отправку в таблицу"),
             ("retry_notify", "Может повторить уведомление"),
+            ("retry_max", "Может повторить отправку в MAX"),
         ]
         indexes = [
             models.Index(
@@ -438,6 +451,11 @@ class Lead(models.Model):
                 fields=["notify_next_attempt_at"],
                 name="lead_notify_due_idx",
                 condition=models.Q(notify_status="pending"),
+            ),
+            models.Index(
+                fields=["max_next_attempt_at"],
+                name="lead_max_due_idx",
+                condition=models.Q(max_status="pending"),
             ),
             models.Index(fields=["created_at"], name="lead_created_idx"),
         ]
@@ -453,6 +471,10 @@ class Lead(models.Model):
             models.CheckConstraint(
                 condition=~models.Q(notify_status="sent") | models.Q(notify_sent_at__isnull=False),
                 name="lead_notified_has_sent_at",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(max_status="sent") | models.Q(max_sent_at__isnull=False),
+                name="lead_max_sent_has_sent_at",
             ),
         ]
 ```
@@ -482,7 +504,7 @@ class Lead(models.Model):
 - JSON, поля в snake_case. TS-типы генерируются без переименования.
 - Ошибки в формате DRF по умолчанию: 400 `{"<field>": ["msg"], "non_field_errors": ["msg"]}`, 403/404/429 `{"detail": "msg"}`. Тексты 400: раздел 12.1.
 - GET-ответы: `Cache-Control: no-store`.
-- Внутренние поля моделей наружу не отдаются: `SiteSettings.notify_emails` (раздел 24) в DTO не входит.
+- Внутренние поля моделей наружу не отдаются: `SiteSettings.notify_emails` (раздел 24) и `SiteSettings.max_chat_id` (раздел 25) в DTO не входят.
 - `{slug}` в пути: строка; неизвестный или скрытый slug даёт 404.
 - drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; `ENUM_NAME_OVERRIDES` фиксирует `ProductKindEnum` (из `ProductKind.choices`) и `CategorySlugEnum` (из `CATEGORY_SLUG_CHOICES`); поля вида и категории в схеме ссылаются на эти enum, не на `string`; схема безопасности apiKey в заголовке `X-Internal-Token`.
 
@@ -957,7 +979,8 @@ Layout (`src/lib/components/layout/`):
 - Загрузки: тело запроса к админке до 200 МБ (Caddy), файл до 20 МБ, пакет до 20 файлов, лимит пикселей Pillow (раздел 9).
 - Заголовки на Caddy: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`, HSTS только в production. CSP сайта: 10.2.
 - Google Sheets: `valueInputOption=RAW` (formula injection).
-- ПДн (ФИО, телефон, комментарий) живут только в Postgres, Google-таблице, админке и письме о новой заявке на адреса оператора (раздел 24). В логах, ошибках, алертах о сбоях, темах писем, `sheet_last_error`, `notify_last_error` и фикстурах их нет. В тестах только фиктивные данные.
+- MAX: сообщение уходит без поля `format`, поэтому разметка из комментария клиента не исполняется. Бот только исходящий: вебхука, публичного эндпоинта и приёма событий нет (раздел 25). Токен бота живёт в `.env` рядом с остальными секретами.
+- ПДн (ФИО, телефон, комментарий) живут только в Postgres, Google-таблице, админке, письме о новой заявке на адреса оператора (раздел 24) и сообщении в групповой чат MAX (раздел 25). В логах, ошибках, алертах о сбоях, темах писем, `sheet_last_error`, `notify_last_error`, `max_last_error` и фикстурах их нет. В тестах только фиктивные данные.
 - Секреты: только env и файлы секретов на VPS, GitHub Secrets. В репозитории их нет. `.env` в `.gitignore`.
 
 ### 13.2 152-ФЗ (если оператор в РФ; владелец сверяет с юристом заказчика)
@@ -967,6 +990,7 @@ Layout (`src/lib/components/layout/`):
 - С 1 сентября 2025 согласие на обработку ПДн оформляется отдельным документом. Страница `/consent`, чекбокс по умолчанию выключен, в заявке хранятся `consent_version` и `consent_at`.
 - Политика обработки ПДн: страница `/privacy`.
 - Письмо о новой заявке (раздел 24) несёт ПДн, поэтому SMTP-провайдер становится обработчиком: политика и согласие называют его, адреса получателей принадлежат оператору. Провайдер за пределами РФ даёт трансграничную передачу и требует того же уведомления в РКН, что и Google-таблица: владелец берёт SMTP в РФ либо подаёт уведомление до запуска.
+- Сообщение в групповой чат MAX (раздел 25) несёт ПДн, поэтому оператор мессенджера становится обработчиком: политика и согласие называют его. Трансграничной передачи здесь нет, сервис принадлежит российскому юрлицу (MAX LLC, Москва), отдельного уведомления в РКН, как для Google-таблицы, не требуется. Доступ к чату выдаёт оператор: все участники чата видят ПДн клиентов, поэтому состав чата это решение заказчика.
 - На сайте нет иностранных счётчиков, шрифтовых CDN, капч и встраиваемых карт. Шрифты self-hosted. Карта: ссылка `map_url`, не iframe. Публичный сайт не ставит cookies, баннер не нужен.
 - Финальные юр. тексты даёт заказчик или юрист. По решению владельца от 2026-11-14 сессия пишет черновик политики ПДн и согласия: компонент показывает Alert `tone="info"` с текстом «Проект документа. Текст проверяет юрист.», маркер `LEGAL_TEXT_PENDING` остаётся в компоненте, `deploy.sh` с маркером останавливается и production не выкатывает (16.3). Реквизиты оператора и срок хранения сессия не выдумывает: в черновике они стоят в квадратных скобках заглушками, заказчик заменяет их на свои. Текст юриста приходит: заменить тело компонента, заполнить заглушки, снять комментарий с маркером и Alert, поднять `CONSENT_VERSION`.
 
@@ -974,7 +998,7 @@ Layout (`src/lib/components/layout/`):
 
 - Бэкенд читает окружение только в `config/settings.py` через хелперы `apps/core/env.py` (`env_str`, `env_bool`, `env_int`, `env_list`). Вне контейнера settings подгружает корневой `.env` (python-dotenv), существующие переменные не перезаписываются. Относительные пути считаются от `backend/`.
 - Django: `LANGUAGE_CODE = "ru"`, `TIME_ZONE = "Europe/Moscow"`, `USE_TZ = True`, `STATIC_URL = "/django-static/"` (whitenoise), `MEDIA_URL = "/media/"`, `CACHES`: DatabaseCache с `MAX_ENTRIES = 10000`.
-- Системная проверка `apps/core/checks.py` (уровень Error) валит `check --deploy` при `APP_ENV` в `staging` или `production`, если: `DJANGO_DEBUG=true`; `DJANGO_SECRET_KEY` пуст или равен dev-значению; `INTERNAL_API_TOKEN` короче 32 символов или равен dev-значению; `DJANGO_ADMIN_PATH=admin/`; `ENABLE_TEST_ENDPOINTS=true`; `SHEETS_BACKEND=google` без `GOOGLE_*`.
+- Системная проверка `apps/core/checks.py` (уровень Error) валит `check --deploy` при `APP_ENV` в `staging` или `production`, если: `DJANGO_DEBUG=true`; `DJANGO_SECRET_KEY` пуст или равен dev-значению; `INTERNAL_API_TOKEN` короче 32 символов или равен dev-значению; `DJANGO_ADMIN_PATH=admin/`; `ENABLE_TEST_ENDPOINTS=true`; `SHEETS_BACKEND=google` без `GOOGLE_*`; `MAX_BACKEND=max` без `MAX_BOT_TOKEN` или `MAX_CA_BUNDLE`.
 - Фронтенд читает окружение только через `$env/dynamic/*`.
 - Makefile подключает корневой `.env` (`-include .env`, `export`).
 - Dev-compose переопределяет только `POSTGRES_HOST=db`. E2E задаёт окружение в compose, пути данных в `/data`. Production читает `.env` рядом с `compose.prod.yml` (на VPS это `/opt/fabrika/app/.env`), `MEDIA_ROOT=/data/media` приходит из compose.
@@ -1029,6 +1053,15 @@ DEFAULT_FROM_EMAIL=
 # lead notifications (S2-13); recipients live in the admin: SiteSettings.notify_emails
 LEAD_NOTIFY_MAX_ATTEMPTS=6
 
+# max messenger (S2-14); the chat lives in the admin: SiteSettings.max_chat_id
+MAX_BACKEND=fake                          # fake | max
+MAX_API_URL=https://platform-api2.max.ru
+MAX_BOT_TOKEN=
+# container: MAX_CA_BUNDLE=/etc/ssl/certs/russian-trusted-root-ca.pem
+MAX_CA_BUNDLE=
+MAX_FAKE_PATH=./var/fake-max.jsonl
+LEAD_MESSENGER_MAX_ATTEMPTS=6
+
 # sveltekit
 API_INTERNAL_URL=http://localhost:8000
 PUBLIC_SITE_URL=http://localhost:5173
@@ -1043,7 +1076,7 @@ E2E_BASE_URL=http://localhost:8080
 E2E_API_URL=http://localhost:8000
 ```
 
-Файлы на VPS: `/opt/fabrika/app/.env` и `/opt/fabrika/app/google-sa.json` рядом с `compose.prod.yml` в клоне репозитория. Оба в `.gitignore`, `git pull` их не трогает. Ключ монтируется read-only в `/run/secrets/google-sa.json`.
+Файлы на VPS: `/opt/fabrika/app/.env` и `/opt/fabrika/app/google-sa.json` рядом с `compose.prod.yml` в клоне репозитория. Оба в `.gitignore`, `git pull` их не трогает. Ключ монтируется read-only в `/run/secrets/google-sa.json`. Корневой сертификат Минцифры секретом не является: он лежит в репозитории (`deploy/certs/russian-trusted-root-ca.pem`) и попадает в образ бэкенда (16.5).
 
 ## 15. Миграции, справочники, сид, команды
 
@@ -1061,7 +1094,7 @@ E2E_API_URL=http://localhost:8000
 - 5 строк `Category`: `slug` из `CATEGORY_SLUG_CHOICES`, `title` = метка, `position` = порядок в enum;
 - 4 строки `SiteImage` (пустые слоты);
 - `SiteSettings` с `id=1`;
-- группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`, `leads.retry_notify`).
+- группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`, `leads.retry_notify`, `leads.retry_max`).
 
 Запускается в release-шаге и в `make seed`.
 
@@ -1069,7 +1102,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` совпадает со статусом таблицы) с фиктивными данными.
+- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails`, фиктивным `max_chat_id` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` и `max_status` совпадают со статусом таблицы) с фиктивными данными.
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1152,11 +1185,11 @@ Caddy стоит в том же `compose.prod.yml`, что и остальные
 ### 16.5 Образы
 
 - Образы собираются из репозитория там, где запускаются: `compose.prod.yml` и `compose.e2e.yml` объявляют `build` с контекстом в корне. Реестра нет, `docker login` не нужен.
-- backend: `python:3.13-slim`, uv, `uv sync --frozen --no-dev`, `collectstatic` на сборке, пользователь без root. Роли: web `gunicorn config.wsgi -k gthread -w 2 --threads 4 -t 120 -b 0.0.0.0:8000`; worker `python manage.py run_sheets_worker` (`stop_grace_period: 30s`); release `python manage.py release`.
+- backend: `python:3.13-slim`, uv, `uv sync --frozen --no-dev`, `collectstatic` на сборке, пользователь без root, корневой сертификат Минцифры из `deploy/certs/` копируется в `/etc/ssl/certs/russian-trusted-root-ca.pem`. Системное хранилище и клиент Google образ не меняет: с этим бандлом ходит только клиент MAX, по `MAX_CA_BUNDLE` (раздел 25). Роли: web `gunicorn config.wsgi -k gthread -w 2 --threads 4 -t 120 -b 0.0.0.0:8000`; worker `python manage.py run_sheets_worker` (`stop_grace_period: 30s`); release `python manage.py release`.
 - frontend: `node:24-slim`, сборка pnpm, `node build`, пользователь без root, `PORT=3000`.
 - `compose.prod.yml`: caddy, db, backend, worker, frontend и одноразовый `release` в профиле `release` (в `up` он не входит, его запускает `deploy.sh` через `run --rm`); тома `pgdata`, `media`, `caddy-data`, `caddy-config`; наружу открыты только порты Caddy.
 - Окружение production: `.env` рядом с `compose.prod.yml` держит секреты и решения, остальное задаёт compose. Из `DOMAIN` выводятся `DJANGO_ALLOWED_HOSTS` (`<domain>,backend,127.0.0.1`: первый для посетителей, второй для SvelteKit, третий для healthcheck), `DJANGO_CSRF_TRUSTED_ORIGINS`, `PUBLIC_SITE_URL` (ссылка на админку в письмах-алертах, 8.4) и `ORIGIN`. Compose также ставит `APP_ENV=production`, `PUBLIC_APP_ENV=production`, `MEDIA_ROOT=/data/media`, `POSTGRES_HOST=db`, `API_INTERNAL_URL=http://backend:8000`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`. Значения этих переменных в `.env` на production не влияют.
-- `compose.e2e.yml`: те же образы из Dockerfile, тот же release-шаг; Caddy на `localhost:8080` (`Caddyfile.e2e`); backend публикует `8000` только для тестового эндпоинта; `APP_ENV=e2e`, `DJANGO_DEBUG=false`, `ORIGIN=http://localhost:8080`, `LEAD_THROTTLE_RATE=1000/hour`, `ENABLE_TEST_ENDPOINTS=true`, `SHEETS_BACKEND=fake`, `SHEETS_POLL_SECONDS=1`; backend и worker делят том `/data` (media, фейковая таблица).
+- `compose.e2e.yml`: те же образы из Dockerfile, тот же release-шаг; Caddy на `localhost:8080` (`Caddyfile.e2e`); backend публикует `8000` только для тестового эндпоинта; `APP_ENV=e2e`, `DJANGO_DEBUG=false`, `ORIGIN=http://localhost:8080`, `LEAD_THROTTLE_RATE=1000/hour`, `ENABLE_TEST_ENDPOINTS=true`, `SHEETS_BACKEND=fake`, `SHEETS_POLL_SECONDS=1`, `MAX_BACKEND=fake`; backend и worker делят том `/data` (media, фейковая таблица, фейковый чат).
 
 ### 16.6 Ограничения Claude Code (`.claude/settings.json`)
 
@@ -1312,6 +1345,8 @@ tech.md v<N>; touched: <sections> | none
 | Политика ПДн, текст согласия, уведомления в РКН (обработка, трансграничная передача) | заказчик, юрист | S2-11, S2-12 | маркер `LEGAL_TEXT_PENDING` |
 | Контент: логотип, фото работ, тексты, контакты | заказчик | S2-06..S2-10 на живых данных | `seed_demo` |
 | SMTP для алертов | владелец | S2-05 | console email backend |
+| Верифицированный профиль организации, ИП или самозанятого на dev.max.ru, бот и его модерация | заказчик, владелец | S2-14 на живом чате | фейк |
+| Групповой чат «Заявки» в MAX: приватность бота разрешает добавление в группы, бот в чате, `chat_id` записан в админку | владелец | S2-14 на живом чате | фейк |
 | S3-совместимое хранилище в РФ для бэкапов | владелец | S2-12 | локальные бэкапы |
 | Шаблон сайта (архив владельца, вне репозитория с v10) | владелец | S1-01 | нет |
 
@@ -1580,13 +1615,34 @@ tech.md v<N>; touched: <sections> | none
 - AC10: `APP_ENV=production` с пустым `EMAIL_HOST` → письма нет, ПДн в логах нет, заявка в ретрае, `notify_last_error` содержит `SmtpNotConfigured`.
 - Тесты: Hypothesis на `parse_recipients` (идемпотентна, без пустых и дублей, порядок сохранён) и `build_message` (тема без ПДн, непустые поля в теле, пустые без строк); Hypothesis stateful на переходы 24.3 (операции «успех», «SMTP упал», «ошибка настройки», «повтор из админки», «нет получателей», «время +N минут»; инварианты: только переходы 24.3, у `sent` есть `notify_sent_at`, без нового перехода заявка не даёт второго письма); pytest на AC1..AC9 с `mail.outbox`.
 
+### S2-14 Пересылка заявок в групповой чат MAX
+- Цель: менеджеры видят новую заявку в групповом чате MAX; чат задаётся в админке без деплоя. Бот только пишет: вебхука, публичного эндпоинта, команд и кнопок нет.
+- Бэкенд: поля пересылки в `Lead`, `SiteSettings.max_chat_id`, пакет `apps/leads/messenger/` (`text.py`: `build_text`, `validate_text`; `client.py`: протокол, ошибки, `get_messenger_client`; `max.py`: транспорт 25.2; `fake.py`: фейк в памяти и в JSONL; `outbox.py`: `send_lead`, `run_messenger_batch`), партия пересылки в `run_cycle`, `apps/leads/services/max_retry.py`, команда `max_bind_chat`, колонка, фильтр и действие в `LeadAdmin`, поле чата в `SiteSettingsAdmin`, право `retry_max` в группе «Заявки», `seed_demo`, `MAX_*` и `LEAD_MESSENGER_MAX_ATTEMPTS` в `config/settings.py`, сертификат в `deploy/certs/` и `backend/Dockerfile`.
+- Фронтенд: только черновики `/privacy` и `/consent`, где назван новый получатель ПДн (13.2). DTO, `openapi.yaml` и типы не меняются. Раздел «Заявки и Google-таблица» в `README.md` описывает пересылку и настройку бота.
+- Контракты: 6, 7 (внутреннее поле вне DTO), 13.1, 13.2, 14, 15.2, 15.3, 16.5, 25.
+- Зависит от: S2-01, S2-05, S2-13.
+- AC1: заявка создана, `max_chat_id` заполнен, один цикл воркера → в фейке ровно одно сообщение, текст по 25.3, `max_status=sent`, `max_sent_at` заполнен.
+- AC2: `send_lead` дважды для одной заявки → одно сообщение.
+- AC3: MAX отвечает 429, 500 или таймаутом → `pending`, `attempts + 1`, `max_next_attempt_at` в пределах `[now + 0,8·base, now + 1,2·base]`, где `base = min(30·2^(n−1), 3600)`; после `LEAD_MESSENGER_MAX_ATTEMPTS` → `failed`.
+- AC4: MAX отвечает 403 или `200` с `success: false` → `failed` сразу, `max_last_error` содержит статус или код и класс ошибки, ПДн и токена в нём нет.
+- AC5: `max_chat_id` пусто → `max_status=off`, сообщения нет, попытки не растут. Заявка, созданная до миграции (`off`), сообщения не вызывает.
+- AC6: текст содержит дату, ФИО, телефон, вид, размеры, комментарий, источник; пустые поля строк не дают; ссылки на админку нет; в логах ПДн нет.
+- AC7: действие «Повторить отправку в MAX»: `failed` и `off` → `pending`, `attempts=0`, `max_last_error=""`; `sent` и `pending` действие не меняет; право у группы «Заявки», группа «Контент» заявок не видит.
+- AC8: `max_chat_id` не входит в `GET /api/v1/site-settings/` и в `openapi.yaml`.
+- AC9: клиент шлёт `POST {MAX_API_URL}/messages?chat_id=<id>` с заголовком `Authorization`, телом `{"text": ...}` без `format`, таймаутом 10 с и `verify` из `MAX_CA_BUNDLE`; `=1+1` в комментарии уходит текстом без изменений.
+- AC10: MAX лежит, почта и таблица отвечают → в одном цикле заявка получает `sheet_status=sent`, `notify_status=sent`, `max_status=pending`.
+- AC11: `max_bind_chat` печатает `chat_id` из событий `bot_added` и `message_created` и в БД ничего не пишет.
+- AC12: `check --deploy` при `APP_ENV=production` и `MAX_BACKEND=max` падает без `MAX_BOT_TOKEN` и без `MAX_CA_BUNDLE`.
+- Тесты: Hypothesis на `build_text` (не длиннее 4000 символов, пустые поля без строк, непустые поля в тексте, исключений не бросает); `responses` на транспорт (AC9, классификация ошибок AC3 и AC4, `max_bind_chat` AC11); Hypothesis stateful на переходы 25.4 (операции «успех», «retryable», «permanent», «повтор из админки», «нет чата», «время +N минут»; инварианты: только переходы 25.4, у `sent` есть `max_sent_at`, без нового перехода заявка не даёт второго сообщения); pytest на AC1..AC12.
+
 ## 23. Вне скоупа v1
 
 - Редактирование текстов секций в админке: тексты в коде по шаблону.
 - Мультиязычность, тёмная тема.
 - Аналитика и счётчики: только российские сервисы и после юр. проверки, через `CONTRACT GAP`.
 - Капча: при спаме добавить российскую капчу через `CONTRACT GAP`.
-- Уведомления в мессенджеры, интеграция с CRM. Письма менеджерам о новых заявках в скоупе с v11: задача S2-13, контракт в разделе 24.
+- Интеграция с CRM. Письма менеджерам о новых заявках в скоупе с v11 (задача S2-13, раздел 24), пересылка в групповой чат MAX с v12 (задача S2-14, раздел 25).
+- Команды и кнопки бота MAX в чате: они требуют вебхука, публичного эндпоинта и прав администратора `read_all_messages`, то есть всего потока чужих сообщений на наш сервер. Понадобится: отдельная задача через `CONTRACT GAP`.
 - Онлайн-калькулятор стоимости.
 - Загрузка HEIC.
 - Автоудаление старых заявок: срок хранения согласовать с заказчиком.
@@ -1644,6 +1700,68 @@ tech.md v<N>; touched: <sections> | none
 - Очереди независимы: недоступный SMTP не задерживает доставку в таблицу и наоборот.
 - Логи: `lead=<public_id> notify_attempt=<n> outcome=<sent|retry|failed|off>`. Без ФИО, телефона, комментария. В `notify_last_error` только код SMTP и класс ошибки.
 - Админка: колонка «Уведомление», фильтр по статусу, действие «Повторить уведомление» под правом `leads.retry_notify` (группа «Заявки», 15.2).
+
+## 25. Пересылка заявок в MAX
+
+Решение владельца от 2026-11-17: менеджеры узнают о заявке в групповом чате MAX. Postgres остаётся источником истины, чат это третья проекция рядом с таблицей и письмом. Бот только исходящий.
+
+### 25.1 Бот и чат
+
+- Бот создаётся на платформе MAX для партнёров: нужен верифицированный профиль юрлица, ИП или самозанятого резидента РФ, и бот проходит модерацию (раздел 20). Токен выдаётся при создании и живёт в `MAX_BOT_TOKEN`.
+- Приватность бота по умолчанию запрещает добавление в групповые чаты. Владелец снимает запрет в настройках бота, затем добавляет бота в чат «Заявки».
+- Метода «дай список чатов» у API нет: `GET /chats` отключён с июня 2026, `chat_id` приходит только в событиях. Один раз его добывает `manage.py max_bind_chat`: команда опрашивает `GET /updates` (long polling, таймаут 30 с), печатает `chat_id` из событий `bot_added` и `message_created` и в БД ничего не пишет. Владелец вставляет значение в админку. Long polling документация MAX разрешает только для разработки, здесь он работает один раз и в production не висит.
+- `SiteSettings.max_chat_id` (раздел 6): админка, поле «Чат в MAX для заявок», одно число. Пусто: пересылка выключена, заявка получает `max_status=off`. Владелец заполнил поле позже: сообщения уходят по новым заявкам, старые поднимает действие «Повторить отправку в MAX».
+- Админских прав боту не нужно: он только пишет. Права `read_all_messages` и `write` понадобятся командам и кнопкам, они вне v1 (раздел 23).
+
+### 25.2 Транспорт
+
+- `POST {MAX_API_URL}/messages?chat_id=<id>`, заголовок `Authorization: <MAX_BOT_TOKEN>` (без `Bearer`; токен в query MAX не поддерживает), тело `{"text": <текст>}`, таймаут 10 с на запрос.
+- Поле `format` не передаётся: текст уходит как есть, разметка из комментария клиента не исполняется (13.1). Это тот же мотив, что `valueInputOption=RAW` у таблицы.
+- TLS: `platform-api2.max.ru` отдаёт сертификат `*.max.ru` от `Russian Trusted Sub CA` и корня `Russian Trusted Root CA` (Минцифры). Бандл certifi его не принимает, поэтому сессия клиента ходит с `verify=MAX_CA_BUNDLE`. Корень лежит в `deploy/certs/russian-trusted-root-ca.pem` и копируется в образ (16.5). Системное хранилище и клиент Google не меняются.
+- Лимиты MAX: не больше 2 сообщений в секунду в один чат, не больше 30 запросов в секунду на хост. Партия воркера (до 10 заявок за цикл в 5 с) в них укладывается.
+- Классификация ошибок:
+  - `MessengerRetryableError`: таймаут, ошибка соединения, HTTP 408, 429, 500, 502, 503, 504.
+  - `MessengerPermanentError`: HTTP 400, 401, 403, 404, 405, прочие 4xx и ответ `200` с `success: false`. Коды вида `chat.denied` и `not.found` означают негодный токен, чужой чат или бота вне чата: ретрай их не исправит.
+- `max_last_error`: HTTP-статус или код ошибки MAX плюс класс исключения. Тела ответа, токена и ПДн в нём нет.
+- `get_messenger_client()` выбирает реализацию по `MAX_BACKEND`: `fake` или `max`. `MaxClient` (`messenger/max.py`) это транспорт выше. `FakeClient` (`messenger/fake.py`) держит сообщения в памяти (юнит-тесты) или в JSONL-файле `MAX_FAKE_PATH` (dev, e2e) и каждое проверяет `validate_text`. Инъекция сбоев: `fail_next(kind, times)`, где `kind` из `429`, `500`, `403`, `success_false`, `timeout`.
+
+### 25.3 Сообщение
+
+- Текст, по строке на поле, пустые поля пропускаются:
+
+```text
+Новая заявка: Кухни под заказ
+
+Дата: 2026-11-17 14:20
+ФИО: Иванов Иван Иванович
+Телефон: +7 (999) 123-45-67
+Размеры: Стена 3,2 м, высота 2,6 м
+Комментарий: МДФ, белый, к марту
+Источник: /catalog/kitchens
+```
+
+- Дата в `SHEETS_TIMEZONE`, формат `YYYY-MM-DD HH:MM`. Телефон через `format_phone_display` (12.3). Вид стоит в первой строке и отдельной строкой не дублируется.
+- Ссылки на карточку в админке в сообщении нет: путь админки секретный (13.1), а состав чата шире списка получателей письма. Карточку менеджер открывает из письма или из админки.
+- `build_text(lead, tz) -> str` в `apps/leads/messenger/text.py`: чистая функция. `validate_text(text) -> None`: текст не пуст и не длиннее 4000 символов (лимит MAX). Нарушение: `ContractViolation`; сообщение называет правило и текста заявки не включает.
+- Текст русский. Вложений, кнопок и клавиатуры нет.
+
+### 25.4 Джоба `leads.send_to_max` (третий outbox)
+
+- Очередь: строки `leads_lead` с `max_status=pending` и `max_next_attempt_at <= now()`.
+- Процесс тот же, `run_sheets_worker`: `run_cycle` после партий таблицы и письма берёт до 10 заявок этой очереди, затем проверяет алерты 8.4. Отдельного сервиса в compose нет.
+- Обработчик `send_lead(lead_id, client, now, rng) -> MessengerOutcome` в `apps/leads/messenger/outbox.py`:
+  1. Заблокировать заявку через `select_for_update(skip_locked=True)`. Статус не `pending`: ничего не делать.
+  2. `max_chat_id` пуст: `off`, попытки не растут.
+  3. `client.send(chat_id, build_text(lead, tz))`. Успех: `sent`, `max_sent_at=now`, `max_last_error=""`.
+  4. `MessengerPermanentError`: `attempts += 1`, сразу `failed`.
+  5. `MessengerRetryableError` и прочие исключения: `attempts += 1`. `attempts >= LEAD_MESSENGER_MAX_ATTEMPTS`: `failed`. Иначе `max_next_attempt_at = now + backoff_seconds(attempts, rng)`. Функция та же, что у таблицы и письма, живёт в `apps/leads/retry.py`.
+- Очередь наполняет только `create_lead`: поле по умолчанию `off`, поэтому заявки, созданные до включения пересылки, сообщений не вызывают.
+- Переходы статусов: `pending → sent`, `pending → pending` (ретрай), `pending → failed`, `pending → off`, `failed → pending` и `off → pending` (админ-действие «Повторить отправку в MAX»: `attempts=0`, `next_attempt_at=now`, `max_last_error=""`). Других переходов нет.
+- Идемпотентность: блокировка и проверка статуса дают одно сообщение на заявку. Сорванный коммит после удачного запроса повторит сообщение: дешёвого вопроса «есть ли уже такое сообщение» у MAX нет, `GET /messages` требует прав администратора в чате. Повтор даёт две одинаковых строки в чате, что менеджер видит сразу, в отличие от дубля строки в таблице. Цена осознанная, альтернатива требует админских прав боту.
+- Очереди независимы: недоступный MAX не задерживает таблицу и письмо, недоступный SMTP или Google не задерживает чат.
+- Логи: `lead=<public_id> max_attempt=<n> outcome=<sent|retry|failed|off>`. Без ФИО, телефона, комментария.
+- Админка: колонка «MAX», фильтр по статусу, действие «Повторить отправку в MAX» под правом `leads.retry_max` (группа «Заявки», 15.2).
+- Алертов у этой очереди нет: о сбоях владелец узнаёт из админки и из писем-алертов таблицы (8.4).
 
 ## Приложение А. Карта шаблона (итог S1-01, v2)
 
