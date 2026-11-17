@@ -35,10 +35,14 @@ class FakeMessengerClient:
         with self._path.open(encoding="utf-8") as chat:
             return [json.loads(line) for line in chat if line.strip()]
 
-    def send(self, chat_id: int, text: str) -> None:
+    def send(
+        self, chat_id: int, text: str, attachments: list[dict[str, object]] | None = None
+    ) -> None:
         self._maybe_fail()
         validate_text(text)
         message: dict[str, object] = {"chat_id": chat_id, "text": text}
+        if attachments:
+            message["attachments"] = attachments
         with self._lock:
             if self._path is None:
                 self._memory.append(message)

@@ -7,7 +7,9 @@ from django.core.exceptions import ImproperlyConfigured
 
 
 class MessengerClient(Protocol):
-    def send(self, chat_id: int, text: str) -> None: ...
+    def send(
+        self, chat_id: int, text: str, attachments: list[dict[str, object]] | None = None
+    ) -> None: ...
 
 
 class MessengerError(Exception):

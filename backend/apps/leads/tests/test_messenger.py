@@ -66,21 +66,19 @@ def test_ac1_new_lead_reaches_the_chat() -> None:
     assert run_messenger_batch(chat, now, RNG) == 1
 
     lead.refresh_from_db()
-    assert chat.messages() == [
-        {
-            "chat_id": CHAT_ID,
-            "text": (
-                "Новая заявка: Кухни под заказ\n"
-                "\n"
-                f"Дата: {lead.created_at.astimezone(TZ):%Y-%m-%d %H:%M}\n"
-                "ФИО: Тестовый Клиент\n"
-                "Телефон: +7 (999) 123-45-67\n"
-                "Размеры: Стена 3,2 м, высота 2,6 м\n"
-                "Комментарий: МДФ, белый\n"
-                "Источник: /catalog/kitchens"
-            ),
-        }
-    ]
+    assert len(chat.messages()) == 1
+    message = chat.messages()[0]
+    assert message["chat_id"] == CHAT_ID
+    assert message["text"] == (
+        "<b>Новая заявка: Кухни под заказ</b>\n"
+        "\n"
+        f"<b>Дата:</b> {lead.created_at.astimezone(TZ):%Y-%m-%d %H:%M}\n"
+        "<b>ФИО:</b> Тестовый Клиент\n"
+        "<b>Телефон:</b> +7 (999) 123-45-67\n"
+        "<b>Размеры:</b> Стена 3,2 м, высота 2,6 м\n"
+        "<b>Комментарий:</b> МДФ, белый\n"
+        "<b>Источник:</b> /catalog/kitchens"
+    )
     assert lead.max_status == NotifyStatus.SENT
     assert lead.max_sent_at == now
     assert lead.max_last_error == ""
@@ -193,7 +191,7 @@ def test_ac6_empty_fields_leave_no_rows_and_no_admin_link() -> None:
     text = str(chat.messages()[0]["text"])
     for label in ("Размеры", "Комментарий", "Источник"):
         assert label not in text
-    assert "ФИО: Тестовый Клиент" in text
+    assert "<b>ФИО:</b> Тестовый Клиент" in text
     # The admin path is a secret and the chat is wider than the mailing list (tech.md, 25.3).
     assert "http" not in text
 
@@ -252,7 +250,7 @@ def test_a_multiline_comment_keeps_its_line_breaks() -> None:
 
     send_lead(lead.pk, chat, timezone.now(), RNG)
 
-    assert "Комментарий: первая строка\nвторая строка" in str(chat.messages()[0]["text"])
+    assert "<b>Комментарий:</b> первая строка\nвторая строка" in str(chat.messages()[0]["text"])
 
 
 def test_validate_text_guards_the_max_limit() -> None:
@@ -281,7 +279,7 @@ def test_build_text_fits_the_limit_and_skips_empty_fields(
 
     validate_text(text)
     assert len(text) <= MAX_LENGTH
-    assert text.startswith("Новая заявка: Офисная мебель")
+    assert text.startswith("<b>Новая заявка: Офисная мебель</b>")
     assert ": None" not in text
     for value, label in ((dimensions, "Размеры"), (comment, "Комментарий"), (source, "Источник")):
-        assert (f"{label}: " in text) is bool(value)
+        assert (f"<b>{label}:</b> " in text) is bool(value)

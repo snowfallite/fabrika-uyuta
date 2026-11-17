@@ -30,9 +30,14 @@ class MaxMessengerClient:
             build_session(settings.MAX_BOT_TOKEN, settings.MAX_CA_BUNDLE), settings.MAX_API_URL
         )
 
-    def send(self, chat_id: int, text: str) -> None:
-        # No "format" field: markup from a visitor comment must stay inert (13.1).
-        self._request("POST", "/messages", params={"chat_id": chat_id}, json={"text": text})
+    def send(
+        self, chat_id: int, text: str, attachments: list[dict[str, object]] | None = None
+    ) -> None:
+        # The template owns the markup; every lead value is escaped before it gets here (13.1).
+        body: dict[str, Any] = {"text": text, "format": "html"}
+        if attachments:
+            body["attachments"] = attachments
+        self._request("POST", "/messages", params={"chat_id": chat_id}, json=body)
 
     def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         try:
