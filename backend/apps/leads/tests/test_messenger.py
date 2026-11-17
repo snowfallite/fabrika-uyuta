@@ -40,7 +40,7 @@ def chat_on(settings: Any) -> None:
 
 
 def queued(**overrides: Any) -> Lead:
-    return make_lead(max_status=NotifyStatus.PENDING, **overrides)
+    return make_lead(**({"max_status": NotifyStatus.PENDING} | overrides))
 
 
 def base(n: int) -> float:

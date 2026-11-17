@@ -176,12 +176,19 @@ class Command(BaseCommand):
                     if status == SheetStatus.FAILED
                     else "",
                     "notify_status": NotifyStatus(status),
-                    "max_status": NotifyStatus(status),
                     "notify_sent_at": now if status == SheetStatus.SENT else None,
                     "notify_attempts": settings.LEAD_NOTIFY_MAX_ATTEMPTS
                     if status == SheetStatus.FAILED
                     else 0,
                     "notify_last_error": "550 SMTPRecipientsRefused"
+                    if status == SheetStatus.FAILED
+                    else "",
+                    "max_status": NotifyStatus(status),
+                    "max_sent_at": now if status == SheetStatus.SENT else None,
+                    "max_attempts": settings.LEAD_MESSENGER_MAX_ATTEMPTS
+                    if status == SheetStatus.FAILED
+                    else 0,
+                    "max_last_error": "403 MessengerPermanentError"
                     if status == SheetStatus.FAILED
                     else "",
                 },
