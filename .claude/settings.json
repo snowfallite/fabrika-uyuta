@@ -13,6 +13,7 @@
       "Edit(/contracts/fixtures/**)",
       "Edit(/backend/apps/core/enums.py)",
       "Edit(/backend/apps/leads/sheets/row.py)",
+      "Edit(/backend/apps/leads/messenger/text.py)",
       "Edit(/frontend/src/lib/types/index.ts)",
       "Edit(/frontend/src/lib/server/api.ts)",
       "Edit(/frontend/src/lib/components/ui/**)",
