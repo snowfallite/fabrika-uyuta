@@ -14,6 +14,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from apps.core.enums import SheetStatus
+from apps.leads.messenger.fake import FakeMessengerClient
 from apps.leads.models import Lead
 from apps.leads.retry import backoff_seconds
 from apps.leads.sheets.fake import FailureKind, FakeSheetsClient
@@ -59,7 +60,7 @@ def test_ac1_one_cycle_sends_a_pending_lead() -> None:
     lead = make_lead()
     client = FakeSheetsClient()
 
-    assert run_cycle(client, rng()) == 1
+    assert run_cycle(client, FakeMessengerClient(), rng()) == 1
 
     rows = client.rows()
     assert len(rows) == 1
@@ -75,7 +76,7 @@ def test_ac1_cycle_skips_leads_that_are_not_due() -> None:
     make_lead(sheet_next_attempt_at=timezone.now() + timedelta(minutes=5))
     make_lead(sheet_status=SheetStatus.FAILED)
     client = FakeSheetsClient()
-    assert run_cycle(client, rng()) == 0
+    assert run_cycle(client, FakeMessengerClient(), rng()) == 0
     assert client.rows() == []
 
 
@@ -197,7 +198,7 @@ def test_ac5_two_workers_on_one_lead_give_one_row() -> None:
 def test_ac6_formula_text_reaches_the_row_unchanged() -> None:
     make_lead(comment="=1+1")
     client = FakeSheetsClient()
-    run_cycle(client, rng())
+    run_cycle(client, FakeMessengerClient(), rng())
     assert client.rows()[0][6] == "=1+1"
 
 
@@ -219,5 +220,5 @@ def test_worker_logs_carry_no_pii(caplog: pytest.LogCaptureFixture) -> None:
 def test_file_backed_fake_survives_a_new_client(tmp_path: Any) -> None:
     make_lead()
     path = tmp_path / "fake-sheet.jsonl"
-    run_cycle(FakeSheetsClient(path), rng())
+    run_cycle(FakeSheetsClient(path), FakeMessengerClient(), rng())
     assert len(FakeSheetsClient(path).rows()) == 1

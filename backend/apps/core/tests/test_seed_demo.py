@@ -11,6 +11,7 @@ from django.core.management.base import CommandError
 
 from apps.content.models import Category, GalleryItem, SiteImage, SiteSettings
 from apps.core.enums import SheetStatus
+from apps.leads.messenger.fake import FakeMessengerClient
 from apps.leads.models import Lead
 from apps.leads.sheets.fake import FakeSheetsClient
 from apps.leads.worker import run_cycle
@@ -94,7 +95,7 @@ def test_ac3_production_refuses_and_writes_nothing(settings: Any, media_root: Pa
 def test_ac4_pending_demo_lead_reaches_the_fake_sheet(tmp_path: Path) -> None:
     seed()
     sheet = tmp_path / "fake-sheet.jsonl"
-    run_cycle(FakeSheetsClient(sheet), random.Random(3))  # noqa: S311
+    run_cycle(FakeSheetsClient(sheet), FakeMessengerClient(), random.Random(3))  # noqa: S311
     pending = Lead.objects.get(public_id="8f1d9c1e-0000-4000-8000-000000000001")
     assert [row[0] for row in FakeSheetsClient(sheet).rows()] == [str(pending.public_id)]
     pending.refresh_from_db()

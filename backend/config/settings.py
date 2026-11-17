@@ -53,6 +53,17 @@ EMAIL_BACKEND = (
 )
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "") or "webmaster@localhost"
 
+MAX_BACKEND = env_str("MAX_BACKEND", "fake")
+MAX_API_URL = env_str("MAX_API_URL", "https://platform-api2.max.ru").rstrip("/")
+MAX_BOT_TOKEN = env_str("MAX_BOT_TOKEN", "")
+# platform-api2.max.ru serves a Russian Trusted Root CA chain that certifi rejects, so the
+# messenger client alone verifies against this bundle (tech.md, 25.2).
+_max_ca = env_str("MAX_CA_BUNDLE", "")
+MAX_CA_BUNDLE = str(_path(_max_ca)) if _max_ca else ""
+MAX_FAKE_PATH = _path(env_str("MAX_FAKE_PATH", "./var/fake-max.jsonl"))
+# The chat that receives new leads lives in the admin: SiteSettings.max_chat_id (tech.md, 25.1).
+LEAD_MESSENGER_MAX_ATTEMPTS = env_int("LEAD_MESSENGER_MAX_ATTEMPTS", 6)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

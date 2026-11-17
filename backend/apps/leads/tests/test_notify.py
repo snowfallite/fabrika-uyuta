@@ -16,6 +16,7 @@ from hypothesis import strategies as st
 
 from apps.content.models import SiteSettings
 from apps.core.enums import NotifyStatus, ProductKind, SheetStatus
+from apps.leads.messenger.fake import FakeMessengerClient
 from apps.leads.models import Lead
 from apps.leads.notify import (
     NotifyOutcome,
@@ -206,7 +207,7 @@ def test_ac9_broken_smtp_does_not_hold_the_sheet() -> None:
     client = FakeSheetsClient()
 
     with mock.patch("apps.leads.notify.send_mail", side_effect=SMTPException("down")):
-        run_cycle(client, RNG)
+        run_cycle(client, FakeMessengerClient(), RNG)
 
     lead.refresh_from_db()
     assert lead.sheet_status == SheetStatus.SENT

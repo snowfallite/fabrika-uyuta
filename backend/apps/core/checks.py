@@ -33,4 +33,6 @@ def check_production_settings(
         settings.GOOGLE_SERVICE_ACCOUNT_FILE and settings.GOOGLE_SPREADSHEET_ID
     ):
         problems.append(("SHEETS_BACKEND=google needs GOOGLE_* variables", "core.E006"))
+    if settings.MAX_BACKEND == "max" and not (settings.MAX_BOT_TOKEN and settings.MAX_CA_BUNDLE):
+        problems.append(("MAX_BACKEND=max needs MAX_BOT_TOKEN and MAX_CA_BUNDLE", "core.E007"))
     return [Error(message, id=check_id) for message, check_id in problems]

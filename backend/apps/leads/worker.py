@@ -17,6 +17,8 @@ from django.utils import timezone
 
 from apps.core.enums import SheetStatus
 from apps.leads.alerts import check_alerts
+from apps.leads.messenger.client import MessengerClient
+from apps.leads.messenger.outbox import run_messenger_batch
 from apps.leads.models import Lead
 from apps.leads.notify import run_notify_batch
 from apps.leads.retry import backoff_seconds
@@ -80,11 +82,12 @@ def sync_lead(lead_id: int, client: SheetsClient, now: datetime, rng: random.Ran
 
 def run_cycle(
     client: SheetsClient,
+    messenger: MessengerClient,
     rng: random.Random,
     stop: threading.Event | None = None,
     now: Callable[[], datetime] = timezone.now,
 ) -> int:
-    """One pass for the sheet, then one for the notifications; returns the sheet leads taken."""
+    """One pass per queue: sheet, email, chat. Returns the sheet leads taken."""
     due = (
         Lead.objects.filter(sheet_status=SheetStatus.PENDING, sheet_next_attempt_at__lte=now())
         .order_by("sheet_next_attempt_at")
@@ -101,6 +104,9 @@ def run_cycle(
     # Independent queue: an unreachable SMTP never holds up the sheet (tech.md, 24.3).
     run_notify_batch(now(), rng, stop)
     heartbeat(now())
+    # Same again for the chat: an unreachable MAX holds up neither the sheet nor the email (25.4).
+    run_messenger_batch(messenger, now(), rng, stop)
+    heartbeat(now())
     check_alerts(now())
     return picked
 
@@ -109,7 +115,7 @@ def heartbeat(now: datetime) -> None:
     cache.set(HEARTBEAT_KEY, now.timestamp(), timeout=None)
 
 
-def run_forever(client: SheetsClient, rng: random.Random) -> None:
+def run_forever(client: SheetsClient, messenger: MessengerClient, rng: random.Random) -> None:
     """Poll every SHEETS_POLL_SECONDS; SIGTERM lets the current lead finish, then exits."""
     stop = threading.Event()
 
@@ -121,7 +127,7 @@ def run_forever(client: SheetsClient, rng: random.Random) -> None:
     signal.signal(signal.SIGINT, request_stop)
     logger.info("sheets worker started")
     while not stop.is_set():
-        run_cycle(client, rng, stop)
+        run_cycle(client, messenger, rng, stop)
         stop.wait(settings.SHEETS_POLL_SECONDS)
     logger.info("sheets worker stopped")
 
