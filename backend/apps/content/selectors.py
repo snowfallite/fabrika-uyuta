@@ -79,6 +79,7 @@ def gallery_item(item: GalleryItem, category: Category) -> dict[str, Any] | None
     return {
         "id": item.pk,
         "category": category.slug,
+        "category_title": category.title,
         "title": item.title,
         "caption": item.caption,
         "image": image,

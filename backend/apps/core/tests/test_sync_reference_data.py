@@ -20,9 +20,9 @@ def counts() -> tuple[int, int, int, int]:
 
 def test_ac3_twice_gives_the_same_counts() -> None:
     call_command("sync_reference_data")
-    assert counts() == (5, 4, 1, 2)
+    assert counts() == (6, 4, 1, 2)
     call_command("sync_reference_data")
-    assert counts() == (5, 4, 1, 2)
+    assert counts() == (6, 4, 1, 2)
 
 
 def test_ac3_existing_values_are_not_overwritten() -> None:

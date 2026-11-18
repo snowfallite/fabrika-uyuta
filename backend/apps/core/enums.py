@@ -1,3 +1,5 @@
+from typing import Final
+
 from django.db import models
 
 
@@ -10,8 +12,9 @@ class ProductKind(models.TextChoices):
     OTHER = "other", "Другое"
 
 
-# Every kind except OTHER has a category page; the value doubles as the URL slug.
-CATEGORY_SLUG_CHOICES = [(v, label) for v, label in ProductKind.choices if v != ProductKind.OTHER]
+# Seed of the category list; after the first run the owner edits it in the admin (tech.md, 15.2).
+# The value doubles as the URL slug of the category page.
+CATEGORY_SEED: Final[list[tuple[str, str]]] = [(v, label) for v, label in ProductKind.choices]
 
 
 class SiteImageSlot(models.TextChoices):

@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.content.models import Category, SiteImage, SiteSettings
-from apps.core.enums import CATEGORY_SLUG_CHOICES, SiteImageSlot
+from apps.core.enums import CATEGORY_SEED, SiteImageSlot
 
 CONTENT_GROUP = "Контент"
 LEADS_GROUP = "Заявки"
@@ -16,9 +16,11 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args: Any, **options: Any) -> None:
-        for position, (slug, label) in enumerate(CATEGORY_SLUG_CHOICES):
-            Category.objects.get_or_create(
-                slug=slug, defaults={"title": label, "position": position}
+        # Categories are editable data: seed them once, never bring a deleted row back (15.2).
+        if not Category.objects.exists():
+            Category.objects.bulk_create(
+                Category(slug=slug, title=label, position=position)
+                for position, (slug, label) in enumerate(CATEGORY_SEED)
             )
         for slot in SiteImageSlot.values:
             SiteImage.objects.get_or_create(slot=slot)

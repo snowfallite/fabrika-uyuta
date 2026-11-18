@@ -2,8 +2,6 @@
 
 from rest_framework import serializers
 
-from apps.core.enums import CATEGORY_SLUG_CHOICES
-
 
 class ImageAssetSerializer(serializers.Serializer):
     url = serializers.CharField()
@@ -34,7 +32,7 @@ class SiteSettingsSerializer(serializers.Serializer):
 
 
 class CategorySummarySerializer(serializers.Serializer):
-    slug = serializers.ChoiceField(choices=CATEGORY_SLUG_CHOICES)
+    slug = serializers.CharField()
     title = serializers.CharField()
     short_description = serializers.CharField()
     cover = ImageAssetSerializer(allow_null=True)
@@ -42,7 +40,8 @@ class CategorySummarySerializer(serializers.Serializer):
 
 class GalleryItemSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    category = serializers.ChoiceField(choices=CATEGORY_SLUG_CHOICES)
+    category = serializers.CharField()
+    category_title = serializers.CharField()
     title = serializers.CharField()
     caption = serializers.CharField()
     image = ImageAssetSerializer()

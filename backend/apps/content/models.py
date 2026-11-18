@@ -1,8 +1,9 @@
 from django.db import models
 
-from apps.core.enums import CATEGORY_SLUG_CHOICES, SiteImageSlot
+from apps.core.enums import SiteImageSlot
 
 ALT_HELP = "Что на фото: для незрячих и поисковиков"
+SLUG_HELP = "Адрес страницы: латиница, цифры и дефис. После сохранения не меняется."
 
 
 class ImageFieldsMixin(models.Model):
@@ -21,7 +22,7 @@ class ImageFieldsMixin(models.Model):
 
 class Category(ImageFieldsMixin):
     image = models.ImageField("Обложка", upload_to="content/", max_length=255, blank=True)
-    slug = models.CharField(max_length=32, unique=True, choices=CATEGORY_SLUG_CHOICES)
+    slug = models.SlugField("Адрес", max_length=32, unique=True, help_text=SLUG_HELP)
     title = models.CharField("Название", max_length=120)
     short_description = models.CharField("Кратко", max_length=300, blank=True)
     # Plain text, paragraphs split by a blank line.
