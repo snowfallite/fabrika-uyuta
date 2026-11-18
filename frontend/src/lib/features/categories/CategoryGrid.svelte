@@ -3,6 +3,7 @@
 	import { CATALOG } from '$lib/content/home';
 	import type { CategorySummary } from '$lib/types';
 	import CategoryCard from './CategoryCard.svelte';
+	import { cardSpan } from './categories';
 
 	interface Props {
 		categories: CategorySummary[];
@@ -10,15 +11,19 @@
 
 	let { categories }: Props = $props();
 
-	// Six tracks on desktop: two wide cards over three narrow ones, so five categories fill
-	// the grid without a hole. On two columns an odd last card spans the whole row.
+	// Six tracks on desktop, filled by cardSpan whatever the count (S2-16 AC7).
+	// On two columns an odd last card spans the whole row.
+	const SPANS: Record<2 | 3 | 6, string> = {
+		2: 'lg:col-span-2 lg:aspect-[4/5]',
+		3: 'lg:col-span-3 lg:aspect-[3/2]',
+		6: 'lg:col-span-6 lg:aspect-[21/9]'
+	};
+
 	function placement(index: number, count: number) {
-		const wide = count === 5 && index < 2;
 		const lastOdd = index === count - 1 && count % 2 === 1;
-		return [
-			wide ? 'lg:col-span-3 lg:aspect-[3/2]' : 'lg:col-span-2 lg:aspect-[4/5]',
-			lastOdd ? 'sm:col-span-2 sm:aspect-[2/1]' : ''
-		].join(' ');
+		return [SPANS[cardSpan(index, count)], lastOdd ? 'sm:col-span-2 sm:aspect-[2/1]' : ''].join(
+			' '
+		);
 	}
 </script>
 
