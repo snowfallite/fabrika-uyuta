@@ -1660,7 +1660,8 @@ tech.md v<N>; touched: <sections> | none
 ### S2-16 Свои категории в админке
 - Цель: контент-менеджер заводит, правит и удаляет категории сам, категория «Другое» появляется в каталоге. Набор перестаёт быть справочником.
 - Бэкенд: `CATEGORY_SEED` вместо `CATEGORY_SLUG_CHOICES` в `apps/core/enums.py`, `Category.slug` как `SlugField` без `choices`, `CategoryAdmin` с добавлением и удалением (slug подставляется из названия при создании, при правке только для чтения), сид категорий только на пустой таблице в `sync_reference_data`, `category_title` в `GalleryItemSerializer` и `selectors.gallery_item`, `ENUM_NAME_OVERRIDES` без `CategorySlugEnum`, `seed_demo` на 6 категорий.
-- Фронтенд: `CategorySlug` как `string` в `src/lib/types/index.ts`, подписи галереи и лайтбокса из `category_title`, чистая функция раскладки `cardSpan` в `src/lib/features/categories/categories.ts`.
+- Фронтенд: `CategorySlug` как `string` в `src/lib/types/index.ts`, подписи галереи и лайтбокса из `category_title`, чистая функция раскладки `cardSpan` в `src/lib/features/categories/categories.ts`, `asProductKind` в `src/lib/domain/product-kind.ts` и предвыбор вида в `CategoryCard` и `CategoryPage` только для известного вида.
+- ADR: `docs/adr/0003-category-slug-is-free-data.md`.
 - Контракты: 6, 7 (`CategorySlug`, `GalleryItem.category_title`), 10.3, 15.2, 15.3.
 - Зависит от: S2-06, S2-07, S2-08.
 - AC1: контент-менеджер создаёт категорию в админке, slug подставляется из названия; карточка встаёт на главной по `position`, `/catalog/<slug>` отвечает 200.
