@@ -73,7 +73,7 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         CategoryDetail: {
-            slug: components["schemas"]["CategorySlugEnum"];
+            slug: string;
             title: string;
             short_description: string;
             cover: components["schemas"]["ImageAsset"] | null;
@@ -82,17 +82,8 @@ export interface components {
             seo_description: string;
             gallery: components["schemas"]["GalleryItem"][];
         };
-        /**
-         * @description * `kitchens` - Кухни под заказ
-         *     * `kitchen-tables` - Кухонные столы
-         *     * `wardrobes` - Шкафы
-         *     * `sliding-wardrobes` - Шкафы-купе
-         *     * `office` - Офисная мебель
-         * @enum {string}
-         */
-        CategorySlugEnum: "kitchens" | "kitchen-tables" | "wardrobes" | "sliding-wardrobes" | "office";
         CategorySummary: {
-            slug: components["schemas"]["CategorySlugEnum"];
+            slug: string;
             title: string;
             short_description: string;
             cover: components["schemas"]["ImageAsset"] | null;
@@ -103,7 +94,8 @@ export interface components {
         };
         GalleryItem: {
             id: number;
-            category: components["schemas"]["CategorySlugEnum"];
+            category: string;
+            category_title: string;
             title: string;
             caption: string;
             image: components["schemas"]["ImageAsset"];

@@ -2,7 +2,6 @@
 	import { ResponsiveImage } from '$lib/components/ui/responsive-image';
 	import { Section } from '$lib/components/ui/section';
 	import { WORKS } from '$lib/content/home';
-	import { PRODUCT_KIND_LABELS } from '$lib/domain/product-kind';
 	import type { GalleryItem } from '$lib/types';
 	import Lightbox from './Lightbox.svelte';
 
@@ -63,7 +62,7 @@
 					></span>
 					<span class="absolute inset-x-0 bottom-0 p-5 text-left">
 						<span class="block text-xs tracking-widest text-primary-foreground uppercase">
-							{PRODUCT_KIND_LABELS[item.category]}
+							{item.category_title}
 						</span>
 						<span class="block font-display text-xl text-primary-foreground">
 							{item.title || WORKS.photoTitle}

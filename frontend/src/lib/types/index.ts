@@ -12,4 +12,4 @@ export type HomeContent = S['HomeContent'];
 export type LeadCreateRequest = S['LeadCreateRequest'];
 export type LeadCreated = S['LeadCreated'];
 export type ProductKind = S['ProductKindEnum'];
-export type CategorySlug = S['CategorySlugEnum'];
+export type CategorySlug = string; // v14: categories are editable data, the schema has no enum

@@ -1,13 +1,32 @@
 import { expect, test } from '@playwright/test';
 import { expectNoSeriousA11yViolations } from './axe';
 
-const ORDER = ['Кухни под заказ', 'Кухонные столы', 'Шкафы', 'Шкафы-купе', 'Офисная мебель'];
+const ORDER = [
+	'Кухни под заказ',
+	'Кухонные столы',
+	'Шкафы',
+	'Шкафы-купе',
+	'Офисная мебель',
+	'Другое'
+];
 
 test.describe('home: categories', () => {
 	test('AC1: published categories render in position order', async ({ page }) => {
 		await page.goto('/');
 		const titles = page.locator('#catalog article h3');
 		await expect(titles).toHaveText(ORDER);
+	});
+
+	test('AC1: the seeded "Другое" category has its own card and page', async ({ page }) => {
+		await page.goto('/');
+		const card = page.locator('#catalog article').filter({ hasText: 'Другое' });
+		await expect(card.getByRole('link', { name: 'Другое' })).toHaveAttribute(
+			'href',
+			'/catalog/other'
+		);
+		const response = await page.goto('/catalog/other');
+		expect(response?.status()).toBe(200);
+		await expect(page.getByRole('heading', { level: 1, name: 'Другое' })).toBeVisible();
 	});
 
 	test('AC3: a card links to its page, the CTA opens the dialog with the kind', async ({
