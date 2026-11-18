@@ -40,7 +40,7 @@ def counts() -> dict[str, int]:
     }
 
 
-EXPECTED = {"slots_with_photo": 4, "covers": 5, "gallery": 12, "featured": 4, "leads": 3}
+EXPECTED = {"slots_with_photo": 4, "covers": 6, "gallery": 12, "featured": 4, "leads": 3}
 
 
 def test_ac1_seed_twice_keeps_counts() -> None:

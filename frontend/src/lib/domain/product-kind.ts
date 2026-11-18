@@ -13,3 +13,8 @@ export const PRODUCT_KIND_LABELS = {
 export function isProductKind(value: unknown): value is ProductKind {
 	return typeof value === 'string' && Object.hasOwn(PRODUCT_KIND_LABELS, value);
 }
+
+/** A category slug is free data since v14, so only a known kind preselects the form. */
+export function asProductKind(value: string): ProductKind | '' {
+	return isProductKind(value) ? value : '';
+}

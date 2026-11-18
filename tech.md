@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v13
-- Дата: 2026-11-17
+- Версия: v14
+- Дата: 2026-11-19
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v14 (2026-11-19): категории стали редактируемыми данными, решение владельца. `Category.slug` теряет `choices` и становится `SlugField`, `CategoryAdmin` получает добавление и удаление: контент-менеджер заводит свои категории сам. Начальные 6 строк (пять видов плюс `other` «Другое») сеет `sync_reference_data` только на пустой таблице, поэтому удалённая категория не возвращается на следующем деплое; `CATEGORY_SLUG_CHOICES` заменён на `CATEGORY_SEED`. `CategorySlugEnum` уходит из схемы: `CategorySummary.slug`, `CategoryDetail.slug` и `GalleryItem.category` становятся строками, `CategorySlug` в TS это `string`. Подпись миниатюры брала название из `PRODUCT_KIND_LABELS` по slug, со свободными slug это больше не работает, поэтому DTO `GalleryItem` расширен полем `category_title`. Раскладка сетки категорий перестала зависеть от числа 5: её считает чистая функция `cardSpan`. Вид заявки остаётся закрытым перечислением `ProductKind`, CTA своей категории открывает форму без предвыбора; вид из категорий принимает S2-17 с отдельным бампом. Задача S2-16.
 - v13 (2026-11-17): разметка и кнопка в сообщении MAX, решение владельца. Сообщение уходит с `format: "html"`: подписи полей жирные, значения заявки проходят через `html.escape`, поэтому разметка и ссылки из комментария посетителя приезжают буквальным текстом. Markdown не берём: у диалекта MAX свои метасимволы (`++`, `^^`, `~~`, `#`, `>`) и экранирование для них не описано, а `html.escape` проверяется тестом. Экранирование удлиняет текст (`&` даёт `&amp;`), поэтому `build_text` обрезает комментарий, пока сообщение не уложится в 4000 символов, и дописывает `…`. Новая функция `build_keyboard(lead) -> list[dict]` в том же замороженном файле: одна кнопка `clipboard` «Скопировать телефон» с номером в E.164. Кнопка работает на клиенте, обработчик и вебхук ей не нужны, в отличие от `callback`. Подписи и вложение описаны в 25.3, задача S2-15.
 - v12 (2026-11-17): пересылка новых заявок в групповой чат MAX, решение владельца. Бот только пишет в чат: вебхука, публичного эндпоинта, команд и кнопок нет, входящие события MAX не принимаются (раздел 25). Чат задаёт владелец в админке новым полем `SiteSettings.max_chat_id` (пусто отключает пересылку, в DTO `SiteSettings` поле не входит, как `notify_emails`). Доставку ведёт тот же `run_sheets_worker` третьим outbox-джобом: новые поля `Lead.max_status` (перечисление `NotifyStatus`, по умолчанию `off`, в очередь заявку ставит `create_lead`), `max_attempts`, `max_next_attempt_at`, `max_last_error`, `max_sent_at`, индекс `lead_max_due_idx`, ограничение `lead_max_sent_has_sent_at`, право `retry_max` и действие админки «Повторить отправку в MAX». Новые переменные `.env`: `MAX_BACKEND`, `MAX_API_URL`, `MAX_BOT_TOKEN`, `MAX_CA_BUNDLE`, `MAX_FAKE_PATH`, `LEAD_MESSENGER_MAX_ATTEMPTS` (6). `MAX_CA_BUNDLE` обязателен при `MAX_BACKEND=max`: `platform-api2.max.ru` отдаёт сертификат Минцифры, бандл certifi его не принимает, поэтому образ бэкенда несёт корневой сертификат из `deploy/certs/`. Правка 13.1: ПДн живут и в чате MAX; 13.2 называет MAX обработчиком, трансграничной передачи он не даёт (MAX LLC, РФ). Уведомления в мессенджеры ушли из раздела 23 в скоуп задачей S2-14, интеграция с CRM остаётся вне v1. Новый замороженный путь `backend/apps/leads/messenger/text.py` добавлен в раздел 3, в список `FROZEN` джобы contract-guard и в строки `ask` файла `.claude/settings.json` (16.6).
 - v11 (2026-11-17): уведомления о новых заявках по почте, решение владельца. Письмо со всеми полями заявки уходит на адреса из нового поля `SiteSettings.notify_emails` (админка, пусто отключает письма): получателей меняет контент-менеджер без деплоя, в DTO `SiteSettings` поле не входит. Доставку ведёт тот же `run_sheets_worker` вторым outbox-джобом (раздел 24): новые поля `Lead.notify_status` (перечисление `NotifyStatus`: `pending`, `sent`, `failed`, `off`; по умолчанию `off`, в очередь заявку ставит `create_lead`, поэтому после миграции письма по архиву заявок не уходят), `notify_attempts`, `notify_next_attempt_at`, `notify_last_error`, `notify_sent_at`, индекс `lead_notify_due_idx`, ограничение `lead_notified_has_sent_at`, право `retry_notify` и действие админки «Повторить уведомление». Новая переменная `.env`: `LEAD_NOTIFY_MAX_ATTEMPTS` (6, около 15 минут ретраев). Правка 13.1: ПДн живут и в письме оператору, поэтому 13.2 требует назвать SMTP-провайдера в политике и согласии, а провайдер за пределами РФ даёт трансграничную передачу. Письма о заявках ушли из раздела 23 в скоуп задачей S2-13, мессенджеры и CRM остаются вне v1.
@@ -268,6 +269,8 @@ src/lib/features/<feature>/
 
 ```python
 # backend/apps/core/enums.py
+from typing import Final
+
 from django.db import models
 
 
@@ -280,8 +283,9 @@ class ProductKind(models.TextChoices):
     OTHER = "other", "Другое"
 
 
-# Every kind except OTHER has a category page; the value doubles as the URL slug.
-CATEGORY_SLUG_CHOICES = [(v, label) for v, label in ProductKind.choices if v != ProductKind.OTHER]
+# Seed of the category list; after the first run the owner edits it in the admin (15.2).
+# The value doubles as the URL slug of the category page.
+CATEGORY_SEED: Final[list[tuple[str, str]]] = [(v, label) for v, label in ProductKind.choices]
 
 
 class SiteImageSlot(models.TextChoices):
@@ -308,7 +312,7 @@ class NotifyStatus(models.TextChoices):
 # backend/apps/content/models.py
 from django.db import models
 
-from apps.core.enums import CATEGORY_SLUG_CHOICES, SiteImageSlot
+from apps.core.enums import SiteImageSlot
 
 
 class ImageFieldsMixin(models.Model):
@@ -326,7 +330,7 @@ class ImageFieldsMixin(models.Model):
 
 class Category(ImageFieldsMixin):
     image = models.ImageField("Обложка", upload_to="content/", max_length=255, blank=True)
-    slug = models.CharField(max_length=32, unique=True, choices=CATEGORY_SLUG_CHOICES)
+    slug = models.SlugField("Адрес", max_length=32, unique=True)  # free ASCII slug, v14
     title = models.CharField("Название", max_length=120)
     short_description = models.CharField("Кратко", max_length=300, blank=True)
     description = models.TextField("Описание", blank=True)  # plain text, paragraphs split by a blank line
@@ -480,7 +484,9 @@ class Lead(models.Model):
         ]
 ```
 
-Справочные строки создаёт `sync_reference_data` (15.2): 5 категорий (по одной на `CATEGORY_SLUG_CHOICES`), 4 слота `SiteImage` (по одному на `SiteImageSlot`), одна строка `SiteSettings` с `id=1`. В админке у этих моделей нет добавления и удаления.
+Справочные строки создаёт `sync_reference_data` (15.2): 4 слота `SiteImage` (по одному на `SiteImageSlot`) и одна строка `SiteSettings` с `id=1`. В админке у этих двух моделей нет добавления и удаления.
+
+Категории живут иначе (v14): 6 строк из `CATEGORY_SEED` сеются только на пустой таблице, дальше их заводит, правит и удаляет контент-менеджер. Slug свободный и уникальный, менять его у существующей строки нельзя: по нему стоит URL страницы. Категорию с работами удалить нельзя, `GalleryItem.category` стоит на `PROTECT`.
 
 ## 7. HTTP API v1 (внутренний)
 
@@ -507,12 +513,12 @@ class Lead(models.Model):
 - GET-ответы: `Cache-Control: no-store`.
 - Внутренние поля моделей наружу не отдаются: `SiteSettings.notify_emails` (раздел 24) и `SiteSettings.max_chat_id` (раздел 25) в DTO не входят.
 - `{slug}` в пути: строка; неизвестный или скрытый slug даёт 404.
-- drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; `ENUM_NAME_OVERRIDES` фиксирует `ProductKindEnum` (из `ProductKind.choices`) и `CategorySlugEnum` (из `CATEGORY_SLUG_CHOICES`); поля вида и категории в схеме ссылаются на эти enum, не на `string`; схема безопасности apiKey в заголовке `X-Internal-Token`.
+- drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; `ENUM_NAME_OVERRIDES` фиксирует `ProductKindEnum` (из `ProductKind.choices`), поле вида в схеме ссылается на этот enum, не на `string`; у slug категории enum нет, категории редактируются в админке (v14); схема безопасности apiKey в заголовке `X-Internal-Token`.
 
 DTO (имена = имена компонентов в `openapi.yaml`):
 ```ts
 type ProductKind = 'kitchens' | 'kitchen-tables' | 'wardrobes' | 'sliding-wardrobes' | 'office' | 'other';
-type CategorySlug = Exclude<ProductKind, 'other'>;
+type CategorySlug = string;  // v14: categories are editable data, the schema holds no enum
 
 type ImageAsset = {
   url: string;          // widest variant, "/media/content/<uuid>/w1920.webp"
@@ -547,7 +553,8 @@ type CategorySummary = {
 
 type GalleryItem = {
   id: number;
-  category: CategorySlug;
+  category: CategorySlug;   // slug of its category
+  category_title: string;   // v14: thumbnail label, no enum left to look it up in
   title: string;
   caption: string;
   image: ImageAsset;
@@ -772,7 +779,7 @@ export type HomeContent = S['HomeContent'];
 export type LeadCreateRequest = S['LeadCreateRequest'];
 export type LeadCreated = S['LeadCreated'];
 export type ProductKind = S['ProductKindEnum'];
-export type CategorySlug = S['CategorySlugEnum'];
+export type CategorySlug = string;  // v14: the schema has no enum for it
 ```
 
 ### 10.4 Чистая логика (`src/lib/domain/`)
@@ -1092,7 +1099,7 @@ E2E_API_URL=http://localhost:8000
 ### 15.2 Справочные данные: `manage.py sync_reference_data`
 
 Идемпотентна, создаёт только недостающее, существующие значения не перезаписывает:
-- 5 строк `Category`: `slug` из `CATEGORY_SLUG_CHOICES`, `title` = метка, `position` = порядок в enum;
+- 6 строк `Category` из `CATEGORY_SEED` (`title` = метка, `position` = порядок в enum) и только на пустой таблице: дальше категориями распоряжается контент-менеджер, удалённая строка не возвращается (v14);
 - 4 строки `SiteImage` (пустые слоты);
 - `SiteSettings` с `id=1`;
 - группы «Контент» (добавление, изменение, удаление и просмотр моделей `content`) и «Заявки» (просмотр `Lead`, `leads.retry_sheet_sync`, `leads.retry_notify`, `leads.retry_max`).
@@ -1103,7 +1110,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 4 слота, обложки 5 категорий, 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails`, фиктивным `max_chat_id` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` и `max_status` совпадают со статусом таблицы) с фиктивными данными.
+- Заполняет: 4 слота, обложки 6 категорий (v14), 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails`, фиктивным `max_chat_id` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` и `max_status` совпадают со статусом таблицы) с фиктивными данными.
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1387,7 +1394,7 @@ tech.md v<N>; touched: <sections> | none
 - API v1 целиком (раздел 7): сериализаторы и view для всех операций, коды 400, 403, 404, 429 в схеме. Поведение: заглушки из таблицы раздела 7.
 - `apps/core`: `env.py`, `checks.py`, `phone.py` (12.3), пермишен внутреннего токена, ключ клиента по `X-Client-IP`, `/healthz` (БД), команда `release`.
 - `make gen`: `contracts/openapi.yaml`, `api.d.ts`. Руками: `src/lib/types/index.ts`, `src/lib/server/api.ts`, `contracts/fixtures/phone-cases.json` (набор 12.3).
-- AC1: `openapi.yaml` содержит все операции и компоненты раздела 7 с точными именами; поля вида и категории ссылаются на `ProductKindEnum` и `CategorySlugEnum`.
+- AC1: `openapi.yaml` содержит все операции и компоненты раздела 7 с точными именами; поле вида ссылается на `ProductKindEnum` (v14: `CategorySlugEnum` убран, slug категории это строка).
 - AC2: запрос без `X-Internal-Token` или с неверным получает 403 на каждой операции `/api/v1/`.
 - AC3: `sync_reference_data` дважды подряд даёт те же количества (5 категорий, 4 слота, 1 строка настроек, 2 группы) и не перезаписывает правки.
 - AC4: ограничения БД: вторая строка `SiteSettings`, `sent` без `sheet_synced_at`, телефон не E.164 → `IntegrityError`.
@@ -1650,6 +1657,28 @@ tech.md v<N>; touched: <sections> | none
 - AC5: пустые поля строк не дают, кнопка остаётся на месте.
 - Тесты: Hypothesis на `build_text` (для любой заявки в пределах схемы текст не длиннее 4000 символов, экранирован, исключений нет); `responses` на тело запроса (`format`, `attachments`); pytest на AC1..AC5.
 
+### S2-16 Свои категории в админке
+- Цель: контент-менеджер заводит, правит и удаляет категории сам, категория «Другое» появляется в каталоге. Набор перестаёт быть справочником.
+- Бэкенд: `CATEGORY_SEED` вместо `CATEGORY_SLUG_CHOICES` в `apps/core/enums.py`, `Category.slug` как `SlugField` без `choices`, `CategoryAdmin` с добавлением и удалением (slug подставляется из названия при создании, при правке только для чтения), сид категорий только на пустой таблице в `sync_reference_data`, `category_title` в `GalleryItemSerializer` и `selectors.gallery_item`, `ENUM_NAME_OVERRIDES` без `CategorySlugEnum`, `seed_demo` на 6 категорий.
+- Фронтенд: `CategorySlug` как `string` в `src/lib/types/index.ts`, подписи галереи и лайтбокса из `category_title`, чистая функция раскладки `cardSpan` в `src/lib/features/categories/categories.ts`, `asProductKind` в `src/lib/domain/product-kind.ts` и предвыбор вида в `CategoryCard` и `CategoryPage` только для известного вида.
+- ADR: `docs/adr/0003-category-slug-is-free-data.md`.
+- Контракты: 6, 7 (`CategorySlug`, `GalleryItem.category_title`), 10.3, 15.2, 15.3.
+- Зависит от: S2-06, S2-07, S2-08.
+- AC1: контент-менеджер создаёт категорию в админке, slug подставляется из названия; карточка встаёт на главной по `position`, `/catalog/<slug>` отвечает 200.
+- AC2: `sync_reference_data` на пустой базе создаёт 6 категорий, включая `other` с названием «Другое»; второй запуск счётчик не меняет; удалённая в админке категория следующим запуском не возвращается.
+- AC3: slug уникален; у существующей категории поле slug только для чтения; значение с пробелами или кириллицей форма не сохраняет.
+- AC4: категория без работ удаляется; категория с работами не удаляется, страница называет мешающие работы, в БД ничего не изменилось.
+- AC5: `GET /home/` и `GET /categories/{slug}/` отдают `slug` и `category` строками, `category_title` непустой; в `openapi.yaml` нет `CategorySlugEnum`; запросы остаются в пределах 4 и 3.
+- AC6: подпись миниатюры и строка лайтбокса берут название категории из `category_title`, не из `PRODUCT_KIND_LABELS`.
+- AC7: `cardSpan` раскладывает любое число карточек без дыр: сумма дорожек в каждом ряду равна 6.
+- Тесты: pytest на AC1..AC5 (админка через тестового клиента, `django_assert_max_num_queries` на AC5); компонентные `GalleryGrid.svelte.test.ts` и `Lightbox.svelte.test.ts` на AC6; fast-check на `cardSpan` (сумма по ряду равна 6, спан в диапазоне 2..6, исключений нет); Playwright `categories.spec.ts` на AC1 (карточка «Другое» и страница `/catalog/other` на сид-данных), axe.
+
+### S2-17 Вид заявки из категорий
+- Цель: посетитель выбирает в форме ту же категорию, что видит в каталоге, и заявка несёт её название в таблицу, письмо и чат MAX. Своя категория перестаёт приходить без вида.
+- Скоуп (часть B блока `CONTRACT GAP` от 2026-11-19): `Lead.product` без `choices`, новое поле `Lead.product_label` со снимком названия на момент заявки, `product_options` в DTO `SiteSettings`, `LeadCreateRequest.product` как строка, `ProductKindEnum` уходит из схемы, колонка E строки таблицы и тексты письма и MAX берут снимок названия.
+- Зависит от: S2-16.
+- Контракты принимает отдельный бамп (v15): разделы 6, 7, 8.1, 10.4, 12.1 правит сессия S2-17 вместе с AC и тестами.
+
 ## 23. Вне скоупа v1
 
 - Редактирование текстов секций в админке: тексты в коде по шаблону.
@@ -1797,7 +1826,7 @@ tech.md v<N>; touched: <sections> | none
 | 1 | Шапка: логотип, меню, телефон, CTA | нет | `layout/Header`, `layout/MobileNav` | `NAV`, `SiteSettings` | прозрачная, `glass` после 24px скролла |
 | 2 | Hero: H1, подзаголовок, 2 CTA, фото | `hero` | `hero` | `slots.hero`, `home.ts` | default |
 | 3 | About: текст, 4 пункта, фото | `about` | `sections` (`About`) | `slots.about`, `home.ts` | default |
-| 4 | Directions: 5 категорий | `catalog` | `categories` | `home.categories`, `home.ts` | muted |
+| 4 | Directions: карточки категорий (v14) | `catalog` | `categories` | `home.categories`, `home.ts` | muted |
 | 5 | Gallery: работы, лайтбокс | `works` | `gallery` | `home.featured`, `home.ts` | default |
 | 6 | Materials: ЛДСП, МДФ | `materials` | `sections` (`Materials`) | `slots.material_ldsp`, `slots.material_mdf`, `home.ts` | muted |
 | 7 | Process: 5 шагов | `process` | `sections` (`Process`) | `home.ts` | default |
@@ -1817,8 +1846,8 @@ tech.md v<N>; touched: <sections> | none
 | About, текст | «Проектируем и изготавливаем мебель по размерам вашего помещения. Замер, проект, производство и монтаж делаем сами.» (черновик: в шаблоне заглушка, текст даёт заказчик) |
 | About, пункты | «Замер и проект», «Собственное производство», «Доставка и сборка», «Гарантия на изделия» |
 | Directions | «Направления производства» / «Что мы производим» / «Изготовляем мебель на заказ для дома и офиса: от кухни до систем хранения.» |
-| Карточка категории | название и `short_description` из API; CTA «Оставить заявку» |
-| Gallery | «Наши работы» / «Галерея реализованных проектов»; подпись миниатюры: метка категории и `title`; кнопки лайтбокса «Закрыть», «Назад», «Вперёд»; счётчик лайтбокса `<n> / <всего>` (v7) |
+| Карточка категории | название и `short_description` из API; CTA «Оставить заявку» (своя категория открывает форму без предвыбора вида до S2-17) |
+| Gallery | «Наши работы» / «Галерея реализованных проектов»; подпись миниатюры: `category_title` и `title` (v14); кнопки лайтбокса «Закрыть», «Назад», «Вперёд»; счётчик лайтбокса `<n> / <всего>` (v7) |
 | Materials | «Материалы» / «С чем мы работаем»; «ЛДСП»: «Практичный материал для корпусной мебели с широкой палитрой декоров.»; «МДФ»: «Гладкие и фрезерованные фасады для кухонь и шкафов.» |
 | Process | «Как мы работаем» / «Путь от заявки до готовой мебели»; 01 «Заявка»: «Вы оставляете контакты.»; 02 «Замер»: «Мастер приезжает на объект.»; 03 «Проект»: «Согласуем дизайн и смету.»; 04 «Производство»: «Изготавливаем изделие.»; 05 «Монтаж»: «Доставка и установка.» |
 | Advantages | «Почему выбирают нас» / «Подход, который виден в деталях»; 01 «Точные размеры»: «Мебель делается под ваши замеры.»; 02 «Свой цех»: «Контролируем качество на каждом этапе.»; 03 «Фурнитура»: «Надёжные механизмы и аккуратные детали.»; 04 «Монтаж»: «Доставим и соберём на месте.» |

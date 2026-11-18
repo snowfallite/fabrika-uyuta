@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 from django import forms
@@ -119,13 +120,14 @@ class GalleryItemInline(admin.TabularInline):
 
 
 @admin.register(Category)
-class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
-    """Five fixed categories (tech.md, S2-06): order and publication edit right in the list."""
+class CategoryAdmin(ImageAdminMixin, admin.ModelAdmin):
+    """Categories the content manager owns (tech.md, S2-16): add, edit and delete them here."""
 
     list_display = ["title", "image_preview", "slug", "position", "is_published"]
     list_display_links = ["title"]
     list_editable = ["position", "is_published"]
-    readonly_fields = ["slug", "image_preview"]
+    readonly_fields = ["image_preview"]
+    prepopulated_fields = {"slug": ("title",)}
     fieldsets = [
         (None, {"fields": ["slug", "title", "short_description", "description"]}),
         ("Обложка", {"fields": ["image", "image_preview", "alt"]}),
@@ -133,6 +135,15 @@ class CategoryAdmin(ImageAdminMixin, ReferenceRowAdmin):
         ("Показ", {"fields": ["position", "is_published"]}),
     ]
     inlines = [GalleryItemInline]
+
+    def get_readonly_fields(self, request: HttpRequest, obj: Category | None = None) -> list[str]:
+        """The slug carries the page URL, so it is written once (tech.md, section 6)."""
+        return [*self.readonly_fields, "slug"] if obj else list(self.readonly_fields)
+
+    def get_prepopulated_fields(
+        self, request: HttpRequest, obj: Category | None = None
+    ) -> dict[str, Sequence[str]]:
+        return {} if obj else dict(self.prepopulated_fields)
 
     def get_urls(self) -> list[URLPattern]:
         upload = path(

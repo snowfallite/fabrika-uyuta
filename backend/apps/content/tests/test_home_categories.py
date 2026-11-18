@@ -39,7 +39,7 @@ def test_ac1_published_categories_in_position_order(client: Client, settings: An
 
     slugs = [c["slug"] for c in home(client, settings)["categories"]]
 
-    assert slugs == ["office", "kitchen-tables", "sliding-wardrobes", "kitchens"]
+    assert slugs == ["office", "kitchen-tables", "sliding-wardrobes", "other", "kitchens"]
 
 
 def test_ac2_category_without_cover_has_null_cover(client: Client, settings: Any) -> None:
@@ -69,10 +69,11 @@ def test_ac4_home_stays_within_four_queries(
         home(client, settings)
 
 
-def test_category_admin_has_fixed_rows_and_inline_order() -> None:
+def test_category_admin_adds_rows_and_edits_order_inline() -> None:
+    """v14: the content manager owns the list, so the add page is open (S2-16 AC1)."""
     admin_client = Client()
     admin_client.force_login(User.objects.create_superuser("owner", "owner@example.com", "x"))
-    assert admin_client.get(reverse("admin:content_category_add")).status_code == 403
+    assert admin_client.get(reverse("admin:content_category_add")).status_code == 200
     page = admin_client.get(reverse("admin:content_category_changelist")).content.decode()
     assert 'name="form-0-position"' in page
     assert 'name="form-0-is_published"' in page

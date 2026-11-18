@@ -23,7 +23,6 @@ COMPONENTS = {
     "LeadCreateRequest",
     "LeadCreated",
     "ProductKindEnum",
-    "CategorySlugEnum",
 }
 
 
@@ -46,14 +45,10 @@ def test_ac1_components_use_exact_names(schema: dict[str, Any]) -> None:
     assert set(schema["components"]["schemas"]) >= COMPONENTS
 
 
-def test_ac1_kind_and_category_fields_reference_enums(schema: dict[str, Any]) -> None:
+def test_ac1_the_kind_field_references_its_enum(schema: dict[str, Any]) -> None:
     schemas = schema["components"]["schemas"]
     product_ref = "#/components/schemas/ProductKindEnum"
-    slug_ref = "#/components/schemas/CategorySlugEnum"
     assert schemas["LeadCreateRequest"]["properties"]["product"] == {"$ref": product_ref}
-    assert schemas["CategorySummary"]["properties"]["slug"] == {"$ref": slug_ref}
-    assert schemas["CategoryDetail"]["properties"]["slug"] == {"$ref": slug_ref}
-    assert schemas["GalleryItem"]["properties"]["category"] == {"$ref": slug_ref}
     assert schemas["ProductKindEnum"]["enum"] == [
         "kitchens",
         "kitchen-tables",
@@ -62,7 +57,6 @@ def test_ac1_kind_and_category_fields_reference_enums(schema: dict[str, Any]) ->
         "office",
         "other",
     ]
-    assert "other" not in schemas["CategorySlugEnum"]["enum"]
 
 
 def test_ac1_internal_token_security_scheme(schema: dict[str, Any]) -> None:

@@ -4,6 +4,7 @@
 	import { ResponsiveImage } from '$lib/components/ui/responsive-image';
 	import { Section } from '$lib/components/ui/section';
 	import { CATEGORY_PAGE } from '$lib/content/pages';
+	import { asProductKind } from '$lib/domain/product-kind';
 	import { splitParagraphs } from '$lib/domain/text';
 	import GalleryGrid from '$lib/features/gallery/GalleryGrid.svelte';
 	import LeadSection from '$lib/features/lead-form/LeadSection.svelte';
@@ -75,4 +76,9 @@
 	</Section>
 {/if}
 
-<LeadSection id="category-lead" idPrefix="category" product={category.slug} {settings} />
+<LeadSection
+	id="category-lead"
+	idPrefix="category"
+	product={asProductKind(category.slug)}
+	{settings}
+/>

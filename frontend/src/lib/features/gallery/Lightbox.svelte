@@ -5,7 +5,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { WORKS } from '$lib/content/home';
-	import { PRODUCT_KIND_LABELS } from '$lib/domain/product-kind';
 	import type { GalleryItem } from '$lib/types';
 	import { nextIndex } from './gallery';
 
@@ -45,8 +44,8 @@
 				/>
 				<figcaption class="mt-5 text-center text-primary-foreground">
 					<span class="block text-xs tracking-widest uppercase">
-						{PRODUCT_KIND_LABELS[current.category]}{#if items.length > 1}<span
-								class="ml-3 tabular-nums">{index + 1} / {items.length}</span
+						{current.category_title}{#if items.length > 1}<span class="ml-3 tabular-nums"
+								>{index + 1} / {items.length}</span
 							>{/if}
 					</span>
 					<Dialog.Title class="text-2xl text-primary-foreground">

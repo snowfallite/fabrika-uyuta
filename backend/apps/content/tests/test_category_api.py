@@ -63,7 +63,7 @@ def test_ac3_seo_fields_fall_back_to_title_and_short_description(
     )
 
 
-@pytest.mark.parametrize("slug", ["spaceship", "other", "KITCHENS"])
+@pytest.mark.parametrize("slug", ["spaceship", "kids", "KITCHENS"])
 def test_ac2_unknown_slug_is_404(client: Client, settings: Any, slug: str) -> None:
     response = get(client, settings, slug)
     assert response.status_code == 404

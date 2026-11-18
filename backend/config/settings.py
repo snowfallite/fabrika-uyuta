@@ -178,7 +178,6 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "ENUM_NAME_OVERRIDES": {
         "ProductKindEnum": "apps.core.enums.ProductKind",
-        "CategorySlugEnum": "apps.core.enums.CATEGORY_SLUG_CHOICES",
     },
     "APPEND_COMPONENTS": {
         "securitySchemes": {

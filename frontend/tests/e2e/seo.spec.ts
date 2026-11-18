@@ -60,7 +60,8 @@ test.describe('seo', () => {
 				'/catalog/kitchen-tables',
 				'/catalog/wardrobes',
 				'/catalog/sliding-wardrobes',
-				'/catalog/office'
+				'/catalog/office',
+				'/catalog/other'
 			].map((path) => origin + path)
 		);
 	});
