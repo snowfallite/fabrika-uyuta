@@ -136,9 +136,7 @@ class CategoryAdmin(ImageAdminMixin, admin.ModelAdmin):
     ]
     inlines = [GalleryItemInline]
 
-    def get_readonly_fields(
-        self, request: HttpRequest, obj: Category | None = None
-    ) -> list[str]:
+    def get_readonly_fields(self, request: HttpRequest, obj: Category | None = None) -> list[str]:
         """The slug carries the page URL, so it is written once (tech.md, section 6)."""
         return [*self.readonly_fields, "slug"] if obj else list(self.readonly_fields)
 
