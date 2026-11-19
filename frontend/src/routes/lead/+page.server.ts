@@ -1,14 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { readLeadForm, type LeadFailure } from '$lib/features/lead-form/lead-form';
 import { mapLeadErrors } from '$lib/domain/lead-errors';
-import { isProductKind } from '$lib/domain/product-kind';
 import { createApi } from '$lib/server/api';
-import type { ProductKind } from '$lib/types';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
-	const product = url.searchParams.get('product');
-	return { product: isProductKind(product) ? product : ('' as const) };
+	// A category slug is at most 32 characters (tech.md, 6); the form drops a kind its list
+	// does not offer, so an old or hidden slug just leaves the placeholder.
+	return { product: (url.searchParams.get('product') ?? '').slice(0, 32) };
 };
 
 export const actions: Actions = {
@@ -24,8 +23,6 @@ export const actions: Actions = {
 				{
 					body: {
 						...values,
-						// The API validates the kind; a wrong value comes back as a 400.
-						product: values.product as ProductKind,
 						website,
 						source_url: sourceUrl
 					}

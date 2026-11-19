@@ -53,6 +53,7 @@
 			<LeadForm
 				idPrefix="dialog"
 				product={leadDialog.product}
+				options={settings.product_options}
 				phone={settings.phone}
 				phoneDisplay={settings.phone_display}
 			/>

@@ -12,7 +12,8 @@ const settings: SiteSettings = {
 	address: 'Вологда, </script><b>',
 	work_hours: '',
 	map_url: '',
-	social_links: []
+	social_links: [],
+	product_options: []
 };
 const image = {
 	url: '/media/content/x/w1920.webp',

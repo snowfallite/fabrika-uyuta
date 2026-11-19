@@ -13,15 +13,16 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { LEAD_FIELDS, LEAD_MESSAGES } from '$lib/content/lead-form';
 	import type { LeadFormErrors } from '$lib/domain/lead-errors';
-	import { PRODUCT_KIND_LABELS } from '$lib/domain/product-kind';
-	import type { ProductKind } from '$lib/types';
+	import type { ProductOption } from '$lib/types';
 	import { EMPTY_VALUES, firstInvalid, type LeadFailure, type LeadResult } from './lead-form';
 	import LeadSuccess from './LeadSuccess.svelte';
 
 	interface Props {
 		/** Keeps ids unique when the page and the dialog both hold a form. */
 		idPrefix: string;
-		product?: ProductKind | '';
+		/** Kind list from the API: published categories by position (tech.md, 12.1). */
+		options: ProductOption[];
+		product?: string;
 		/** Company phone for the error alerts, E.164 and display form. */
 		phone: string;
 		phoneDisplay: string;
@@ -29,15 +30,19 @@
 		result?: LeadResult | null;
 	}
 
-	let { idPrefix, product = '', phone, phoneDisplay, result = null }: Props = $props();
+	let { idPrefix, options, product = '', phone, phoneDisplay, result = null }: Props = $props();
 
 	type Status = 'idle' | 'submitting' | 'success' | 'throttled' | 'unavailable';
 
 	const failure = (value: LeadResult | null) =>
 		value && !('success' in value) ? (value as LeadFailure) : null;
 
-	// The form owns its state after mount; props only seed it.
-	const seed = untrack(() => ({ result, product }));
+	// The form owns its state after mount; props only seed it. A kind the list does not offer
+	// (an old link, a category taken off the site) leaves the placeholder in place.
+	const seed = untrack(() => ({
+		result,
+		product: options.some((option) => option.value === product) ? product : ''
+	}));
 	const initial = failure(seed.result);
 	let values = $state(initial ? { ...initial.values } : { ...EMPTY_VALUES, product: seed.product });
 	let errors = $state<LeadFormErrors>(initial?.errors ?? {});
@@ -47,7 +52,6 @@
 	// Without JS only the autofocus attribute can move focus to the first bad field.
 	const autofocusField = firstInvalid(initial?.errors ?? {});
 
-	const options = Object.entries(PRODUCT_KIND_LABELS).map(([value, label]) => ({ value, label }));
 	const sourceUrl = $derived((page.url.pathname + page.url.search).slice(0, 2000));
 	const id = (name: string) => `${idPrefix}-${name}`;
 

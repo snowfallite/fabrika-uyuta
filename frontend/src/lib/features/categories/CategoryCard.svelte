@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { ResponsiveImage } from '$lib/components/ui/responsive-image';
 	import { CATALOG } from '$lib/content/home';
-	import { asProductKind } from '$lib/domain/product-kind';
 	import { openFromLink } from '$lib/features/lead-form/dialog.svelte';
 	import type { CategorySummary } from '$lib/types';
 	import { cn } from '$lib/utils';
@@ -13,9 +12,6 @@
 	}
 
 	let { category, class: className }: Props = $props();
-
-	// Own categories carry no kind until S2-17, so their CTA opens a blank form.
-	const kind = $derived(asProductKind(category.slug));
 </script>
 
 <article
@@ -50,9 +46,9 @@
 			{/if}
 		</div>
 		<a
-			href={kind ? `/lead?product=${kind}` : '/lead'}
+			href="/lead?product={category.slug}"
 			class="relative z-10 inline-flex w-fit items-center rounded-full px-5 py-2.5 text-sm font-medium text-primary glass transition-colors hover:bg-secondary/80 focus-visible:outline-primary-foreground"
-			onclick={(event) => openFromLink(event, kind || undefined)}
+			onclick={(event) => openFromLink(event, category.slug)}
 		>
 			{CATALOG.cardCta}
 		</a>
