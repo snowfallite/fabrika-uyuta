@@ -9,3 +9,9 @@ import /etc/caddy/site.caddy
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	import fabrika {$DJANGO_ADMIN_PATH}
 }
+
+# One address for the site: www moves to the apex and keeps the path (tech.md, 16.4).
+www.{$DOMAIN} {
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	redir https://{$DOMAIN}{uri} permanent
+}
