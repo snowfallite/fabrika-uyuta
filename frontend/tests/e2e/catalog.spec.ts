@@ -63,6 +63,19 @@ test.describe('/catalog/<slug>', () => {
 		expect([row[4], row[7]]).toEqual(['Шкафы', '/catalog/wardrobes']);
 	});
 
+	test('S2-18 AC8: the page links the other directions and skips its own', async ({ page }) => {
+		await page.goto('/catalog/kitchens');
+
+		const others = page.locator('#other-categories');
+
+		await expect(others.getByRole('link', { name: 'Офисная мебель' })).toHaveAttribute(
+			'href',
+			'/catalog/office'
+		);
+		await expect(others.getByRole('link', { name: 'Другое' })).toBeVisible();
+		await expect(others.getByRole('link', { name: 'Кухни под заказ' })).toHaveCount(0);
+	});
+
 	test('axe finds no serious issues on a category page', async ({ page }) => {
 		await page.goto('/catalog/kitchens', { waitUntil: 'networkidle' });
 		await expectNoSeriousA11yViolations(page);
