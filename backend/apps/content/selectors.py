@@ -24,7 +24,19 @@ def get_site_settings() -> dict[str, Any]:
         "work_hours": row.work_hours,
         "map_url": row.map_url,
         "social_links": [{"label": link.label, "url": link.url} for link in links],
+        "product_options": product_options(),
     }
+
+
+def product_options() -> list[dict[str, str]]:
+    """Kind list of the lead form: published categories by position (tech.md, 7, v15)."""
+    rows = Category.objects.filter(is_published=True).values_list("slug", "title")
+    return [{"value": slug, "label": title} for slug, title in rows]
+
+
+def category_label(slug: str) -> str | None:
+    """Title of an existing category, published or hidden. None means there is no such kind."""
+    return Category.objects.filter(slug=slug).values_list("title", flat=True).first()
 
 
 FEATURED_LIMIT = 12

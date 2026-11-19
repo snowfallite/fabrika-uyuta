@@ -15,6 +15,7 @@ def create_lead(data: dict[str, Any], now: datetime) -> Lead:
         name=data["name"],
         phone=data["phone"],
         product=data["product"],
+        product_label=data["product_label"],
         dimensions=data.get("dimensions", ""),
         comment=data.get("comment", ""),
         source_url=data.get("source_url", ""),

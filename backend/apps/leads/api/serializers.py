@@ -7,7 +7,7 @@ from django.core.validators import ProhibitNullCharactersValidator
 from rest_framework import serializers
 from rest_framework.validators import ProhibitSurrogateCharactersValidator
 
-from apps.core.enums import ProductKind
+from apps.content.selectors import category_label
 from apps.core.phone import normalize_phone
 from apps.core.text import clean_name, clean_text
 
@@ -53,16 +53,17 @@ class StrictBooleanField(serializers.BooleanField):
 
 
 class LeadCreateSerializer(serializers.Serializer):
+    # Title of the chosen category, taken while validating it and stored as a snapshot.
+    _product_label: str = ""
+
     name = RawCharField(
         max_length=120, error_messages=_messages(NAME_REQUIRED, max_length=NAME_TOO_LONG)
     )
     phone = RawCharField(
         max_length=32, error_messages=_messages(PHONE_REQUIRED, max_length=PHONE_INVALID)
     )
-    product = serializers.ChoiceField(
-        choices=ProductKind.choices,
-        error_messages=_messages(PRODUCT_REQUIRED, invalid_choice=PRODUCT_REQUIRED),
-    )
+    # v15: the kind is a category slug, so the schema has no enum and the check hits the table.
+    product = RawCharField(max_length=32, error_messages=_messages(PRODUCT_REQUIRED))
     dimensions = RawCharField(
         required=False,
         allow_blank=True,
@@ -106,11 +107,28 @@ class LeadCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(CONSENT_REQUIRED)
         return value
 
+    def validate_product(self, value: str) -> str:
+        """Match the kind to a category and keep its title (tech.md, section 7, v15).
+
+        The check sits on the field, not in validate(), so a bad kind comes back together with
+        the other field errors instead of waiting for the next submit. A hidden category still
+        passes: the content manager may uncheck the box while a visitor fills the form, and the
+        lead matters more than the list being current.
+        """
+        label = category_label(value)
+        if label is None:
+            raise serializers.ValidationError(PRODUCT_REQUIRED)
+        self._product_label = label
+        return value
+
     def validate_source_url(self, value: str) -> str:
         """Path and query only, no host, at most 500 characters (tech.md, section 7)."""
         parts = urlsplit(clean_text(value))
         path = parts.path + (f"?{parts.query}" if parts.query else "")
         return path[:500]
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        return attrs | {"product_label": self._product_label}
 
 
 class LeadCreatedSerializer(serializers.Serializer):

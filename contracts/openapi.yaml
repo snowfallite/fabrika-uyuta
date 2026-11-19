@@ -302,7 +302,9 @@ components:
           minLength: 1
           maxLength: 32
         product:
-          $ref: '#/components/schemas/ProductKindEnum'
+          type: string
+          minLength: 1
+          maxLength: 32
         dimensions:
           type: string
           maxLength: 300
@@ -329,22 +331,18 @@ components:
           format: uuid
       required:
       - id
-    ProductKindEnum:
-      enum:
-      - kitchens
-      - kitchen-tables
-      - wardrobes
-      - sliding-wardrobes
-      - office
-      - other
-      type: string
-      description: |-
-        * `kitchens` - Кухни под заказ
-        * `kitchen-tables` - Кухонные столы
-        * `wardrobes` - Шкафы
-        * `sliding-wardrobes` - Шкафы-купе
-        * `office` - Офисная мебель
-        * `other` - Другое
+    ProductOption:
+      type: object
+      description: 'v15: one entry of the lead form''s kind list, shaped for the Select
+        primitive.'
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+      required:
+      - label
+      - value
     SiteSettings:
       type: object
       properties:
@@ -370,6 +368,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SocialLink'
+        product_options:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductOption'
       required:
       - address
       - email
@@ -378,6 +380,7 @@ components:
       - max_phone_display
       - phone
       - phone_display
+      - product_options
       - social_links
       - vk_url
       - work_hours

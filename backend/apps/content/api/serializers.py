@@ -18,6 +18,14 @@ class SocialLinkSerializer(serializers.Serializer):
     url = serializers.CharField()
 
 
+class ProductOptionSerializer(serializers.Serializer):
+    """v15: one entry of the lead form's kind list, shaped for the Select primitive."""
+
+    value = serializers.CharField()
+    # DRF pops declared fields off the class; the stubs still see Field.label.
+    label = serializers.CharField()  # type: ignore[assignment]
+
+
 class SiteSettingsSerializer(serializers.Serializer):
     phone = serializers.CharField()
     phone_display = serializers.CharField()
@@ -29,6 +37,7 @@ class SiteSettingsSerializer(serializers.Serializer):
     work_hours = serializers.CharField()
     map_url = serializers.CharField()
     social_links = SocialLinkSerializer(many=True)
+    product_options = ProductOptionSerializer(many=True)
 
 
 class CategorySummarySerializer(serializers.Serializer):

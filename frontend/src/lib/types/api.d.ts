@@ -132,7 +132,7 @@ export interface components {
         LeadCreateRequest: {
             name: string;
             phone: string;
-            product: components["schemas"]["ProductKindEnum"];
+            product: string;
             dimensions?: string;
             comment?: string;
             consent: boolean;
@@ -143,16 +143,11 @@ export interface components {
             /** Format: uuid */
             id: string;
         };
-        /**
-         * @description * `kitchens` - Кухни под заказ
-         *     * `kitchen-tables` - Кухонные столы
-         *     * `wardrobes` - Шкафы
-         *     * `sliding-wardrobes` - Шкафы-купе
-         *     * `office` - Офисная мебель
-         *     * `other` - Другое
-         * @enum {string}
-         */
-        ProductKindEnum: "kitchens" | "kitchen-tables" | "wardrobes" | "sliding-wardrobes" | "office" | "other";
+        /** @description v15: one entry of the lead form's kind list, shaped for the Select primitive. */
+        ProductOption: {
+            value: string;
+            label: string;
+        };
         SiteSettings: {
             phone: string;
             phone_display: string;
@@ -164,6 +159,7 @@ export interface components {
             work_hours: string;
             map_url: string;
             social_links: components["schemas"]["SocialLink"][];
+            product_options: components["schemas"]["ProductOption"][];
         };
         SocialLink: {
             label: string;

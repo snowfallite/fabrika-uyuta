@@ -176,9 +176,7 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
-    "ENUM_NAME_OVERRIDES": {
-        "ProductKindEnum": "apps.core.enums.ProductKind",
-    },
+    # v15: no enum is left in the schema, so ENUM_NAME_OVERRIDES has nothing to pin.
     "APPEND_COMPONENTS": {
         "securitySchemes": {
             "InternalToken": {"type": "apiKey", "in": "header", "name": "X-Internal-Token"}
