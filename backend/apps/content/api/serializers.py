@@ -33,6 +33,7 @@ class SiteSettingsSerializer(serializers.Serializer):
     max_phone_display = serializers.CharField()
     vk_url = serializers.CharField()
     email = serializers.CharField()
+    city = serializers.CharField()
     address = serializers.CharField()
     work_hours = serializers.CharField()
     map_url = serializers.CharField()
@@ -45,6 +46,8 @@ class CategorySummarySerializer(serializers.Serializer):
     title = serializers.CharField()
     short_description = serializers.CharField()
     cover = ImageAssetSerializer(allow_null=True)
+    # v16: the lastmod of the sitemap.
+    updated_at = serializers.DateTimeField()
 
 
 class GalleryItemSerializer(serializers.Serializer):

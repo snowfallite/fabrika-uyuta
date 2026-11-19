@@ -1,7 +1,7 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v15
-- Дата: 2026-11-19
+- Версия: v16
+- Дата: 2026-11-20
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
 
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v16 (2026-11-20): SEO после S2-11, решение владельца. Разметка организации дорастает до карточки: новое поле `SiteSettings.city` даёт `addressLocality` (город это данные, а не константа в коде: владелец планирует другие города), в `FurnitureStore` уходят `email`, `sameAs` из `vk_url` и соцссылок, `hasMap` из `map_url` и адрес объектом `PostalAddress`; ключ `city` входит в DTO `SiteSettings`. Главная отдаёт вторым блоком `ItemList` опубликованных категорий, страница категории получает видимые крошки и `BreadcrumbList`: разметка пути без видимых крошек нарушает правила Google. `CategorySummary` расширен полем `updated_at`, по нему `sitemap.xml` пишет `lastmod` у страниц категорий; статичные страницы остаются без `lastmod`, своей даты изменения у них нет. `Seo` подставляет `static/og-cover.png` там, где своего фото нет, и дублирует OG в теги `twitter:*`: без этого ссылка на `/privacy` или на категорию без обложки уходит в мессенджеры без превью. `robots.txt` в production несёт `Clean-param: product /lead`: предвыбор вида плодит для Яндекса дубли адресов, а `Disallow` на странице с `noindex` помешал бы роботу увидеть сам `noindex`. Caddy держит второй сайт `www.{$DOMAIN}` с редиректом 301 на основной хост. Блок «Другие направления» на странице категории собирается из `product_options` и запросов к БД не добавляет: список опубликованных категорий там уже есть. Проверено в Chromium: `script-src 'self'` блокирует только исполняемый инлайновый скрипт, встроенный `application/ld+json` нарушения не даёт, поэтому разметка остаётся инлайновой и nonce ей не нужен. IndexNow в скоуп не берём (раздел 23). Задача S2-18.
 - v15 (2026-11-19): вид заявки приходит из категорий, решение владельца. Список «Что хотите заказать» собирает новый ключ `product_options` в DTO `SiteSettings` из опубликованных категорий по `position`, а не перечисление в коде фронта: своя категория попадает в форму без деплоя, снятая галочка «Опубликовано» убирает её и из каталога, и из списка. `Lead.product` теряет `choices` и хранит slug категории, новое поле `Lead.product_label` держит снимок названия на момент заявки: категорию потом переименуют или удалят, а заявка в таблице, письме и чате MAX остаётся читаемой. Колонка E строки таблицы (8.1), строка «Что заказать» письма (24.2) и первая строка сообщения MAX (25.3) берут снимок; у заявок до v15 снимок пустой, поэтому метку даёт `ProductKind` по slug, а неизвестный slug уходит как есть (data-миграций нет, 15.1). `LeadCreateRequest.product` становится строкой и `ProductKindEnum` уходит из схемы, перечислений в ней больше нет; `ProductKind` остаётся в коде источником `CATEGORY_SEED` и этой метки. API принимает slug любой существующей категории, не только опубликованной: контент-менеджер снимает галочку, пока посетитель заполняет форму, и заявка всё равно доходит. Опубликованных категорий нет: в списке только плейсхолдер, отправка даёт ошибку 12.1, поле остаётся обязательным. Фронт теряет `src/lib/domain/product-kind.ts` и тип `ProductKind`: вид стал строкой, предвыбор берёт slug категории. Задача S2-17.
 - v14 (2026-11-19): категории стали редактируемыми данными, решение владельца. `Category.slug` теряет `choices` и становится `SlugField`, `CategoryAdmin` получает добавление и удаление: контент-менеджер заводит свои категории сам. Начальные 6 строк (пять видов плюс `other` «Другое») сеет `sync_reference_data` только на пустой таблице, поэтому удалённая категория не возвращается на следующем деплое; `CATEGORY_SLUG_CHOICES` заменён на `CATEGORY_SEED`. `CategorySlugEnum` уходит из схемы: `CategorySummary.slug`, `CategoryDetail.slug` и `GalleryItem.category` становятся строками, `CategorySlug` в TS это `string`. Подпись миниатюры брала название из `PRODUCT_KIND_LABELS` по slug, со свободными slug это больше не работает, поэтому DTO `GalleryItem` расширен полем `category_title`. Раскладка сетки категорий перестала зависеть от числа 5: её считает чистая функция `cardSpan`. Вид заявки остаётся закрытым перечислением `ProductKind`, CTA своей категории открывает форму без предвыбора; вид из категорий принимает S2-17 с отдельным бампом. Задача S2-16.
 - v13 (2026-11-17): разметка и кнопка в сообщении MAX, решение владельца. Сообщение уходит с `format: "html"`: подписи полей жирные, значения заявки проходят через `html.escape`, поэтому разметка и ссылки из комментария посетителя приезжают буквальным текстом. Markdown не берём: у диалекта MAX свои метасимволы (`++`, `^^`, `~~`, `#`, `>`) и экранирование для них не описано, а `html.escape` проверяется тестом. Экранирование удлиняет текст (`&` даёт `&amp;`), поэтому `build_text` обрезает комментарий, пока сообщение не уложится в 4000 символов, и дописывает `…`. Новая функция `build_keyboard(lead) -> list[dict]` в том же замороженном файле: одна кнопка `clipboard` «Скопировать телефон» с номером в E.164. Кнопка работает на клиенте, обработчик и вебхук ей не нужны, в отличие от `callback`. Подписи и вложение описаны в 25.3, задача S2-15.
@@ -374,6 +375,7 @@ class SiteSettings(models.Model):
     max_phone = models.CharField("Номер в MAX", max_length=16, blank=True)  # E.164, no profile URL
     vk_url = models.URLField("Ссылка ВКонтакте", blank=True)  # brand card, empty hides it
     email = models.EmailField(blank=True)
+    city = models.CharField("Город", max_length=120, blank=True)  # v16: addressLocality of the markup
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)
     map_url = models.URLField("Ссылка на карту", blank=True)
@@ -545,6 +547,7 @@ type SiteSettings = {
   max_phone_display: string;  // "+7 (999) 123-45-67" or ""
   vk_url: string;             // VK page URL or ""
   email: string;
+  city: string;               // v16: addressLocality of the JSON-LD
   address: string;
   work_hours: string;
   map_url: string;
@@ -557,6 +560,7 @@ type CategorySummary = {
   title: string;
   short_description: string;
   cover: ImageAsset | null;
+  updated_at: string;             // v16: ISO 8601, the lastmod of the sitemap
 };
 
 type GalleryItem = {
@@ -731,8 +735,8 @@ def get_sheets_client() -> SheetsClient: ...  # by SHEETS_BACKEND: "fake" | "goo
 | `/lead` | `+page.server.ts` (`load`, `actions.default`), `+page.svelte` | `POST /leads/` | форма отдельной страницей; `?product=<slug>` предвыбирает вид; приёмник формы со всех страниц; `noindex` |
 | `/privacy` | `+page.svelte` | статика | политика обработки ПДн |
 | `/consent` | `+page.svelte` | статика | согласие на обработку ПДн, отдельный документ |
-| `/sitemap.xml` | `+server.ts` | `GET /home/` | |
-| `/robots.txt` | `+server.ts` | `PUBLIC_APP_ENV` | не production: `Disallow: /` |
+| `/sitemap.xml` | `+server.ts` | `GET /home/` | `lastmod` категорий из `updated_at` (v16) |
+| `/robots.txt` | `+server.ts` | `PUBLIC_APP_ENV` | не production: `Disallow: /`; production: `Clean-param: product /lead` (v16) |
 | `/healthz` | `+server.ts` | backend `/healthz` | 200 `ok` или 503 `degraded`; для мониторинга |
 | `/dev/ui` | `+page.svelte` | нет | kitchen sink; 404 при `PUBLIC_APP_ENV=production` |
 | ошибки | `+error.svelte` | нет | 404 и 5xx |
@@ -802,7 +806,9 @@ export type CategorySlug = string;  // v14: the schema has no enum for it
 | `lead-errors.ts` | `mapLeadErrors(body: unknown): LeadFormErrors` | ошибки DRF → ошибки полей формы | S2-02 |
 | `url.ts` | `absoluteUrl(origin: string, path: string): string` | абсолютные URL для canonical и OG | S2-08 |
 | `text.ts` | `splitParagraphs(text: string): string[]` | описание категории → абзацы | S2-08 |
-| `sitemap.ts` | `buildSitemap(origin: string, categories: CategorySummary[]): string` | XML карты сайта | S2-11 |
+| `sitemap.ts` | `buildSitemap(origin: string, categories: CategorySummary[]): string` | XML карты сайта с `lastmod` | S2-11, S2-18 |
+| `json-ld.ts` | `furnitureStoreJsonLd`, `itemListJsonLd`, `breadcrumbListJsonLd`, `jsonLdScript` | разметка организации, списка направлений и пути | S2-11, S2-18 |
+| `seo.ts` | `previewImage(origin: string, image: ImageAsset \| null, title: string): Preview` | превью ссылки: своё фото или обложка сайта | S2-18 |
 
 `LeadFormErrors = Partial<Record<'name' | 'phone' | 'product' | 'dimensions' | 'comment' | 'consent' | 'form', string>>`. Неизвестные поля DRF уходят в `form`.
 
@@ -886,7 +892,8 @@ Layout (`src/lib/components/layout/`):
 - `MobileNav`: `{ nav: NavItem[]; phone: string }` на Sheet.
 - `Footer`: `{ settings: SiteSettings; nav: NavItem[] }`. Контакты, меню, ссылки на `/privacy` и `/consent`, год.
 - `SkipLink`: ссылка на `#main`.
-- `Seo` (S2-08): `{ title: string; description: string; path: string; image?: ImageAsset | null; noindex?: boolean }`. Title, description, canonical, OG в `<svelte:head>`.
+- `Seo` (S2-08): `{ title: string; description: string; path: string; image?: ImageAsset | null; noindex?: boolean }`. Title, description, canonical, OG и `twitter:*` в `<svelte:head>`. Пустой `image` даёт `static/og-cover.png`, поэтому превью есть у каждой страницы (v16).
+- `Breadcrumbs` (S2-18): `{ items: { label: string; href?: string }[] }`. `<nav>` с `aria-label`, последний элемент идёт без `href` и несёт `aria-current="page"`. Видимые крошки стоят в паре с `BreadcrumbList` (10.4).
 
 Токены: имена переменных shadcn-svelte в `src/app.css` (`--background`, `--foreground`, `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--muted`, `--muted-foreground`, `--accent`, `--accent-foreground`, `--destructive`, `--border`, `--input`, `--ring`, `--radius`), `--success` (v7) и брендовые `--brand-vk`, `--brand-max`, `--brand-max-accent`, `--brand-foreground` (v9), связка через `@theme inline`. Шрифты: `--font-sans`, `--font-display`. Тёмной темы нет.
 
@@ -1169,7 +1176,7 @@ Branch protection на `main`: только через PR; обязательн�
 Деплой запускает владелец на VPS. GitHub Actions только проверяет PR (16.2): доступа к серверу и секретов у CI нет, реестра образов тоже.
 
 Подготовка VPS, один раз:
-1. Docker с плагином compose; DNS-запись `<domain>` на IP сервера; порты 80 и 443 открыты.
+1. Docker с плагином compose; DNS-записи `<domain>` и `www.<domain>` на IP сервера; порты 80 и 443 открыты.
 2. `git clone https://github.com/<owner>/fabrika-uyuta.git /opt/fabrika/app`.
 3. `/opt/fabrika/app/.env`: копия `.env.example` с production-значениями (раздел 14). Заполнить: `DOMAIN`, `ACME_EMAIL`, `POSTGRES_PASSWORD`, `DJANGO_SECRET_KEY`, `INTERNAL_API_TOKEN` (от 32 символов), `DJANGO_DEBUG=false`, `DJANGO_ADMIN_PATH` не `admin/`, `ENABLE_TEST_ENDPOINTS=false`, `CONSENT_VERSION`, при боевой таблице `SHEETS_BACKEND=google` с `GOOGLE_SERVICE_ACCOUNT_FILE=/run/secrets/google-sa.json` и `GOOGLE_SPREADSHEET_ID`, при алертах `ALERT_EMAIL` и `EMAIL_*`. Хосты, CSRF-источники и адрес сайта выводит compose из `DOMAIN` (16.5).
 4. `/opt/fabrika/app/google-sa.json`: ключ сервисного аккаунта, если `SHEETS_BACKEND=google`.
@@ -1198,6 +1205,8 @@ Caddy стоит в том же `compose.prod.yml`, что и остальные
 | остальное | `reverse_proxy frontend:3000` | |
 
 Везде: `encode zstd gzip`, заголовки из 13.1, `header -Server`. Production добавляет HSTS. Сертификаты и внутреннее состояние Caddy лежат в томах `caddy-data` и `caddy-config`: при пересоздании контейнера сертификат не перевыпускается.
+
+Production держит второй сайт `www.{$DOMAIN}`: он отвечает `redir` с кодом 301 на `https://{$DOMAIN}{uri}`, чтобы у сайта был один адрес (v16). Let's Encrypt выдаёт сертификат на оба имени, поэтому DNS-запись `www` должна существовать до деплоя. `smoke.sh` в production проверяет код редиректа и адрес в `Location`.
 
 ### 16.5 Образы
 
@@ -1702,6 +1711,24 @@ tech.md v<N>; touched: <sections> | none
 - AC11: `LeadAdmin` показывает название вида и фильтрует по нему; у заявки до v15 в колонке стоит метка `ProductKind`.
 - Тесты: Hypothesis на `product_label` (непустой снимок возвращается как есть, пустой даёт метку `ProductKind` или slug, исключений нет); pytest на AC2..AC7, AC9 и AC11 (`django_assert_max_num_queries` на AC7, админка через тестового клиента на AC11); тест схемы на AC10; компонентные `LeadForm.svelte.test.ts` на AC2, AC8 и AC9 и `CategoryCard.svelte.test.ts` на AC1 со своей категорией: в сид-данных своей категории нет, поэтому эту половину AC1 Playwright не закрывает; Playwright `lead.spec.ts` на AC2 и AC8, `catalog.spec.ts` на колонку E сид-категории, axe.
 
+### S2-18 SEO: разметка, превью, один адрес
+- Цель: поисковик собирает карточку организации из данных админки, ссылка на любую страницу даёт превью, у сайта один адрес, предвыбор вида не плодит дубли.
+- Бэкенд: поле `SiteSettings.city` (раздел 6) и ключ `city` в `SiteSettingsSerializer`, `updated_at` в `CategorySummarySerializer` и в селекторах главной и страницы категории, поле города в `SiteSettingsAdmin`, `seed_demo` пишет город.
+- Фронтенд: `furnitureStoreJsonLd` растёт на `email`, `sameAs`, `hasMap` и `PostalAddress`, новые `itemListJsonLd` и `breadcrumbListJsonLd` в `src/lib/domain/json-ld.ts`, `lastmod` в `buildSitemap`, `previewImage` в новом `src/lib/domain/seo.ts` и теги `twitter:*` в `Seo`, `Breadcrumbs` в `src/lib/components/layout/`, блок «Другие направления» в `src/lib/features/category-page/`, `Clean-param` в `robots.txt`, `static/og-cover.png`.
+- Инфраструктура: сайт `www.{$DOMAIN}` с редиректом 301 в `deploy/caddy/Caddyfile`, проверка редиректа в `deploy/smoke.sh`.
+- Контракты: 6, 7 (`SiteSettings.city`, `CategorySummary.updated_at`), 10.1, 10.4, 11, 16.4, приложение А. Бамп v16 делает эта задача.
+- Зависит от: S2-10, S2-11.
+- AC1: `https://www.<domain>/<путь>` отвечает 301 на `https://<domain>/<путь>`; `smoke.sh` в production проверяет код и `Location`.
+- AC2: у каждой страницы есть `og:image`: своё фото, иначе `/og-cover.png`. `twitter:card` это `summary_large_image`, `twitter:title`, `twitter:description` и `twitter:image` совпадают с одноимёнными OG.
+- AC3: `FurnitureStore` отдаёт `email`, `sameAs` из `vk_url` и соцссылок, `hasMap` из `map_url`, `address` объектом `PostalAddress` с `addressLocality` из поля «Город»; пустое поле в разметку не попадает; правка в админке меняет разметку без деплоя.
+- AC4: страница категории показывает крошки «Главная», «Направления», название категории и отдаёт `BreadcrumbList` с теми же тремя уровнями; у последнего уровня ссылки нет.
+- AC5: главная отдаёт `ItemList` опубликованных категорий по `position` с абсолютными адресами их страниц.
+- AC6: `sitemap.xml` несёт `lastmod` у каждой категории из `Category.updated_at` в формате ISO 8601; у статичных страниц `lastmod` нет; правка категории в админке меняет дату.
+- AC7: `robots.txt` в production содержит `Clean-param: product /lead`, вне production остаётся `Disallow: /`.
+- AC8: блок «Другие направления» перечисляет остальные опубликованные категории ссылками на `/catalog/<slug>`, своей категории в нём нет; `GET /categories/{slug}/` остаётся в пределах 3 запросов к БД, `GET /site-settings/` в пределах 3, `GET /home/` в пределах 4.
+- AC9: на `/` и `/catalog/<slug>` консоль браузера не содержит нарушений CSP, оба блока JSON-LD парсятся как JSON.
+- Тесты: pytest на AC3 (ключ `city` в ответе), AC6 (`updated_at` в ответе) и AC8 (`django_assert_max_num_queries`); fast-check на `buildSitemap` (у каждой категории ровно один `lastmod`, статичные страницы без него, адреса абсолютные) и на `breadcrumbListJsonLd` (`position` идут подряд с единицы, у последнего элемента нет `item`); vitest на `furnitureStoreJsonLd` (пустые поля выпадают, `sameAs` собирает `vk_url` и соцссылки), на `itemListJsonLd` и на `previewImage` (AC2: своё фото выигрывает, пустое даёт обложку); компонентный `OtherCategories.svelte.test.ts` на AC8; Playwright `seo.spec.ts` на AC2, AC4..AC7 и AC9, `catalog.spec.ts` на AC8, axe на странице категории с крошками. Компонентного теста у `Seo` нет: в браузерном режиме Vitest модуль `$env/dynamic/public` не читается, теги проверяет Playwright.
+
 ## 23. Вне скоупа v1
 
 - Редактирование текстов секций в админке: тексты в коде по шаблону.
@@ -1710,6 +1737,7 @@ tech.md v<N>; touched: <sections> | none
 - Капча: при спаме добавить российскую капчу через `CONTRACT GAP`.
 - Интеграция с CRM. Письма менеджерам о новых заявках в скоупе с v11 (задача S2-13, раздел 24), пересылка в групповой чат MAX с v12 (задача S2-14, раздел 25).
 - Команды бота MAX и кнопки `callback`: они требуют вебхука, публичного эндпоинта и прав администратора `read_all_messages`, то есть всего потока чужих сообщений на наш сервер. Понадобится: отдельная задача через `CONTRACT GAP`. Кнопка `clipboard` обработчика не требует и входит в v1 (25.3).
+- Ускоренная индексация через IndexNow: Яндекс протокол поддерживает, Google нет, а десять страниц робот обходит и так. Понадобится: отдельная задача, ключ в `static/` и пинг при сохранении контента (решение владельца, v16).
 - Онлайн-калькулятор стоимости.
 - Загрузка HEIC.
 - Автоудаление старых заявок: срок хранения согласовать с заказчиком.
@@ -1879,7 +1907,7 @@ tech.md v<N>; touched: <sections> | none
 | Шапка | логотип «Фабрика Уюта»; CTA «Оставить заявку»; кнопка мобильного меню и заголовок Sheet «Меню»; кнопка звонка до `lg`: `aria-label` «Позвонить» (v7) |
 | SkipLink | «Перейти к содержанию» |
 | Подвал | «Фабрика Уюта»; «Мебель на заказ для дома и офиса. Кухни, шкафы, столы и системы хранения, изготовленные под ваше пространство.»; «Навигация»; «Заявка»: «Оставьте заявку, и мы обсудим детали вашего будущего изделия.» + «Оставить заявку»; «© <год> Фабрика Уюта. Все права защищены.»; «Политика обработки персональных данных», «Согласие на обработку персональных данных» |
-| `/catalog/<slug>` | ссылка «Все направления» (`/#catalog`); H1 = `title`; галерея «Наши работы», пустая: «Скоро здесь появятся фото работ.»; блок формы как LeadForm |
+| `/catalog/<slug>` | крошки «Главная» (`/`), «Направления» (`/#catalog`), название категории без ссылки (v16); ссылка «Все направления» (`/#catalog`); H1 = `title`; галерея «Наши работы», пустая: «Скоро здесь появятся фото работ.»; блок формы как LeadForm; блок «Другие направления» со ссылками на остальные опубликованные категории из `product_options` (v16) |
 | `/lead` | H1 «Оставить заявку»; текст как у LeadForm |
 | `/privacy`, `/consent` | H1 «Политика обработки персональных данных», «Согласие на обработку персональных данных»; до текста юриста: черновик по 13.2, плашка «Проект документа. Текст проверяет юрист.» и маркер `LEGAL_TEXT_PENDING` (v8) |
 | 404 | «Страница не найдена» / «Возможно, её удалили или в ссылке опечатка.» / «На главную» |
@@ -1903,3 +1931,4 @@ SEO (S2-08, S2-11):
 - Фото: файлов в шаблоне нет (hero и about ссылаются на Unsplash, остальное цветные заглушки). `seed_demo` генерирует картинки Pillow (15.3). Пустой слот или обложка: заглушка ResponsiveImage.
 - Шрифты: Cormorant Garamond (есть `cyrillic`), Manrope вместо Plus Jakarta Sans (у Plus Jakarta Sans только `cyrillic-ext`, русские буквы шли бы системным шрифтом). Пакеты в разделе 4.
 - Favicon и manifest: в шаблоне нет. S2-11 кладёт `static/favicon.svg` (буква «Ф» цветом `--primary` на `--background`) и `static/manifest.webmanifest`.
+- Превью ссылок (v16): `static/og-cover.png`, 1200x630, фон `--background`, название шрифтом `--font-display` и строка «Мебель на заказ в Вологде» шрифтом `--font-sans`. Файл собран один раз снимком Playwright с HTML на токенах и шрифтах проекта, в репозитории лежит готовым.

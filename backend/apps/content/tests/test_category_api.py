@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager
+from datetime import datetime
 from typing import Any
 
 import pytest
@@ -45,6 +46,18 @@ def test_ac1_published_category_with_its_published_gallery(client: Client, setti
     assert data["description"] == "Первый абзац.\n\nВторой абзац."
     assert [work["id"] for work in data["gallery"]] == [early.pk, late.pk]
     assert data["cover"] is None
+
+
+def test_ac6_the_detail_response_carries_the_time_of_the_last_edit(
+    client: Client, settings: Any
+) -> None:
+    """S2-18: CategoryDetail extends CategorySummary, so it carries updated_at too."""
+    data = get(client, settings, "kitchens").json()
+
+    assert (
+        datetime.fromisoformat(data["updated_at"])
+        == Category.objects.get(slug="kitchens").updated_at
+    )
 
 
 def test_ac3_seo_fields_fall_back_to_title_and_short_description(

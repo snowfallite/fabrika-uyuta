@@ -7,7 +7,8 @@ const base: CategorySummary = {
 	slug: 'wardrobes',
 	title: 'Шкафы',
 	short_description: 'Распашные шкафы под ваши размеры.',
-	cover: null
+	cover: null,
+	updated_at: '2026-11-20T10:00:00Z'
 };
 
 describe('CategoryCard', () => {

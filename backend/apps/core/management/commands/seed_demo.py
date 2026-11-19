@@ -69,7 +69,8 @@ CONTACTS = {
     "max_phone": "+78172000001",
     "vk_url": "https://vk.com/",
     "email": "info@example.ru",
-    "address": "Вологда",
+    "city": "Вологда",
+    "address": "ул. Мира, 1",
     "work_hours": "Пн–Пт, 9:00–18:00",
     "map_url": "https://yandex.ru/maps/?text=%D0%92%D0%BE%D0%BB%D0%BE%D0%B3%D0%B4%D0%B0",
     # Reserved TLD: a demo stack never mails a real mailbox (tech.md, 24.1).

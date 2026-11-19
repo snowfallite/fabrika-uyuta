@@ -38,8 +38,21 @@ fi
 robots="$(fetch "$base/robots.txt")"
 if [ "$env_name" = production ]; then
 	echo "$robots" | grep -q '^Sitemap:' || fail "robots.txt has no Sitemap in production"
+	echo "$robots" | grep -q '^Clean-param: product /lead$' ||
+		fail "robots.txt has no Clean-param in production"
 else
 	echo "$robots" | grep -q '^Disallow: /$' || fail "robots.txt must disallow everything outside production"
 fi
 echo "ok   robots.txt ($env_name)"
+
+# S2-18 AC1: the www host exists only in production, where Caddy answers it with one redirect.
+if [ "$env_name" = production ]; then
+	www="$(printf '%s' "$base" | sed 's#://#://www.#')"
+	code="$(fetch -o /dev/null -w '%{http_code}' "$www/privacy")"
+	target="$(fetch -o /dev/null -w '%{redirect_url}' "$www/privacy")"
+	[ "$code" = 301 ] || fail "www answered $code, expected 301"
+	[ "$target" = "$base/privacy" ] || fail "www points at $target, expected $base/privacy"
+	echo "ok   www -> $target"
+fi
+
 echo "smoke passed: $base"

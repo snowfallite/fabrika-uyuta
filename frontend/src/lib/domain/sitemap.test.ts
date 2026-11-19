@@ -17,7 +17,8 @@ const category = (slug: CategorySlug): CategorySummary => ({
 	slug,
 	title: slug,
 	short_description: '',
-	cover: null
+	cover: null,
+	updated_at: '2026-11-20T10:00:00Z'
 });
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1] ?? '');
@@ -50,6 +51,39 @@ describe('buildSitemap', () => {
 					expect(urls).not.toContain(`${base}/lead`);
 				}
 			),
+			{ numRuns }
+		);
+	});
+
+	it('AC6: a category carries its edit time, static pages carry none', () => {
+		const xml = buildSitemap(ORIGIN, [
+			{ ...category('office'), updated_at: '2026-11-18T08:30:00Z' }
+		]);
+
+		expect(xml).toContain(
+			'<url><loc>https://example.com/catalog/office</loc><lastmod>2026-11-18T08:30:00Z</lastmod></url>'
+		);
+		expect(xml).toContain('<url><loc>https://example.com/</loc></url>');
+	});
+
+	it('AC6: every category gets exactly one lastmod', () => {
+		fc.assert(
+			fc.property(fc.array(fc.constantFrom(...SLUGS), { maxLength: 5 }), (published) => {
+				const dated = published.map((slug, index) => ({
+					...category(slug),
+					updated_at: `2026-11-1${index}T10:00:00Z`
+				}));
+				const entries = [...buildSitemap(ORIGIN, dated).matchAll(/ {2}<url>(.*)<\/url>/g)].map(
+					(match) => match[1] ?? ''
+				);
+
+				for (const entry of entries) {
+					expect(entry.includes('<lastmod>')).toBe(entry.includes('/catalog/'));
+				}
+				expect(entries.filter((entry) => entry.includes('<lastmod>')).length).toBe(
+					new Set(published).size
+				);
+			}),
 			{ numRuns }
 		);
 	});

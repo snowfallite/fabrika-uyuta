@@ -10,8 +10,13 @@ describe('/robots.txt', () => {
 	it('AC3: production allows indexing and points to the sitemap', async () => {
 		env.PUBLIC_APP_ENV = 'production';
 		expect(await robots()).toBe(
-			'User-agent: *\nAllow: /\n\nSitemap: https://example.com/sitemap.xml\n'
+			'User-agent: *\nAllow: /\nClean-param: product /lead\n\nSitemap: https://example.com/sitemap.xml\n'
 		);
+	});
+
+	it('AC7: production folds the preselected kind into one address', async () => {
+		env.PUBLIC_APP_ENV = 'production';
+		expect(await robots()).toContain('Clean-param: product /lead');
 	});
 
 	it.each(['dev', 'e2e', 'staging'])('AC3: %s disallows everything', async (name) => {

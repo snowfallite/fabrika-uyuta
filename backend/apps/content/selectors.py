@@ -20,6 +20,7 @@ def get_site_settings() -> dict[str, Any]:
         "max_phone_display": format_phone_display(row.max_phone),
         "vk_url": row.vk_url,
         "email": row.email,
+        "city": row.city,
         "address": row.address,
         "work_hours": row.work_hours,
         "map_url": row.map_url,
@@ -52,6 +53,7 @@ def _category_summary(category: Category) -> dict[str, Any]:
         "title": category.title,
         "short_description": category.short_description,
         "cover": to_image_asset(category, category.title),
+        "updated_at": category.updated_at,
     }
 
 
