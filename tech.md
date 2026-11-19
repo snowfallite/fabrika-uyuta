@@ -1,6 +1,6 @@
 # tech.md: Фабрика Уюта, сайт-визитка
 
-- Версия: v14
+- Версия: v15
 - Дата: 2026-11-19
 - Каркас: готов
 - Статус: контракты заморожены. Любое изменение ядра: бамп версии и строка в Changelog (раздел 3).
@@ -9,6 +9,7 @@
 
 Новая строка сверху. Формат: `vN (YYYY-MM-DD): что изменилось`.
 
+- v15 (2026-11-19): вид заявки приходит из категорий, решение владельца. Список «Что хотите заказать» собирает новый ключ `product_options` в DTO `SiteSettings` из опубликованных категорий по `position`, а не перечисление в коде фронта: своя категория попадает в форму без деплоя, снятая галочка «Опубликовано» убирает её и из каталога, и из списка. `Lead.product` теряет `choices` и хранит slug категории, новое поле `Lead.product_label` держит снимок названия на момент заявки: категорию потом переименуют или удалят, а заявка в таблице, письме и чате MAX остаётся читаемой. Колонка E строки таблицы (8.1), строка «Что заказать» письма (24.2) и первая строка сообщения MAX (25.3) берут снимок; у заявок до v15 снимок пустой, поэтому метку даёт `ProductKind` по slug, а неизвестный slug уходит как есть (data-миграций нет, 15.1). `LeadCreateRequest.product` становится строкой и `ProductKindEnum` уходит из схемы, перечислений в ней больше нет; `ProductKind` остаётся в коде источником `CATEGORY_SEED` и этой метки. API принимает slug любой существующей категории, не только опубликованной: контент-менеджер снимает галочку, пока посетитель заполняет форму, и заявка всё равно доходит. Опубликованных категорий нет: в списке только плейсхолдер, отправка даёт ошибку 12.1, поле остаётся обязательным. Фронт теряет `src/lib/domain/product-kind.ts` и тип `ProductKind`: вид стал строкой, предвыбор берёт slug категории. Задача S2-17.
 - v14 (2026-11-19): категории стали редактируемыми данными, решение владельца. `Category.slug` теряет `choices` и становится `SlugField`, `CategoryAdmin` получает добавление и удаление: контент-менеджер заводит свои категории сам. Начальные 6 строк (пять видов плюс `other` «Другое») сеет `sync_reference_data` только на пустой таблице, поэтому удалённая категория не возвращается на следующем деплое; `CATEGORY_SLUG_CHOICES` заменён на `CATEGORY_SEED`. `CategorySlugEnum` уходит из схемы: `CategorySummary.slug`, `CategoryDetail.slug` и `GalleryItem.category` становятся строками, `CategorySlug` в TS это `string`. Подпись миниатюры брала название из `PRODUCT_KIND_LABELS` по slug, со свободными slug это больше не работает, поэтому DTO `GalleryItem` расширен полем `category_title`. Раскладка сетки категорий перестала зависеть от числа 5: её считает чистая функция `cardSpan`. Вид заявки остаётся закрытым перечислением `ProductKind`, CTA своей категории открывает форму без предвыбора; вид из категорий принимает S2-17 с отдельным бампом. Задача S2-16.
 - v13 (2026-11-17): разметка и кнопка в сообщении MAX, решение владельца. Сообщение уходит с `format: "html"`: подписи полей жирные, значения заявки проходят через `html.escape`, поэтому разметка и ссылки из комментария посетителя приезжают буквальным текстом. Markdown не берём: у диалекта MAX свои метасимволы (`++`, `^^`, `~~`, `#`, `>`) и экранирование для них не описано, а `html.escape` проверяется тестом. Экранирование удлиняет текст (`&` даёт `&amp;`), поэтому `build_text` обрезает комментарий, пока сообщение не уложится в 4000 символов, и дописывает `…`. Новая функция `build_keyboard(lead) -> list[dict]` в том же замороженном файле: одна кнопка `clipboard` «Скопировать телефон» с номером в E.164. Кнопка работает на клиенте, обработчик и вебхук ей не нужны, в отличие от `callback`. Подписи и вложение описаны в 25.3, задача S2-15.
 - v12 (2026-11-17): пересылка новых заявок в групповой чат MAX, решение владельца. Бот только пишет в чат: вебхука, публичного эндпоинта, команд и кнопок нет, входящие события MAX не принимаются (раздел 25). Чат задаёт владелец в админке новым полем `SiteSettings.max_chat_id` (пусто отключает пересылку, в DTO `SiteSettings` поле не входит, как `notify_emails`). Доставку ведёт тот же `run_sheets_worker` третьим outbox-джобом: новые поля `Lead.max_status` (перечисление `NotifyStatus`, по умолчанию `off`, в очередь заявку ставит `create_lead`), `max_attempts`, `max_next_attempt_at`, `max_last_error`, `max_sent_at`, индекс `lead_max_due_idx`, ограничение `lead_max_sent_has_sent_at`, право `retry_max` и действие админки «Повторить отправку в MAX». Новые переменные `.env`: `MAX_BACKEND`, `MAX_API_URL`, `MAX_BOT_TOKEN`, `MAX_CA_BUNDLE`, `MAX_FAKE_PATH`, `LEAD_MESSENGER_MAX_ATTEMPTS` (6). `MAX_CA_BUNDLE` обязателен при `MAX_BACKEND=max`: `platform-api2.max.ru` отдаёт сертификат Минцифры, бандл certifi его не принимает, поэтому образ бэкенда несёт корневой сертификат из `deploy/certs/`. Правка 13.1: ПДн живут и в чате MAX; 13.2 называет MAX обработчиком, трансграничной передачи он не даёт (MAX LLC, РФ). Уведомления в мессенджеры ушли из раздела 23 в скоуп задачей S2-14, интеграция с CRM остаётся вне v1. Новый замороженный путь `backend/apps/leads/messenger/text.py` добавлен в раздел 3, в список `FROZEN` джобы contract-guard и в строки `ask` файла `.claude/settings.json` (16.6).
@@ -274,6 +275,7 @@ from typing import Final
 from django.db import models
 
 
+# Labels for the seeded categories and for leads made before v15; Lead.product has no choices.
 class ProductKind(models.TextChoices):
     KITCHENS = "kitchens", "Кухни под заказ"
     KITCHEN_TABLES = "kitchen-tables", "Кухонные столы"
@@ -402,14 +404,16 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
-from apps.core.enums import ProductKind, SheetStatus
+from apps.core.enums import NotifyStatus, SheetStatus
 
 
 class Lead(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField("ФИО", max_length=120)
     phone = models.CharField("Телефон", max_length=16)  # E.164
-    product = models.CharField("Что заказать", max_length=32, choices=ProductKind.choices)
+    product = models.CharField("Что заказать", max_length=32)  # Category.slug, free data since v15
+    # Snapshot of Category.title when the lead arrived; empty on leads made before v15.
+    product_label = models.CharField("Название вида", max_length=120, blank=True)
     dimensions = models.CharField("Размеры", max_length=300, blank=True)
     comment = models.TextField("Комментарий", blank=True)  # the API caps it at 2000
     source_url = models.CharField("Источник", max_length=500, blank=True)  # path + query, no host
@@ -488,6 +492,8 @@ class Lead(models.Model):
 
 Категории живут иначе (v14): 6 строк из `CATEGORY_SEED` сеются только на пустой таблице, дальше их заводит, правит и удаляет контент-менеджер. Slug свободный и уникальный, менять его у существующей строки нельзя: по нему стоит URL страницы. Категорию с работами удалить нельзя, `GalleryItem.category` стоит на `PROTECT`.
 
+Вид заявки с v15 это снимок: `Lead.product` хранит slug категории без `choices`, `Lead.product_label` её название на момент заявки. Таблица, письмо и чат MAX читают снимок, поэтому переименованная или удалённая категория старые заявки не меняет. Заявку с категорией связывает только slug, внешнего ключа нет: иначе удаление категории упиралось бы в архив заявок. У заявок до v15 снимок пустой, метку по slug даёт `ProductKind`, неизвестный slug отдаётся как есть (`product_label(lead)` в `apps/leads/product.py`, data-миграций нет, 15.1).
+
 ## 7. HTTP API v1 (внутренний)
 
 Ниже нормативная форма. drf-spectacular генерирует из кода `contracts/openapi.yaml`. Расхождение схемы с этим разделом: баг.
@@ -513,11 +519,10 @@ class Lead(models.Model):
 - GET-ответы: `Cache-Control: no-store`.
 - Внутренние поля моделей наружу не отдаются: `SiteSettings.notify_emails` (раздел 24) и `SiteSettings.max_chat_id` (раздел 25) в DTO не входят.
 - `{slug}` в пути: строка; неизвестный или скрытый slug даёт 404.
-- drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; `ENUM_NAME_OVERRIDES` фиксирует `ProductKindEnum` (из `ProductKind.choices`), поле вида в схеме ссылается на этот enum, не на `string`; у slug категории enum нет, категории редактируются в админке (v14); схема безопасности apiKey в заголовке `X-Internal-Token`.
+- drf-spectacular: `COMPONENT_SPLIT_REQUEST = True`; перечислений в схеме нет, поэтому `ENUM_NAME_OVERRIDES` из настроек убран: slug категории (v14) и вид заявки (v15) это строки, категории редактируются в админке; схема безопасности apiKey в заголовке `X-Internal-Token`.
 
 DTO (имена = имена компонентов в `openapi.yaml`):
 ```ts
-type ProductKind = 'kitchens' | 'kitchen-tables' | 'wardrobes' | 'sliding-wardrobes' | 'office' | 'other';
 type CategorySlug = string;  // v14: categories are editable data, the schema holds no enum
 
 type ImageAsset = {
@@ -530,6 +535,8 @@ type ImageAsset = {
 };
 
 type SocialLink = { label: string; url: string };
+// v15: the kind list of the lead form, shaped for the Select primitive (11)
+type ProductOption = { value: CategorySlug; label: string };
 
 type SiteSettings = {
   phone: string;              // E.164 or ""
@@ -542,6 +549,7 @@ type SiteSettings = {
   work_hours: string;
   map_url: string;
   social_links: SocialLink[];
+  product_options: ProductOption[];  // v15: published categories by position, the form's kind list
 };
 
 type CategorySummary = {
@@ -583,7 +591,7 @@ type CategoryDetail = CategorySummary & {
 type LeadCreateRequest = {
   name: string;          // 2..120 after cleanup
   phone: string;         // raw input, max 32, normalized to E.164
-  product: ProductKind;
+  product: CategorySlug;  // v15: slug of an existing category, published or hidden
   dimensions?: string;   // max 300
   comment?: string;      // max 2000
   consent: boolean;      // must be true
@@ -597,7 +605,8 @@ type LeadCreated = { id: string };  // Lead.public_id
 Поведение `POST /api/v1/leads/` (S2-01, S2-02):
 - Порядок: токен → троттлинг → honeypot → валидация → сохранение.
 - Honeypot `website` непустой: 201 со случайным UUID, запись не создаётся, лог без ПДн.
-- Успех: `Lead` сохранён, телефон в E.164, `sheet_status=pending`, `consent_at=now`, `consent_version=CONSENT_VERSION`, ответ 201 `{ "id": "<public_id>" }`.
+- Успех: `Lead` сохранён, телефон в E.164, `product_label` со снимком названия категории, `sheet_status=pending`, `consent_at=now`, `consent_version=CONSENT_VERSION`, ответ 201 `{ "id": "<public_id>" }`.
+- `product` (v15): slug существующей категории. Категории с таким slug нет: 400 «Выберите, что хотите заказать» (12.1). Скрытую категорию форма не предлагает, но заявку с ней принимает: контент-менеджер мог снять галочку, пока посетитель заполнял форму. Название категории уходит в `Lead.product_label` снимком.
 - `source_url`: сохраняется только path + query, обрезка до 500.
 - Троттлинг: `LEAD_THROTTLE_RATE` (по умолчанию `5/hour`) на ключ из `X-Client-IP`, ответ 429.
 - Тексты ошибок полей: раздел 12.1. Фронтенд показывает их как есть.
@@ -614,7 +623,7 @@ type LeadCreated = { id: string };  // Lead.public_id
 | B | Дата | `lead.created_at` в `SHEETS_TIMEZONE` | `YYYY-MM-DD HH:MM` (текст, сортируется как дата) |
 | C | ФИО | `lead.name` | как сохранено |
 | D | Телефон | `lead.phone` | E.164 |
-| E | Что заказать | метка `ProductKind` | `Кухни под заказ` и т.д. |
+| E | Что заказать | `product_label(lead)` | название категории на момент заявки, `Кухни под заказ` и т.д. |
 | F | Размеры | `lead.dimensions` | как сохранено или пусто |
 | G | Комментарий | `lead.comment` | как сохранено или пусто |
 | H | Источник | `lead.source_url` | path + query или пусто |
@@ -623,7 +632,8 @@ type LeadCreated = { id: string };  // Lead.public_id
 - `HEADERS: Final[tuple[str, ...]]`: восемь заголовков выше;
 - `SheetRow = tuple[str, str, str, str, str, str, str, str]`;
 - `build_row(lead, tz) -> SheetRow`: чистая функция;
-- `validate_row(row) -> None`: 8 строк; A это UUID4; B по шаблону `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$`; D по шаблону E.164; E из меток `ProductKind`; ячейка ≤ 5000 символов. Нарушение: `ContractViolation`. Сообщение называет колонку и правило, значение ячейки не включает.
+- `validate_row(row) -> None`: 8 строк; A это UUID4; B по шаблону `^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$`; D по шаблону E.164; E непуста (v15: названия видов это данные, закрытого списка меток больше нет); ячейка ≤ 5000 символов. Нарушение: `ContractViolation`. Сообщение называет колонку и правило, значение ячейки не включает.
+- Колонку E даёт `product_label(lead)` из `apps/leads/product.py`: снимок `Lead.product_label`, у заявок до v15 метка `ProductKind` по slug, неизвестный slug как есть (раздел 6).
 
 ### 8.2 Транспорт
 
@@ -770,6 +780,7 @@ import type { components } from './api';
 type S = components['schemas'];
 export type ImageAsset = S['ImageAsset'];
 export type SocialLink = S['SocialLink'];
+export type ProductOption = S['ProductOption'];
 export type SiteSettings = S['SiteSettings'];
 export type CategorySummary = S['CategorySummary'];
 export type CategoryDetail = S['CategoryDetail'];
@@ -778,7 +789,6 @@ export type HomeSlots = S['HomeSlots'];
 export type HomeContent = S['HomeContent'];
 export type LeadCreateRequest = S['LeadCreateRequest'];
 export type LeadCreated = S['LeadCreated'];
-export type ProductKind = S['ProductKindEnum'];
 export type CategorySlug = string;  // v14: the schema has no enum for it
 ```
 
@@ -789,7 +799,6 @@ export type CategorySlug = string;  // v14: the schema has no enum for it
 | Модуль | Экспорт | Назначение | Слайс |
 |---|---|---|---|
 | `phone.ts` | `formatPhoneInput(raw: string): string` | маска ввода, 12.3 | S1-05 |
-| `product-kind.ts` | `PRODUCT_KIND_LABELS` | метки видов, `satisfies Record<ProductKind, string>`: новый вид в OpenAPI без метки ломает svelte-check | S2-01 |
 | `lead-errors.ts` | `mapLeadErrors(body: unknown): LeadFormErrors` | ошибки DRF → ошибки полей формы | S2-02 |
 | `url.ts` | `absoluteUrl(origin: string, path: string): string` | абсолютные URL для canonical и OG | S2-08 |
 | `text.ts` | `splitParagraphs(text: string): string[]` | описание категории → абзацы | S2-08 |
@@ -935,7 +944,7 @@ Layout (`src/lib/components/layout/`):
 - `dimensions`, `comment`: trim, управляющие символы удаляются (кроме `\n` и `\t`).
 - `website`: honeypot. Поле скрыто (`aria-hidden` у обёртки, `tabindex="-1"`, `autocomplete="off"`).
 - `source_url`: скрытое поле, `page.url.pathname + page.url.search`.
-- `product`: на главной пустой плейсхолдер; на странице категории и на `/lead?product=<slug>` вид предвыбран.
+- `product` (v15): варианты это опубликованные категории по `position` из `SiteSettings.product_options`, значение это slug категории. На главной стоит пустой плейсхолдер; на странице категории, в диалоге с карточки каталога и на `/lead?product=<slug>` предвыбрана своя категория. Форма сверяет предвыбранный вид со своим списком: slug не из списка даёт плейсхолдер. Опубликованных категорий нет: в списке только плейсхолдер, отправка даёт «Выберите, что хотите заказать».
 
 ### 12.2 Сообщения формы (фронтенд)
 
@@ -1110,7 +1119,7 @@ E2E_API_URL=http://localhost:8000
 
 - Живёт в `apps/core`. Работает только при `APP_ENV` в `dev`, `e2e`, `staging`. В production завершается с ошибкой и ничего не пишет.
 - Картинки: фото из `template/` копируются в `backend/fixtures/demo/`; нет фото в шаблоне: генерируются Pillow (градиент в цветах токенов и подпись).
-- Заполняет: 4 слота, обложки 6 категорий (v14), 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails`, фиктивным `max_chat_id` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` и `max_status` совпадают со статусом таблицы) с фиктивными данными.
+- Заполняет: 4 слота, обложки 6 категорий (v14), 12 работ галереи (4 на главной), демо-контакты с `vk_url`, адресом в `notify_emails`, фиктивным `max_chat_id` и без `social_links` (v9), 3 демо-заявки (`pending`, `sent`, `failed`; `notify_status` и `max_status` совпадают со статусом таблицы) с фиктивными данными, slug и названием своей категории в `product` и `product_label` (v15).
 - Идемпотентна. `--reset` пересоздаёт демо-данные.
 - Фейковая Google-таблица и E2E работают на этих же данных.
 
@@ -1394,9 +1403,9 @@ tech.md v<N>; touched: <sections> | none
 - API v1 целиком (раздел 7): сериализаторы и view для всех операций, коды 400, 403, 404, 429 в схеме. Поведение: заглушки из таблицы раздела 7.
 - `apps/core`: `env.py`, `checks.py`, `phone.py` (12.3), пермишен внутреннего токена, ключ клиента по `X-Client-IP`, `/healthz` (БД), команда `release`.
 - `make gen`: `contracts/openapi.yaml`, `api.d.ts`. Руками: `src/lib/types/index.ts`, `src/lib/server/api.ts`, `contracts/fixtures/phone-cases.json` (набор 12.3).
-- AC1: `openapi.yaml` содержит все операции и компоненты раздела 7 с точными именами; поле вида ссылается на `ProductKindEnum` (v14: `CategorySlugEnum` убран, slug категории это строка).
+- AC1: `openapi.yaml` содержит все операции и компоненты раздела 7 с точными именами; перечислений в схеме нет (v14: `CategorySlugEnum` убран, slug категории это строка; v15: `ProductKindEnum` убран, вид заявки это slug категории).
 - AC2: запрос без `X-Internal-Token` или с неверным получает 403 на каждой операции `/api/v1/`.
-- AC3: `sync_reference_data` дважды подряд даёт те же количества (5 категорий, 4 слота, 1 строка настроек, 2 группы) и не перезаписывает правки.
+- AC3: `sync_reference_data` дважды подряд даёт те же количества (6 категорий, 4 слота, 1 строка настроек, 2 группы) и не перезаписывает правки.
 - AC4: ограничения БД: вторая строка `SiteSettings`, `sent` без `sheet_synced_at`, телефон не E.164 → `IntegrityError`.
 - AC5: `check --deploy` при `APP_ENV=production` падает по каждому условию раздела 14.
 - AC6: `normalize_phone` и `format_phone_display` проходят все векторы `phone-cases.json`.
@@ -1435,7 +1444,7 @@ tech.md v<N>; touched: <sections> | none
 ### S1-08 Сид и dev-окружение
 - `seed_demo` (15.3), `backend/fixtures/demo/`, `make seed`.
 - AC1: `make seed` дважды → те же количества; `seed_demo --reset` пересоздаёт демо-данные.
-- AC2: после сида в БД: 4 слота с фото, 5 категорий с обложками, 12 работ (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`); у каждой картинки варианты и цвет по разделу 9.
+- AC2: после сида в БД: 4 слота с фото, 6 категорий с обложками, 12 работ (4 на главной), демо-контакты, 3 демо-заявки (`pending`, `sent`, `failed`); у каждой картинки варианты и цвет по разделу 9.
 - AC3: `seed_demo` при `APP_ENV=production` завершается с ошибкой и ничего не пишет.
 - AC4: демо-заявка `pending` доходит воркером до `backend/var/fake-sheet.jsonl`.
 - Тесты: pytest на AC1..AC4.
@@ -1480,7 +1489,7 @@ tech.md v<N>; touched: <sections> | none
 ### S2-01 Заявка: сквозной путь
 - Цель: посетитель отправляет заявку с главной и со страницы `/lead`, с JS и без; заявка сохраняется и доходит до фейковой таблицы.
 - Бэкенд: `apps/leads/services/create_lead.py` (телефон через `normalize_phone` в E.164, `consent_at`, `consent_version`, `sheet_status=pending`), `LeadCreateView` вместо заглушки. Невалидный телефон: 400 «Проверьте номер телефона», не 500.
-- Фронтенд: роут `/lead` (`load` читает `?product=`, `actions.default`), фича `lead-form` (`LeadForm.svelte`), секция `#lead` на главной, `src/lib/domain/product-kind.ts`.
+- Фронтенд: роут `/lead` (`load` читает `?product=`, `actions.default`), фича `lead-form` (`LeadForm.svelte`), секция `#lead` на главной, `src/lib/domain/product-kind.ts` (v15: модуль убран, список видов приходит из API).
 - Контракты: 7 (`POST /leads/`), `LeadCreateRequest`, `LeadCreated`, 12.1, 12.2 (успех); примитивы Field, Input, PhoneInput, Select, Textarea, Checkbox, Button, Alert.
 - Зависит от: S1-11.
 - AC1: с JS: валидная форма на главной → текст успеха из 12.2 на месте формы без перезагрузки, форма очищена, в БД одна заявка.
@@ -1675,9 +1684,22 @@ tech.md v<N>; touched: <sections> | none
 
 ### S2-17 Вид заявки из категорий
 - Цель: посетитель выбирает в форме ту же категорию, что видит в каталоге, и заявка несёт её название в таблицу, письмо и чат MAX. Своя категория перестаёт приходить без вида.
-- Скоуп (часть B блока `CONTRACT GAP` от 2026-11-19): `Lead.product` без `choices`, новое поле `Lead.product_label` со снимком названия на момент заявки, `product_options` в DTO `SiteSettings`, `LeadCreateRequest.product` как строка, `ProductKindEnum` уходит из схемы, колонка E строки таблицы и тексты письма и MAX берут снимок названия.
+- Бэкенд: `Lead.product` без `choices` и новое поле `Lead.product_label` (раздел 6), `product_label(lead)` в новом `apps/leads/product.py`, `product_options` и `category_label(slug)` в `apps/content/selectors.py`, `ProductOptionSerializer` в `apps/content/api/serializers.py`, `product` как строка в `LeadCreateSerializer` с проверкой по существующим категориям и снимком названия в `validated_data`, снимок в `create_lead`, колонка E в `sheets/row.py`, строка письма в `notify.py`, первая строка в `messenger/text.py`, колонка и фильтр в `LeadAdmin`, `seed_demo`, `ENUM_NAME_OVERRIDES` убран из `config/settings.py`.
+- Фронтенд: `ProductOption` вместо `ProductKind` в `src/lib/types/index.ts`, список `Select` из `settings.product_options` в `LeadForm` со сверкой предвыбранного вида, вид как строка в `LeadSection`, `LeadDialog` и `dialog.svelte.ts`, предвыбор своей категории в `CategoryCard` и `CategoryPage`, `src/lib/domain/product-kind.ts` удалён.
+- Контракты: 6, 7, 8.1, 10.3, 10.4, 12.1, 15.3, 24.2, 25.3. Бамп v15 делает эта задача.
 - Зависит от: S2-16.
-- Контракты принимает отдельный бамп (v15): разделы 6, 7, 8.1, 10.4, 12.1 правит сессия S2-17 вместе с AC и тестами.
+- AC1: CTA карточки каталога подставляет свою категорию: с JS диалог открывается с ней в «Что хотите заказать», без JS ссылка ведёт на `/lead?product=<slug>` и вид предвыбран. Так же работает категория, которую контент-менеджер завёл сам.
+- AC2: в списке «Что хотите заказать» ровно опубликованные категории по `position`; снятая галочка «Опубликовано» убирает вариант, новая категория добавляет без деплоя.
+- AC3: заявка сохраняет `product` = slug категории и `product_label` = её название на момент заявки; переименование категории после заявки снимок не меняет.
+- AC4: `product`, которого нет ни у одной категории, даёт 400 «Выберите, что хотите заказать» и заявку не создаёт; slug скрытой категории заявку создаёт.
+- AC5: колонка E строки таблицы, строка «Что заказать» письма и первая строка сообщения MAX берут снимок названия; `validate_row` непустую E принимает, пустую отклоняет.
+- AC6: заявка до v15 (`product_label` пустой, `product=kitchens`) даёт в таблице, письме и MAX «Кухни под заказ»; неизвестный slug уходит как есть.
+- AC7: `GET /api/v1/site-settings/` отдаёт `product_options` опубликованных категорий по `position`; `notify_emails` и `max_chat_id` в ответе не появляются; запросов к БД не больше 3.
+- AC8: форма сверяет предвыбранный вид со своим списком: `/lead?product=<slug>` опубликованной категории предвыбирает её, неизвестный, скрытый и пустой slug дают плейсхолдер.
+- AC9: опубликованных категорий нет: в списке только плейсхолдер, отправка даёт 400 «Выберите, что хотите заказать».
+- AC10: в `openapi.yaml` нет `ProductKindEnum`, `LeadCreateRequest.product` это строка; `api.d.ts` и `svelte-check` проходят без типа `ProductKind`.
+- AC11: `LeadAdmin` показывает название вида и фильтрует по нему; у заявки до v15 в колонке стоит метка `ProductKind`.
+- Тесты: Hypothesis на `product_label` (непустой снимок возвращается как есть, пустой даёт метку `ProductKind` или slug, исключений нет); pytest на AC2..AC7, AC9 и AC11 (`django_assert_max_num_queries` на AC7, админка через тестового клиента на AC11); тест схемы на AC10; компонентный `LeadForm.svelte.test.ts` на AC2 и AC8 (список из пропса, предвыбор, неизвестный slug, пустой список); Playwright `categories.spec.ts` и `lead.spec.ts` на AC1 и AC8 на сид-данных, axe.
 
 ## 23. Вне скоупа v1
 
@@ -1709,7 +1731,7 @@ tech.md v<N>; touched: <sections> | none
 
 ### 24.2 Письмо
 
-- Тема: `Фабрика Уюта: новая заявка, <метка ProductKind>`. ПДн в теме нет: темы попадают в журналы почтовых систем.
+- Тема: `Фабрика Уюта: новая заявка, <название вида>`. Название даёт `product_label(lead)` (v15). ПДн в теме нет: темы попадают в журналы почтовых систем.
 - Тело: по строке на поле, пустые поля пропускаются.
 
 ```text
@@ -1784,7 +1806,7 @@ tech.md v<N>; touched: <sections> | none
 <b>Источник:</b> /catalog/kitchens
 ```
 
-- Строка на поле, пустые поля пропускаются. Дата в `SHEETS_TIMEZONE`, формат `YYYY-MM-DD HH:MM`. Вид стоит в первой строке и отдельной строкой не дублируется.
+- Строка на поле, пустые поля пропускаются. Дата в `SHEETS_TIMEZONE`, формат `YYYY-MM-DD HH:MM`. Вид стоит в первой строке и отдельной строкой не дублируется, название даёт `product_label(lead)` (v15).
 - Телефон через `format_phone_display` (12.3) и обычным текстом, без моноширинного начертания и без тега: клиент MAX сам делает из номера ссылку для звонка.
 - Ссылки на карточку в админке в сообщении нет: путь админки секретный (13.1), а состав чата шире списка получателей письма.
 - Вложение: одна кнопка, которая копирует телефон в E.164 в буфер обмена.
