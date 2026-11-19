@@ -162,9 +162,7 @@ describe('breadcrumbListJsonLd', () => {
 					const items: { position: number; item?: string }[] = JSON.parse(
 						breadcrumbListJsonLd(ORIGIN, crumbs)
 					).itemListElement;
-					expect(items.map((entry) => entry.position)).toEqual(
-						crumbs.map((_, index) => index + 1)
-					);
+					expect(items.map((entry) => entry.position)).toEqual(crumbs.map((_, index) => index + 1));
 					expect(items.at(-1)).not.toHaveProperty('item');
 					for (const entry of items.slice(0, -1)) expect(entry).toHaveProperty('item');
 				}

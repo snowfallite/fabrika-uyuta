@@ -2,7 +2,7 @@
 	import { env } from '$env/dynamic/public';
 	import Seo from '$lib/components/layout/Seo.svelte';
 	import { HOME_SEO } from '$lib/content/pages';
-	import { furnitureStoreJsonLd, jsonLdScript } from '$lib/domain/json-ld';
+	import { furnitureStoreJsonLd, itemListJsonLd, jsonLdScript } from '$lib/domain/json-ld';
 	import CategoryGrid from '$lib/features/categories/CategoryGrid.svelte';
 	import GalleryGrid from '$lib/features/gallery/GalleryGrid.svelte';
 	import Hero from '$lib/features/hero/Hero.svelte';
@@ -18,6 +18,7 @@
 	const jsonLd = $derived(
 		furnitureStoreJsonLd(env.PUBLIC_SITE_URL ?? '', data.settings, data.home.slots.hero)
 	);
+	const itemList = $derived(itemListJsonLd(env.PUBLIC_SITE_URL ?? '', data.home.categories));
 </script>
 
 <Seo
@@ -29,6 +30,10 @@
 <svelte:head>
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- escaped JSON built in json-ld.ts -->
 	{@html jsonLdScript(jsonLd)}
+	{#if data.home.categories.length > 0}
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- escaped JSON built in json-ld.ts -->
+		{@html jsonLdScript(itemList)}
+	{/if}
 </svelte:head>
 
 <!-- Section order follows the template (tech.md, appendix A). -->

@@ -15,8 +15,11 @@ export const HOME_LINK = 'На главную';
 
 export const CATEGORY_PAGE = {
 	back: 'Все направления',
+	crumbHome: 'Главная',
+	crumbCatalog: 'Направления',
 	worksTitle: 'Наши работы',
 	emptyGallery: 'Скоро здесь появятся фото работ.',
+	otherTitle: 'Другие направления',
 	titleSuffix: ' | Фабрика Уюта'
 };
 

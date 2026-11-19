@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import Breadcrumbs from '$lib/components/layout/Breadcrumbs.svelte';
 	import { Container } from '$lib/components/ui/container';
 	import { ResponsiveImage } from '$lib/components/ui/responsive-image';
 	import { Section } from '$lib/components/ui/section';
@@ -8,6 +9,8 @@
 	import GalleryGrid from '$lib/features/gallery/GalleryGrid.svelte';
 	import LeadSection from '$lib/features/lead-form/LeadSection.svelte';
 	import type { CategoryDetail, SiteSettings } from '$lib/types';
+	import { categoryCrumbs } from './crumbs';
+	import OtherCategories from './OtherCategories.svelte';
 
 	interface Props {
 		category: CategoryDetail;
@@ -17,9 +20,11 @@
 	let { category, settings }: Props = $props();
 
 	const paragraphs = $derived(splitParagraphs(category.description));
+	const crumbs = $derived(categoryCrumbs(category.title));
 </script>
 
 <Container class="pt-24 pb-12 md:pt-28">
+	<Breadcrumbs items={crumbs} />
 	<a
 		href="/#catalog"
 		class="inline-flex items-center gap-2 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
@@ -74,5 +79,7 @@
 		<p class="text-muted-foreground">{CATEGORY_PAGE.emptyGallery}</p>
 	</Section>
 {/if}
+
+<OtherCategories current={category.slug} options={settings.product_options} />
 
 <LeadSection id="category-lead" idPrefix="category" product={category.slug} {settings} />
