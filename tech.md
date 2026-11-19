@@ -1176,7 +1176,7 @@ Branch protection на `main`: только через PR; обязательн�
 Деплой запускает владелец на VPS. GitHub Actions только проверяет PR (16.2): доступа к серверу и секретов у CI нет, реестра образов тоже.
 
 Подготовка VPS, один раз:
-1. Docker с плагином compose; DNS-запись `<domain>` на IP сервера; порты 80 и 443 открыты.
+1. Docker с плагином compose; DNS-записи `<domain>` и `www.<domain>` на IP сервера; порты 80 и 443 открыты.
 2. `git clone https://github.com/<owner>/fabrika-uyuta.git /opt/fabrika/app`.
 3. `/opt/fabrika/app/.env`: копия `.env.example` с production-значениями (раздел 14). Заполнить: `DOMAIN`, `ACME_EMAIL`, `POSTGRES_PASSWORD`, `DJANGO_SECRET_KEY`, `INTERNAL_API_TOKEN` (от 32 символов), `DJANGO_DEBUG=false`, `DJANGO_ADMIN_PATH` не `admin/`, `ENABLE_TEST_ENDPOINTS=false`, `CONSENT_VERSION`, при боевой таблице `SHEETS_BACKEND=google` с `GOOGLE_SERVICE_ACCOUNT_FILE=/run/secrets/google-sa.json` и `GOOGLE_SPREADSHEET_ID`, при алертах `ALERT_EMAIL` и `EMAIL_*`. Хосты, CSRF-источники и адрес сайта выводит compose из `DOMAIN` (16.5).
 4. `/opt/fabrika/app/google-sa.json`: ключ сервисного аккаунта, если `SHEETS_BACKEND=google`.
