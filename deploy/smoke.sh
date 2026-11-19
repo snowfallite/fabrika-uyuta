@@ -48,8 +48,31 @@ echo "ok   robots.txt ($env_name)"
 # S2-18 AC1: the www host exists only in production, where Caddy answers it with one redirect.
 if [ "$env_name" = production ]; then
 	www="$(printf '%s' "$base" | sed 's#://#://www.#')"
-	code="$(fetch -o /dev/null -w '%{http_code}' "$www/privacy")"
-	target="$(fetch -o /dev/null -w '%{redirect_url}' "$www/privacy")"
+	answer=""
+	why=""
+	tries=0
+	# A hostname Caddy sees for the first time needs its certificate first, and ACME takes a while.
+	# Until it arrives the handshake fails, so the request is retried instead of killing the script.
+	while [ "$tries" -lt 12 ]; do
+		if answer="$(curl -sS --max-time 20 -o /dev/null -w '%{http_code} %{redirect_url}' \
+			"$www/privacy" 2>&1)"; then
+			break
+		fi
+		why="$answer"
+		answer=""
+		tries=$((tries + 1))
+		if [ "$tries" = 1 ]; then
+			echo "wait www certificate..."
+		fi
+		sleep 5
+	done
+	if [ -z "$answer" ]; then
+		fail "www did not answer: ${why:-no response}
+     Check the DNS record for $www and the certificate:
+     docker compose -f compose.prod.yml logs caddy | grep -i 'www\|certificate\|acme'"
+	fi
+	code="${answer%% *}"
+	target="${answer#* }"
 	[ "$code" = 301 ] || fail "www answered $code, expected 301"
 	[ "$target" = "$base/privacy" ] || fail "www points at $target, expected $base/privacy"
 	echo "ok   www -> $target"
