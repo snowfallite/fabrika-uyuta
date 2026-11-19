@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Section } from '$lib/components/ui/section';
 	import { LEAD_SECTION } from '$lib/content/lead-form';
-	import type { ProductKind, SiteSettings } from '$lib/types';
+	import type { SiteSettings } from '$lib/types';
 	import LeadForm from './LeadForm.svelte';
 
 	interface Props {
@@ -9,7 +9,7 @@
 		/** Section anchor; the category page uses its own. */
 		id?: string;
 		idPrefix?: string;
-		product?: ProductKind | '';
+		product?: string;
 	}
 
 	let { settings, id = 'lead', idPrefix = 'lead', product = '' }: Props = $props();
@@ -33,7 +33,13 @@
 			</p>
 		</div>
 		<div class="rounded-[2rem] p-6 glass md:p-10">
-			<LeadForm {idPrefix} {product} phone={settings.phone} phoneDisplay={settings.phone_display} />
+			<LeadForm
+				{idPrefix}
+				{product}
+				options={settings.product_options}
+				phone={settings.phone}
+				phoneDisplay={settings.phone_display}
+			/>
 		</div>
 	</div>
 </Section>

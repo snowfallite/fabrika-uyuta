@@ -6,8 +6,8 @@ from collections.abc import Sequence
 from datetime import tzinfo
 from typing import Final
 
-from apps.core.enums import ProductKind
 from apps.leads.models import Lead
+from apps.leads.product import product_label
 
 HEADERS: Final[tuple[str, ...]] = (
     "ID",
@@ -25,7 +25,6 @@ COLUMNS: Final = "ABCDEFGH"
 MAX_CELL: Final = 5000
 DATE_RE: Final = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$")
 E164_RE: Final = re.compile(r"^\+[1-9][0-9]{7,14}$")
-PRODUCT_LABELS: Final = frozenset(label for _, label in ProductKind.choices)
 
 
 class ContractViolation(Exception):
@@ -38,7 +37,7 @@ def build_row(lead: Lead, tz: tzinfo) -> SheetRow:
         lead.created_at.astimezone(tz).strftime("%Y-%m-%d %H:%M"),
         lead.name,
         lead.phone,
-        ProductKind(lead.product).label,
+        product_label(lead),
         lead.dimensions,
         lead.comment,
         lead.source_url,
@@ -60,8 +59,9 @@ def validate_row(row: Sequence[object]) -> None:
         raise ContractViolation("column B: must match YYYY-MM-DD HH:MM")
     if not E164_RE.match(phone):
         raise ContractViolation("column D: must be E.164")
-    if product not in PRODUCT_LABELS:
-        raise ContractViolation("column E: must be a ProductKind label")
+    # v15: category titles are data, so the rule is only that the kind has a name.
+    if not product.strip():
+        raise ContractViolation("column E: must not be empty")
 
 
 def _is_uuid4(value: str) -> bool:

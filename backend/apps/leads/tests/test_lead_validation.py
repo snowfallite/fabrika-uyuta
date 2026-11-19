@@ -21,6 +21,7 @@ from apps.leads.api.serializers import (
     PRODUCT_REQUIRED,
 )
 from apps.leads.models import Lead
+from apps.leads.tests.factories import make_categories
 from apps.leads.tests.test_create_lead_api import post, valid_body
 
 pytestmark = pytest.mark.django_db
@@ -45,6 +46,12 @@ PHONE_CASES: list[dict[str, Any]] = json.loads(
 @pytest.fixture(autouse=True)
 def generous_throttle(settings: Any) -> None:
     settings.LEAD_THROTTLE_RATE = "1000/hour"
+
+
+@pytest.fixture(autouse=True)
+def categories() -> None:
+    """Since v15 the kind is a category slug, so the categories have to exist (tech.md, 7)."""
+    make_categories()
 
 
 @pytest.mark.parametrize("case", PHONE_CASES, ids=[c["input"] or "<empty>" for c in PHONE_CASES])

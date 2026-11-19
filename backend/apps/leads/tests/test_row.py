@@ -21,6 +21,7 @@ def lead(**overrides: object) -> Lead:
         "name": "Тестовый Клиент",
         "phone": "+79990000001",
         "product": ProductKind.WARDROBES,
+        "product_label": ProductKind.WARDROBES.label,
         "dimensions": "",
         "comment": "",
         "source_url": "/",
@@ -63,6 +64,10 @@ def test_build_row_formats_each_column() -> None:
     comment=st.text(max_size=2000),
     source_url=st.text(max_size=500),
     product=st.sampled_from(ProductKind.values),
+    # A title as the admin stores it, or no snapshot at all on a lead from before v15.
+    product_label=st.one_of(
+        st.just(""), st.text(min_size=1, max_size=120).filter(lambda value: value.strip())
+    ),
     phone=st.from_regex(r"\+[1-9][0-9]{7,14}", fullmatch=True),
     created_at=st.datetimes(
         min_value=datetime(2000, 1, 1), max_value=datetime(2100, 1, 1), timezones=st.just(UTC)
@@ -74,6 +79,7 @@ def test_build_row_always_fits_the_contract(
     comment: str,
     source_url: str,
     product: str,
+    product_label: str,
     phone: str,
     created_at: datetime,
 ) -> None:
@@ -84,6 +90,7 @@ def test_build_row_always_fits_the_contract(
             comment=comment,
             source_url=source_url,
             product=product,
+            product_label=product_label,
             phone=phone,
             created_at=created_at,
         ),
@@ -91,7 +98,7 @@ def test_build_row_always_fits_the_contract(
     )
     assert len(row) == 8
     validate_row(row)
-    assert row[4] == ProductKind(product).label
+    assert row[4] == (product_label or ProductKind(product).label)
 
 
 @pytest.mark.parametrize(
@@ -101,7 +108,6 @@ def test_build_row_always_fits_the_contract(
         (0, str(uuid.uuid1()), "column A"),
         (1, "26.09.2026 00:30", "column B"),
         (3, "89990000001", "column D"),
-        (4, "kitchens", "column E"),
         (6, "x" * 5001, "column G"),
     ],
 )
@@ -112,6 +118,28 @@ def test_validate_row_names_the_column_not_the_value(index: int, value: str, col
         validate_row(row)
     assert column in str(exc_info.value)
     assert value[:12] not in str(exc_info.value)
+
+
+def test_ac5_column_e_takes_the_snapshot_not_the_slug() -> None:
+    renamed = lead(product="kitchens", product_label="Кухни и столешницы")
+    assert build_row(renamed, MOSCOW)[4] == "Кухни и столешницы"
+    before_v15 = lead(product="kitchens", product_label="")
+    assert build_row(before_v15, MOSCOW)[4] == "Кухни под заказ"
+
+
+def test_ac5_validate_row_takes_any_non_empty_kind() -> None:
+    """v15: category titles are data, so column E has no closed list of labels."""
+    row = list(build_row(lead(), MOSCOW))
+    row[4] = "Детские комнаты"
+    validate_row(row)
+
+
+@pytest.mark.parametrize("value", ["", "   "])
+def test_ac5_validate_row_rejects_an_empty_kind(value: str) -> None:
+    row = list(build_row(lead(), MOSCOW))
+    row[4] = value
+    with pytest.raises(ContractViolation, match="column E"):
+        validate_row(row)
 
 
 def test_validate_row_needs_eight_string_cells() -> None:

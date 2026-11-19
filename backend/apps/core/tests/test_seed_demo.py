@@ -81,6 +81,11 @@ def test_ac2_seed_fills_everything_with_pipeline_images(media_root: Path) -> Non
     assert contacts.social_links.count() == 0
     statuses = sorted(Lead.objects.values_list("sheet_status", flat=True))
     assert statuses == sorted([SheetStatus.PENDING, SheetStatus.SENT, SheetStatus.FAILED])
+    # v15: a demo lead carries the slug and the title of its category.
+    slugs = set(Category.objects.values_list("slug", flat=True))
+    for product, label in Lead.objects.values_list("product", "product_label"):
+        assert product in slugs
+        assert label
 
 
 def test_ac3_production_refuses_and_writes_nothing(settings: Any, media_root: Path) -> None:

@@ -37,6 +37,15 @@ describe('CategoryCard', () => {
 		await expect.element(img).toHaveAttribute('width', '1200');
 	});
 
+	it('AC1: a category the content manager added carries its own kind', async () => {
+		const screen = await render(CategoryCard, {
+			category: { ...base, slug: 'kids-rooms', title: 'Детские комнаты' }
+		});
+		await expect
+			.element(screen.getByRole('link', { name: 'Оставить заявку' }))
+			.toHaveAttribute('href', '/lead?product=kids-rooms');
+	});
+
 	it('AC3: links to the category page and the CTA to /lead with the kind', async () => {
 		const screen = await render(CategoryCard, { category: base });
 		await expect

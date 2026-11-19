@@ -108,6 +108,23 @@ def test_ac6_nobody_adds_or_edits_and_only_superusers_delete() -> None:
     assert not Lead.objects.filter(pk=lead.pk).exists()
 
 
+def test_ac11_the_changelist_shows_the_kind_label_and_filters_by_it() -> None:
+    client = staff_in("Заявки")
+    make_lead(product="kids-rooms", product_label="Детские комнаты")
+    make_lead(product="office", product_label="")  # a lead from before v15
+
+    page = client.get(reverse(CHANGELIST)).content.decode()
+
+    assert "Детские комнаты" in page
+    assert "Офисная мебель" in page  # the enum still labels the old lead
+    assert "kids-rooms" not in page
+
+    filtered = client.get(reverse(CHANGELIST), {"product_label__exact": "Детские комнаты"})
+
+    assert "Детские комнаты" in filtered.content.decode()
+    assert "Офисная мебель" not in filtered.content.decode()
+
+
 def notify_retry(client: Client, *leads: Lead) -> None:
     response = client.post(
         reverse(CHANGELIST),

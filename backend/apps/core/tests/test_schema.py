@@ -22,7 +22,7 @@ COMPONENTS = {
     "HomeContent",
     "LeadCreateRequest",
     "LeadCreated",
-    "ProductKindEnum",
+    "ProductOption",
 }
 
 
@@ -45,18 +45,18 @@ def test_ac1_components_use_exact_names(schema: dict[str, Any]) -> None:
     assert set(schema["components"]["schemas"]) >= COMPONENTS
 
 
-def test_ac1_the_kind_field_references_its_enum(schema: dict[str, Any]) -> None:
+def test_ac10_the_kind_is_a_string_and_the_schema_holds_no_enum(schema: dict[str, Any]) -> None:
+    """S2-17: the kinds are categories now, so no enum pins them down (tech.md, section 7)."""
     schemas = schema["components"]["schemas"]
-    product_ref = "#/components/schemas/ProductKindEnum"
-    assert schemas["LeadCreateRequest"]["properties"]["product"] == {"$ref": product_ref}
-    assert schemas["ProductKindEnum"]["enum"] == [
-        "kitchens",
-        "kitchen-tables",
-        "wardrobes",
-        "sliding-wardrobes",
-        "office",
-        "other",
-    ]
+    assert schemas["LeadCreateRequest"]["properties"]["product"]["type"] == "string"
+    assert [name for name in schemas if name.endswith("Enum")] == []
+
+
+def test_ac7_site_settings_carry_the_kind_list(schema: dict[str, Any]) -> None:
+    schemas = schema["components"]["schemas"]
+    options = schemas["SiteSettings"]["properties"]["product_options"]
+    assert options["items"] == {"$ref": "#/components/schemas/ProductOption"}
+    assert set(schemas["ProductOption"]["properties"]) == {"value", "label"}
 
 
 def test_ac1_internal_token_security_scheme(schema: dict[str, Any]) -> None:

@@ -13,7 +13,8 @@ from django.urls import reverse
 from hypothesis import given
 from hypothesis import strategies as st
 
-from apps.content.models import SiteSettings
+from apps.content.models import Category, SiteSettings
+from apps.core.enums import CATEGORY_SEED
 from apps.core.phone import format_phone_display
 
 pytestmark = pytest.mark.django_db
@@ -58,7 +59,7 @@ def test_site_settings_api_returns_contacts_and_links(
     row.social_links.create(label="Второй", url="https://example.com/2", position=2)
     row.social_links.create(label="Первый", url="https://example.com/1", position=1)
 
-    with django_assert_max_num_queries(2):
+    with django_assert_max_num_queries(3):
         data = api(client, settings)
 
     assert data == {
@@ -75,7 +76,56 @@ def test_site_settings_api_returns_contacts_and_links(
             {"label": "Первый", "url": "https://example.com/1"},
             {"label": "Второй", "url": "https://example.com/2"},
         ],
+        "product_options": [{"value": slug, "label": title} for slug, title in CATEGORY_SEED],
     }
+
+
+def test_ac2_the_kind_list_holds_published_categories_in_position_order(
+    client: Client, settings: Any
+) -> None:
+    Category.objects.filter(slug="office").update(position=0)
+    Category.objects.filter(slug="kitchens").update(position=9)
+    Category.objects.filter(slug="wardrobes").update(is_published=False)
+    Category.objects.filter(slug="other").update(title="Другое изделие")
+
+    assert api(client, settings)["product_options"] == [
+        {"value": "office", "label": "Офисная мебель"},
+        {"value": "kitchen-tables", "label": "Кухонные столы"},
+        {"value": "sliding-wardrobes", "label": "Шкафы-купе"},
+        {"value": "other", "label": "Другое изделие"},
+        {"value": "kitchens", "label": "Кухни под заказ"},
+    ]
+
+
+def test_ac2_a_category_the_content_manager_added_joins_the_list(
+    client: Client, settings: Any
+) -> None:
+    Category.objects.create(slug="kids-rooms", title="Детские комнаты", position=10)
+
+    options = api(client, settings)["product_options"]
+
+    assert options[-1] == {"value": "kids-rooms", "label": "Детские комнаты"}
+
+
+def test_ac7_the_kind_list_rides_along_and_hides_nothing_internal(
+    client: Client, settings: Any, django_assert_max_num_queries: MaxQueries
+) -> None:
+    SiteSettings.objects.filter(id=1).update(
+        notify_emails="manager@example.ru", max_chat_id=-12307927
+    )
+
+    with django_assert_max_num_queries(3):
+        data = api(client, settings)
+
+    assert len(data["product_options"]) == len(CATEGORY_SEED)
+    assert "notify_emails" not in data
+    assert "max_chat_id" not in data
+
+
+def test_ac9_without_published_categories_the_list_is_empty(client: Client, settings: Any) -> None:
+    Category.objects.update(is_published=False)
+
+    assert api(client, settings)["product_options"] == []
 
 
 def test_empty_settings_give_empty_strings(client: Client, settings: Any) -> None:

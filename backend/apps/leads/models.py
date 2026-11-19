@@ -3,14 +3,17 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
-from apps.core.enums import NotifyStatus, ProductKind, SheetStatus
+from apps.core.enums import NotifyStatus, SheetStatus
 
 
 class Lead(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField("ФИО", max_length=120)
     phone = models.CharField("Телефон", max_length=16)  # E.164
-    product = models.CharField("Что заказать", max_length=32, choices=ProductKind.choices)
+    # Category.slug; the set of kinds is editable data since v15, so no choices here.
+    product = models.CharField("Что заказать", max_length=32)
+    # Title of that category when the lead arrived; empty on leads made before v15.
+    product_label = models.CharField("Название вида", max_length=120, blank=True)
     dimensions = models.CharField("Размеры", max_length=300, blank=True)
     comment = models.TextField("Комментарий", blank=True)  # the API caps it at 2000
     source_url = models.CharField("Источник", max_length=500, blank=True)  # path + query, no host

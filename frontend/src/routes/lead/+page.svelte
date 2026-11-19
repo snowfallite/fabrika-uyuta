@@ -20,6 +20,7 @@
 		<LeadForm
 			idPrefix="lead-page"
 			product={data.product}
+			options={data.settings.product_options}
 			phone={data.settings.phone}
 			phoneDisplay={data.settings.phone_display}
 			result={form}

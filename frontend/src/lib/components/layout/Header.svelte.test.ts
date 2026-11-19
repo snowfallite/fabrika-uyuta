@@ -14,7 +14,8 @@ const empty: SiteSettings = {
 	address: '',
 	work_hours: '',
 	map_url: '',
-	social_links: []
+	social_links: [],
+	product_options: []
 };
 const filled: SiteSettings = {
 	...empty,

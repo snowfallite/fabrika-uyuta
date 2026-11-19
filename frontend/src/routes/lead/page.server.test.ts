@@ -105,12 +105,15 @@ describe('/lead action', () => {
 describe('/lead load', () => {
 	const url = (query: string) => ({ url: new URL(`http://localhost/lead${query}`) });
 
-	it('AC5: preselects a known kind', () => {
-		expect(load(url('?product=wardrobes') as never)).toEqual({ product: 'wardrobes' });
+	it('AC5: hands the asked-for kind to the form', () => {
+		expect(load(url('?product=kids-rooms') as never)).toEqual({ product: 'kids-rooms' });
+		expect(load(url('') as never)).toEqual({ product: '' });
 	});
 
-	it('AC5: ignores an unknown kind', () => {
-		expect(load(url('?product=spaceship') as never)).toEqual({ product: '' });
-		expect(load(url('') as never)).toEqual({ product: '' });
+	it('AC8: a slug longer than a category slug is cut, the form drops what it cannot offer', () => {
+		// Which kinds exist is the form's business since v15, so load only caps the length.
+		expect(load(url(`?product=${'x'.repeat(40)}`) as never)).toEqual({
+			product: 'x'.repeat(32)
+		});
 	});
 });

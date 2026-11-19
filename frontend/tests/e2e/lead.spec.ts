@@ -39,6 +39,20 @@ test.describe('lead form with JavaScript', () => {
 		expect(apiCalls).toEqual([]);
 	});
 
+	test('AC2: the kind list holds the published categories in their order', async ({ page }) => {
+		await page.goto('/lead');
+
+		await expect(page.getByLabel('Что хотите заказать').locator('option')).toHaveText([
+			'Выберите',
+			'Кухни под заказ',
+			'Кухонные столы',
+			'Шкафы',
+			'Шкафы-купе',
+			'Офисная мебель',
+			'Другое'
+		]);
+	});
+
 	test('AC5: /lead preselects a known kind and ignores an unknown one', async ({ page }) => {
 		await page.goto('/lead?product=wardrobes');
 		await expect(page.getByLabel('Что хотите заказать')).toHaveValue('wardrobes');

@@ -5,9 +5,9 @@ from collections.abc import Sequence
 from datetime import tzinfo
 from typing import Final
 
-from apps.core.enums import ProductKind
 from apps.core.phone import format_phone_display
 from apps.leads.models import Lead
+from apps.leads.product import product_label
 
 MAX_LENGTH: Final = 4000
 COPY_BUTTON: Final = "Скопировать телефон"
@@ -20,7 +20,7 @@ class ContractViolation(Exception):
 
 def build_text(lead: Lead, tz: tzinfo) -> str:
     """Labels in <b>, values escaped. Values are trimmed in order, so the whole fits MAX_LENGTH."""
-    label = ProductKind(lead.product).label
+    label = product_label(lead)
     head = f"<b>Новая заявка: {html.escape(label)}</b>"
     lines = [head, ""]
     budget = MAX_LENGTH - len(head) - 1
