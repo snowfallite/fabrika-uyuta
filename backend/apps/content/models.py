@@ -89,6 +89,8 @@ class SiteSettings(models.Model):
     # Brand card in the contacts section; empty hides it (tech.md, v9).
     vk_url = models.URLField("Ссылка ВКонтакте", blank=True)
     email = models.EmailField(blank=True)
+    # addressLocality of the markup; data, not a constant: more cities are planned (tech.md, v16).
+    city = models.CharField("Город", max_length=120, blank=True)
     address = models.CharField("Адрес", max_length=300, blank=True)
     work_hours = models.CharField("Часы работы", max_length=120, blank=True)
     map_url = models.URLField("Ссылка на карту", blank=True)

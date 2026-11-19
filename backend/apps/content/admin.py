@@ -266,6 +266,7 @@ class SiteSettingsForm(forms.ModelForm):
             "max_phone",
             "vk_url",
             "email",
+            "city",
             "address",
             "work_hours",
             "map_url",

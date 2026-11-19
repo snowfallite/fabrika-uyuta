@@ -9,6 +9,7 @@ const settings: SiteSettings = {
 	max_phone_display: '',
 	vk_url: '',
 	email: '',
+	city: '',
 	address: 'Вологда, </script><b>',
 	work_hours: '',
 	map_url: '',

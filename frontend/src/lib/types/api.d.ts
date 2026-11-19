@@ -77,6 +77,8 @@ export interface components {
             title: string;
             short_description: string;
             cover: components["schemas"]["ImageAsset"] | null;
+            /** Format: date-time */
+            updated_at: string;
             description: string;
             seo_title: string;
             seo_description: string;
@@ -87,6 +89,8 @@ export interface components {
             title: string;
             short_description: string;
             cover: components["schemas"]["ImageAsset"] | null;
+            /** Format: date-time */
+            updated_at: string;
         };
         /** @description DRF default error body for 403, 404 and 429 (tech.md, section 7). */
         ErrorDetail: {
@@ -155,6 +159,7 @@ export interface components {
             max_phone_display: string;
             vk_url: string;
             email: string;
+            city: string;
             address: string;
             work_hours: string;
             map_url: string;

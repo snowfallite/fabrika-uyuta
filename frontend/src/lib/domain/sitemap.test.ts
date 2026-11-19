@@ -17,7 +17,8 @@ const category = (slug: CategorySlug): CategorySummary => ({
 	slug,
 	title: slug,
 	short_description: '',
-	cover: null
+	cover: null,
+	updated_at: '2026-11-20T10:00:00Z'
 });
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1] ?? '');

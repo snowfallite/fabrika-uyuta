@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 from contextlib import AbstractContextManager
+from datetime import datetime
 from typing import Any
 
 import pytest
@@ -54,6 +55,23 @@ def test_ac2_category_without_cover_has_null_cover(client: Client, settings: Any
     cover = categories["kitchens"]["cover"]
     assert cover["alt"] == "Кухни под заказ"  # empty alt falls back to the title
     assert categories["kitchens"]["short_description"] == "Кухонные гарнитуры"
+
+
+def test_ac6_every_category_carries_the_time_of_its_last_edit(
+    client: Client, settings: Any
+) -> None:
+    """S2-18: the sitemap writes lastmod from this field."""
+    before = {c["slug"]: c["updated_at"] for c in home(client, settings)["categories"]}
+    assert all(before.values())
+
+    kitchens = Category.objects.get(slug="kitchens")
+    kitchens.title = "Кухни на заказ"
+    kitchens.save()
+
+    after = {c["slug"]: c["updated_at"] for c in home(client, settings)["categories"]}
+
+    assert datetime.fromisoformat(after["kitchens"]) > datetime.fromisoformat(before["kitchens"])
+    assert after["office"] == before["office"]
 
 
 def test_ac4_home_stays_within_four_queries(

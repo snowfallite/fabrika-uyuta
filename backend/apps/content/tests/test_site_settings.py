@@ -69,6 +69,7 @@ def test_site_settings_api_returns_contacts_and_links(
         "max_phone_display": "+7 (999) 000-00-01",
         "vk_url": "https://vk.com/fabrikauyuta",
         "email": "info@example.ru",
+        "city": "",
         "address": "",
         "work_hours": "",
         "map_url": "",
@@ -128,6 +129,15 @@ def test_ac9_without_published_categories_the_list_is_empty(client: Client, sett
     assert api(client, settings)["product_options"] == []
 
 
+def test_ac3_the_city_rides_in_the_contacts_response(client: Client, settings: Any) -> None:
+    """S2-18: the city feeds addressLocality, so it travels apart from the street."""
+    SiteSettings.objects.filter(id=1).update(city="Вологда", address="ул. Мира, 1")
+
+    data = api(client, settings)
+
+    assert (data["city"], data["address"]) == ("Вологда", "ул. Мира, 1")
+
+
 def test_empty_settings_give_empty_strings(client: Client, settings: Any) -> None:
     data = api(client, settings)
     assert data["phone"] == data["phone_display"] == ""
@@ -148,6 +158,7 @@ def form_data(**overrides: str) -> dict[str, str]:
         "max_phone": "",
         "vk_url": "",
         "email": "",
+        "city": "",
         "address": "",
         "work_hours": "",
         "map_url": "",
@@ -225,6 +236,15 @@ def test_ac8_recipients_stay_out_of_the_api(client: Client, settings: Any) -> No
     SiteSettings.objects.filter(id=1).update(notify_emails="manager@example.ru")
 
     assert "notify_emails" not in api(client, settings)
+
+
+def test_ac3_the_city_is_saved_from_the_admin() -> None:
+    url = reverse("admin:content_sitesettings_change", args=[1])
+
+    response = owner().post(url, form_data(city="Вологда"))
+
+    assert response.status_code == 302
+    assert SiteSettings.objects.get(id=1).city == "Вологда"
 
 
 def test_the_chat_id_is_saved_from_the_admin() -> None:
