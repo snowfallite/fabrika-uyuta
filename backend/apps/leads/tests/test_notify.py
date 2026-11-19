@@ -57,6 +57,7 @@ def test_ac1_new_lead_reaches_every_recipient() -> None:
             "name": "Тестовый Клиент",
             "phone": "+79991234567",
             "product": ProductKind.KITCHENS,
+            "product_label": "Кухни под заказ",
             "dimensions": "Стена 3,2 м, высота 2,6 м",
             "comment": "МДФ, белый",
             "source_url": "/catalog/kitchens",

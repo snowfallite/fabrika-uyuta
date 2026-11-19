@@ -22,9 +22,10 @@ from django.db import transaction
 from django.urls import reverse
 
 from apps.content.models import SiteSettings
-from apps.core.enums import NotifyStatus, ProductKind
+from apps.core.enums import NotifyStatus
 from apps.core.phone import format_phone_display
 from apps.leads.models import Lead
+from apps.leads.product import product_label
 from apps.leads.retry import backoff_seconds
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ def card_url(lead: Lead) -> str:
 
 def build_message(lead: Lead, tz: ZoneInfo, url: str) -> LeadMessage:
     """Subject without PII, body with the lead itself (tech.md, 24.2)."""
-    label = ProductKind(lead.product).label
+    label = product_label(lead)
     rows = (
         ("Дата", lead.created_at.astimezone(tz).strftime("%Y-%m-%d %H:%M")),
         ("ФИО", lead.name),
