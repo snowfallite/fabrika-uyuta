@@ -42,6 +42,12 @@ compose run --rm release
 echo "==> up"
 compose up -d --remove-orphans --wait --wait-timeout 300
 
+# The Caddyfile is a bind mount: editing it changes no service, so `up` keeps the running
+# container and its old config. Without this a new site never appears, and a request for its
+# name gets a TLS alert because Caddy holds no certificate for it (tech.md, 16.3).
+echo "==> caddy reload"
+compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+
 domain="$(sed -n 's/^DOMAIN=//p' .env | head -n 1)"
 if [ -n "$domain" ]; then
 	echo "==> smoke"
