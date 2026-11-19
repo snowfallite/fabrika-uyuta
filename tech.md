@@ -808,6 +808,7 @@ export type CategorySlug = string;  // v14: the schema has no enum for it
 | `text.ts` | `splitParagraphs(text: string): string[]` | описание категории → абзацы | S2-08 |
 | `sitemap.ts` | `buildSitemap(origin: string, categories: CategorySummary[]): string` | XML карты сайта с `lastmod` | S2-11, S2-18 |
 | `json-ld.ts` | `furnitureStoreJsonLd`, `itemListJsonLd`, `breadcrumbListJsonLd`, `jsonLdScript` | разметка организации, списка направлений и пути | S2-11, S2-18 |
+| `seo.ts` | `previewImage(origin: string, image: ImageAsset \| null, title: string): Preview` | превью ссылки: своё фото или обложка сайта | S2-18 |
 
 `LeadFormErrors = Partial<Record<'name' | 'phone' | 'product' | 'dimensions' | 'comment' | 'consent' | 'form', string>>`. Неизвестные поля DRF уходят в `form`.
 
@@ -1713,7 +1714,7 @@ tech.md v<N>; touched: <sections> | none
 ### S2-18 SEO: разметка, превью, один адрес
 - Цель: поисковик собирает карточку организации из данных админки, ссылка на любую страницу даёт превью, у сайта один адрес, предвыбор вида не плодит дубли.
 - Бэкенд: поле `SiteSettings.city` (раздел 6) и ключ `city` в `SiteSettingsSerializer`, `updated_at` в `CategorySummarySerializer` и в селекторах главной и страницы категории, поле города в `SiteSettingsAdmin`, `seed_demo` пишет город.
-- Фронтенд: `furnitureStoreJsonLd` растёт на `email`, `sameAs`, `hasMap` и `PostalAddress`, новые `itemListJsonLd` и `breadcrumbListJsonLd` в `src/lib/domain/json-ld.ts`, `lastmod` в `buildSitemap`, OG-заглушка и теги `twitter:*` в `Seo`, `Breadcrumbs` в `src/lib/components/layout/`, блок «Другие направления» в `src/lib/features/category-page/`, `Clean-param` в `robots.txt`, `static/og-cover.png`.
+- Фронтенд: `furnitureStoreJsonLd` растёт на `email`, `sameAs`, `hasMap` и `PostalAddress`, новые `itemListJsonLd` и `breadcrumbListJsonLd` в `src/lib/domain/json-ld.ts`, `lastmod` в `buildSitemap`, `previewImage` в новом `src/lib/domain/seo.ts` и теги `twitter:*` в `Seo`, `Breadcrumbs` в `src/lib/components/layout/`, блок «Другие направления» в `src/lib/features/category-page/`, `Clean-param` в `robots.txt`, `static/og-cover.png`.
 - Инфраструктура: сайт `www.{$DOMAIN}` с редиректом 301 в `deploy/caddy/Caddyfile`, проверка редиректа в `deploy/smoke.sh`.
 - Контракты: 6, 7 (`SiteSettings.city`, `CategorySummary.updated_at`), 10.1, 10.4, 11, 16.4, приложение А. Бамп v16 делает эта задача.
 - Зависит от: S2-10, S2-11.
@@ -1726,7 +1727,7 @@ tech.md v<N>; touched: <sections> | none
 - AC7: `robots.txt` в production содержит `Clean-param: product /lead`, вне production остаётся `Disallow: /`.
 - AC8: блок «Другие направления» перечисляет остальные опубликованные категории ссылками на `/catalog/<slug>`, своей категории в нём нет; `GET /categories/{slug}/` остаётся в пределах 3 запросов к БД, `GET /site-settings/` в пределах 3, `GET /home/` в пределах 4.
 - AC9: на `/` и `/catalog/<slug>` консоль браузера не содержит нарушений CSP, оба блока JSON-LD парсятся как JSON.
-- Тесты: pytest на AC3 (ключ `city` в ответе), AC6 (`updated_at` в ответе) и AC8 (`django_assert_max_num_queries`); fast-check на `buildSitemap` (у каждой категории ровно один `lastmod`, статичные страницы без него, адреса абсолютные) и на `breadcrumbListJsonLd` (`position` идут подряд с единицы, у последнего элемента нет `item`); vitest на `furnitureStoreJsonLd` (пустые поля выпадают, `sameAs` собирает `vk_url` и соцссылки) и `itemListJsonLd`; компонентный `Seo.svelte.test.ts` на AC2; Playwright `seo.spec.ts` на AC2, AC4..AC7 и AC9, `catalog.spec.ts` на AC8, axe на странице категории с крошками.
+- Тесты: pytest на AC3 (ключ `city` в ответе), AC6 (`updated_at` в ответе) и AC8 (`django_assert_max_num_queries`); fast-check на `buildSitemap` (у каждой категории ровно один `lastmod`, статичные страницы без него, адреса абсолютные) и на `breadcrumbListJsonLd` (`position` идут подряд с единицы, у последнего элемента нет `item`); vitest на `furnitureStoreJsonLd` (пустые поля выпадают, `sameAs` собирает `vk_url` и соцссылки), на `itemListJsonLd` и на `previewImage` (AC2: своё фото выигрывает, пустое даёт обложку); компонентный `OtherCategories.svelte.test.ts` на AC8; Playwright `seo.spec.ts` на AC2, AC4..AC7 и AC9, `catalog.spec.ts` на AC8, axe на странице категории с крошками. Компонентного теста у `Seo` нет: в браузерном режиме Vitest модуль `$env/dynamic/public` не читается, теги проверяет Playwright.
 
 ## 23. Вне скоупа v1
 
