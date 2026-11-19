@@ -4,6 +4,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.leads.models import Lead
+from apps.leads.product import product_label
 from apps.leads.services.max_retry import retry_max
 from apps.leads.services.notify_retry import retry_notify
 from apps.leads.services.sheet_retry import retry_sheet_sync
@@ -17,17 +18,22 @@ class LeadAdmin(admin.ModelAdmin):
         "created_at",
         "name",
         "phone",
-        "product",
+        "product_title",
         "sheet_status",
         "sheet_attempts",
         "notify_status",
         "max_status",
     ]
-    list_filter = ["sheet_status", "notify_status", "max_status", "product", "created_at"]
+    # v15: the kinds are categories, so the filter lists the titles leads were sent with.
+    list_filter = ["sheet_status", "notify_status", "max_status", "product_label", "created_at"]
     search_fields = ["name", "phone"]
     date_hierarchy = "created_at"
     actions = ["retry_sheet_sync", "retry_notify", "retry_max"]
     readonly_fields = [field.name for field in Lead._meta.fields]
+
+    @admin.display(description="Что заказать", ordering="product_label")
+    def product_title(self, obj: Lead) -> str:
+        return product_label(obj)
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return False

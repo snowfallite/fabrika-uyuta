@@ -163,6 +163,7 @@ class Command(BaseCommand):
                     "name": f"Демо Клиент {number}",
                     "phone": f"+7999000000{number}",
                     "product": ProductKind.KITCHENS,
+                    "product_label": ProductKind.KITCHENS.label,
                     "dimensions": "Стена 3,2 м, высота 2,6 м",
                     "comment": "Демо-заявка",
                     "source_url": "/",
