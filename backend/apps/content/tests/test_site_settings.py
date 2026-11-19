@@ -80,7 +80,7 @@ def test_site_settings_api_returns_contacts_and_links(
     }
 
 
-def test_ac7_the_kind_list_holds_published_categories_in_position_order(
+def test_ac2_the_kind_list_holds_published_categories_in_position_order(
     client: Client, settings: Any
 ) -> None:
     Category.objects.filter(slug="office").update(position=0)
@@ -97,7 +97,7 @@ def test_ac7_the_kind_list_holds_published_categories_in_position_order(
     ]
 
 
-def test_ac7_a_category_the_content_manager_added_joins_the_list(
+def test_ac2_a_category_the_content_manager_added_joins_the_list(
     client: Client, settings: Any
 ) -> None:
     Category.objects.create(slug="kids-rooms", title="Детские комнаты", position=10)
@@ -105,6 +105,21 @@ def test_ac7_a_category_the_content_manager_added_joins_the_list(
     options = api(client, settings)["product_options"]
 
     assert options[-1] == {"value": "kids-rooms", "label": "Детские комнаты"}
+
+
+def test_ac7_the_kind_list_rides_along_and_hides_nothing_internal(
+    client: Client, settings: Any, django_assert_max_num_queries: MaxQueries
+) -> None:
+    SiteSettings.objects.filter(id=1).update(
+        notify_emails="manager@example.ru", max_chat_id=-12307927
+    )
+
+    with django_assert_max_num_queries(3):
+        data = api(client, settings)
+
+    assert len(data["product_options"]) == len(CATEGORY_SEED)
+    assert "notify_emails" not in data
+    assert "max_chat_id" not in data
 
 
 def test_ac9_without_published_categories_the_list_is_empty(client: Client, settings: Any) -> None:
