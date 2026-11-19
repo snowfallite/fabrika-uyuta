@@ -1686,6 +1686,7 @@ tech.md v<N>; touched: <sections> | none
 - Цель: посетитель выбирает в форме ту же категорию, что видит в каталоге, и заявка несёт её название в таблицу, письмо и чат MAX. Своя категория перестаёт приходить без вида.
 - Бэкенд: `Lead.product` без `choices` и новое поле `Lead.product_label` (раздел 6), `product_label(lead)` в новом `apps/leads/product.py`, `product_options` и `category_label(slug)` в `apps/content/selectors.py`, `ProductOptionSerializer` в `apps/content/api/serializers.py`, `product` как строка в `LeadCreateSerializer` с проверкой по существующим категориям и снимком названия в `validated_data`, снимок в `create_lead`, колонка E в `sheets/row.py`, строка письма в `notify.py`, первая строка в `messenger/text.py`, колонка и фильтр в `LeadAdmin`, `seed_demo`, `ENUM_NAME_OVERRIDES` убран из `config/settings.py`.
 - Фронтенд: `ProductOption` вместо `ProductKind` в `src/lib/types/index.ts`, список `Select` из `settings.product_options` в `LeadForm` со сверкой предвыбранного вида, вид как строка в `LeadSection`, `LeadDialog` и `dialog.svelte.ts`, предвыбор своей категории в `CategoryCard` и `CategoryPage`, `src/lib/domain/product-kind.ts` удалён.
+- ADR: `docs/adr/0004-lead-kind-comes-from-the-categories.md`. `README.md`, раздел «Админка»: направление встаёт карточкой каталога, страницей и вариантом формы, снятая галочка убирает все три.
 - Контракты: 6, 7, 8.1, 10.3, 10.4, 12.1, 15.3, 24.2, 25.3. Бамп v15 делает эта задача.
 - Зависит от: S2-16.
 - AC1: CTA карточки каталога подставляет свою категорию: с JS диалог открывается с ней в «Что хотите заказать», без JS ссылка ведёт на `/lead?product=<slug>` и вид предвыбран. Так же работает категория, которую контент-менеджер завёл сам.
@@ -1699,7 +1700,7 @@ tech.md v<N>; touched: <sections> | none
 - AC9: опубликованных категорий нет: в списке только плейсхолдер, отправка даёт 400 «Выберите, что хотите заказать».
 - AC10: в `openapi.yaml` нет `ProductKindEnum`, `LeadCreateRequest.product` это строка; `api.d.ts` и `svelte-check` проходят без типа `ProductKind`.
 - AC11: `LeadAdmin` показывает название вида и фильтрует по нему; у заявки до v15 в колонке стоит метка `ProductKind`.
-- Тесты: Hypothesis на `product_label` (непустой снимок возвращается как есть, пустой даёт метку `ProductKind` или slug, исключений нет); pytest на AC2..AC7, AC9 и AC11 (`django_assert_max_num_queries` на AC7, админка через тестового клиента на AC11); тест схемы на AC10; компонентный `LeadForm.svelte.test.ts` на AC2 и AC8 (список из пропса, предвыбор, неизвестный slug, пустой список); Playwright `categories.spec.ts` и `lead.spec.ts` на AC1 и AC8 на сид-данных, axe.
+- Тесты: Hypothesis на `product_label` (непустой снимок возвращается как есть, пустой даёт метку `ProductKind` или slug, исключений нет); pytest на AC2..AC7, AC9 и AC11 (`django_assert_max_num_queries` на AC7, админка через тестового клиента на AC11); тест схемы на AC10; компонентные `LeadForm.svelte.test.ts` на AC2, AC8 и AC9 и `CategoryCard.svelte.test.ts` на AC1 со своей категорией: в сид-данных своей категории нет, поэтому эту половину AC1 Playwright не закрывает; Playwright `lead.spec.ts` на AC2 и AC8, `catalog.spec.ts` на колонку E сид-категории, axe.
 
 ## 23. Вне скоупа v1
 
