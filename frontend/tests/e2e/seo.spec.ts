@@ -189,9 +189,49 @@ test.describe('seo', () => {
 				{ position: 3, name: 'Кухни под заказ' }
 			]
 		});
-		expect(
-			Object.keys((path?.itemListElement as Record<string, unknown>[])[2] ?? {})
-		).not.toContain('item');
+		const steps = (path?.itemListElement ?? []) as Record<string, unknown>[];
+		expect(Object.keys(steps[2] ?? {})).not.toContain('item');
+		expect(Object.keys(steps[2] ?? {})).not.toContain('url');
+	});
+
+	test('S2-19 AC5: every step but the last carries url beside item', async ({ page }) => {
+		await page.goto('/catalog/kitchens');
+		const [path] = await jsonLd(page);
+		const steps = (path?.itemListElement ?? []) as Record<string, unknown>[];
+		// Google reads item, Yandex reads url: both name the same address.
+		for (const step of steps.slice(0, -1)) expect(step.url).toBe(step.item);
+	});
+
+	test('S2-19 AC3: /favicon.ico carries the three classic sizes', async ({ request }) => {
+		const response = await request.get('/favicon.ico');
+		expect(response.status()).toBe(200);
+		const body = await response.body();
+		// ICO header: reserved, type 1, then the number of images.
+		expect(body.readUInt16LE(2)).toBe(1);
+		const count = body.readUInt16LE(4);
+		expect(count).toBe(3);
+		const sizes = Array.from({ length: count }, (_, index) => body[6 + index * 16]);
+		expect(sizes).toEqual([16, 32, 48]);
+	});
+
+	test('S2-19 AC4: the shell links the icon set and the manifest lists it', async ({
+		page,
+		request
+	}) => {
+		await page.goto('/');
+		const head = page.locator('head');
+		await expect(head.locator('link[rel="icon"][href$="favicon.ico"]')).toHaveCount(1);
+		await expect(head.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveCount(1);
+		await expect(
+			head.locator('link[rel="apple-touch-icon"][href$="apple-touch-icon.png"]')
+		).toHaveCount(1);
+
+		const manifest = await (await request.get('/manifest.webmanifest')).json();
+		const sources = (manifest.icons as { src: string }[]).map((icon) => icon.src);
+		expect(sources).toEqual(['/favicon.svg', '/icon-192.png', '/icon-512.png']);
+		for (const source of ['/apple-touch-icon.png', '/icon-192.png', '/icon-512.png']) {
+			expect((await request.get(source)).status(), source).toBe(200);
+		}
 	});
 
 	test('S2-18 AC9: the markup parses and the policy blocks nothing', async ({ page }) => {
