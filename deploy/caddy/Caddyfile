@@ -11,7 +11,14 @@ import /etc/caddy/site.caddy
 }
 
 # One address for the site: www moves to the apex and keeps the path (tech.md, 16.4).
+# The site routes nothing, so it imports no snippet and carries the headers of 13.1 itself.
 www.{$DOMAIN} {
-	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
 	redir https://{$DOMAIN}{uri} permanent
 }
