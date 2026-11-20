@@ -141,15 +141,43 @@ describe('breadcrumbListJsonLd', () => {
 			{ label: 'Шкафы' }
 		]);
 		expect(JSON.parse(raw).itemListElement).toEqual([
-			{ '@type': 'ListItem', position: 1, name: 'Главная', item: 'https://example.com/' },
+			{
+				'@type': 'ListItem',
+				position: 1,
+				name: 'Главная',
+				item: 'https://example.com/',
+				url: 'https://example.com/'
+			},
 			{
 				'@type': 'ListItem',
 				position: 2,
 				name: 'Направления',
-				item: 'https://example.com/#catalog'
+				item: 'https://example.com/#catalog',
+				url: 'https://example.com/#catalog'
 			},
 			{ '@type': 'ListItem', position: 3, name: 'Шкафы' }
 		]);
+	});
+
+	it('AC5: every step but the last carries url beside item', () => {
+		fc.assert(
+			fc.property(
+				fc.array(fc.string({ minLength: 1 }), { minLength: 1, maxLength: 4 }),
+				fc.string({ minLength: 1 }),
+				(labels, current) => {
+					const crumbs = [
+						...labels.map((label) => ({ label, href: '/catalog/x' })),
+						{ label: current }
+					];
+					const items: { item?: string; url?: string }[] = JSON.parse(
+						breadcrumbListJsonLd(ORIGIN, crumbs)
+					).itemListElement;
+					for (const entry of items.slice(0, -1)) expect(entry.url).toBe(entry.item);
+					expect(items.at(-1)).not.toHaveProperty('url');
+				}
+			),
+			{ numRuns }
+		);
 	});
 
 	it('AC4: positions run from one and the current page carries no item', () => {

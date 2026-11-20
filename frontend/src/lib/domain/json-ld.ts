@@ -55,17 +55,23 @@ export function itemListJsonLd(origin: string, categories: CategorySummary[]): s
 	});
 }
 
-/** The path to the current page: the crumb without an href is the page itself. */
+/**
+ * The path to the current page: the crumb without an href is the page itself.
+ * Each step carries the address twice: Google reads `item`, Yandex reads `url`.
+ */
 export function breadcrumbListJsonLd(origin: string, crumbs: Crumb[]): string {
 	return encode({
 		'@context': 'https://schema.org',
 		'@type': 'BreadcrumbList',
-		itemListElement: crumbs.map((crumb, index) => ({
-			'@type': 'ListItem',
-			position: index + 1,
-			name: crumb.label,
-			...(crumb.href && { item: absoluteUrl(origin, crumb.href) })
-		}))
+		itemListElement: crumbs.map((crumb, index) => {
+			const href = crumb.href ? absoluteUrl(origin, crumb.href) : undefined;
+			return {
+				'@type': 'ListItem',
+				position: index + 1,
+				name: crumb.label,
+				...(href && { item: href, url: href })
+			};
+		})
 	});
 }
 
