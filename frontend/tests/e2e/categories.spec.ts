@@ -45,6 +45,41 @@ test.describe('home: categories', () => {
 		await expect(dialog.getByLabel('Что хотите заказать')).toHaveValue('sliding-wardrobes');
 	});
 
+	test('S2-19 AC1: on a phone the text sits under the photo', async ({ page }, testInfo) => {
+		test.skip(testInfo.project.name !== 'mobile', 'phone layout');
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const card = page.locator('#catalog article').first();
+		await card.scrollIntoViewIfNeeded();
+
+		const photo = await card.locator('img').first().boundingBox();
+		const title = await card.getByRole('heading', { level: 3 }).boundingBox();
+		const cta = await card.getByRole('link', { name: 'Оставить заявку' }).boundingBox();
+		expect(photo && title && cta).toBeTruthy();
+		// The photo ends before the text starts: nothing covers it.
+		expect(photo!.y + photo!.height).toBeLessThanOrEqual(title!.y);
+		expect(title!.y + title!.height).toBeLessThanOrEqual(cta!.y);
+		await expect(card.locator('p')).toBeVisible();
+	});
+
+	test('S2-19 AC2: on desktop the text overlays the photo and the description waits for hover', async ({
+		page
+	}, testInfo) => {
+		test.skip(testInfo.project.name !== 'desktop', 'desktop layout');
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const card = page.locator('#catalog article').first();
+		await card.scrollIntoViewIfNeeded();
+
+		const photo = await card.locator('img').first().boundingBox();
+		const title = await card.getByRole('heading', { level: 3 }).boundingBox();
+		expect(title!.y).toBeGreaterThan(photo!.y);
+		expect(title!.y).toBeLessThan(photo!.y + photo!.height);
+
+		const description = card.locator('p');
+		await expect(description).toBeHidden();
+		await card.hover();
+		await expect(description).toBeVisible();
+	});
+
 	test('axe finds no serious issues in the catalog section', async ({ page }) => {
 		await page.goto('/', { waitUntil: 'networkidle' });
 		await page.locator('#catalog').scrollIntoViewIfNeeded();
