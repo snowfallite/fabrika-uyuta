@@ -98,8 +98,10 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./deploy/caddy/site.caddy:/etc/caddy/site.caddy:ro
+      # The directory, not the two files: a file mount follows the inode, git pull replaces
+      # the file, and the container reads the old config until it is recreated, the reload
+      # step of deploy.sh included (tech.md, 16.4).
+      - ./deploy/caddy:/etc/caddy:ro
       - media:/srv/media:ro
       # Certificates survive a container rebuild, so Let's Encrypt is not asked again.
       - caddy-data:/data
