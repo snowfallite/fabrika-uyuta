@@ -17,7 +17,7 @@ x-backend-env: &backend-env
   POSTGRES_PORT: "5432"
   MEDIA_ROOT: /data/media
   LEAD_THROTTLE_RATE: 1000/hour
-  CONSENT_VERSION: "2026-09-25"
+  CONSENT_VERSION: "2026-11-21"
   ENABLE_TEST_ENDPOINTS: "true"
   SHEETS_BACKEND: fake
   SHEETS_FAKE_PATH: /data/fake-sheet.jsonl
