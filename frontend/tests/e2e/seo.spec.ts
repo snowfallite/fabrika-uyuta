@@ -122,7 +122,8 @@ test.describe('seo', () => {
 			...xml.matchAll(/<url><loc>([^<]+)<\/loc>(?:<lastmod>([^<]+)<\/lastmod>)?<\/url>/g)
 		];
 
-		expect(entries).toHaveLength(9);
+		// Four static pages (v20 added /cookies) plus the six seeded categories.
+		expect(entries).toHaveLength(10);
 		for (const [, loc, lastmod] of entries) {
 			if (loc?.includes('/catalog/')) {
 				expect(lastmod, loc).toBeTruthy();
