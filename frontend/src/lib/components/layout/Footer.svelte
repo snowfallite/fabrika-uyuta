@@ -79,6 +79,7 @@
 			<div class="flex flex-col items-start sm:flex-row sm:items-center sm:gap-6">
 				<a href="/privacy" class="py-2 hover:text-primary-foreground">{FOOTER.privacy}</a>
 				<a href="/consent" class="py-2 hover:text-primary-foreground">{FOOTER.consent}</a>
+				<a href="/cookies" class="py-2 hover:text-primary-foreground">{FOOTER.cookies}</a>
 			</div>
 		</div>
 	</div>

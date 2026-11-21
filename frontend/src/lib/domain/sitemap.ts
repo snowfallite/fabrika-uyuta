@@ -2,7 +2,7 @@ import type { CategorySummary } from '$lib/types';
 import { absoluteUrl } from './url';
 
 /** Indexable pages besides categories; /lead is noindex and stays out. */
-const STATIC_PATHS = ['/', '/privacy', '/consent'];
+const STATIC_PATHS = ['/', '/privacy', '/consent', '/cookies'];
 
 const escapeXml = (value: string) =>
 	value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
