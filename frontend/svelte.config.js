@@ -8,16 +8,16 @@ const config = {
 	},
 	kit: {
 		adapter: adapter(),
-		// No foreign scripts, fonts or widgets (tech.md, 10.2 and 13.2).
+		// One foreign script: the Yandex.Metrika counter (tech.md, 10.2 and 13.2).
 		csp: {
 			mode: 'auto',
 			directives: {
 				'default-src': ['self'],
-				'script-src': ['self'],
-				'img-src': ['self', 'data:'],
+				'script-src': ['self', 'https://mc.yandex.ru'],
+				'img-src': ['self', 'data:', 'https://mc.yandex.ru'],
 				'font-src': ['self'],
 				'style-src': ['self', 'unsafe-inline'],
-				'connect-src': ['self'],
+				'connect-src': ['self', 'https://mc.yandex.ru'],
 				'frame-ancestors': ['none'],
 				'form-action': ['self'],
 				'base-uri': ['self']

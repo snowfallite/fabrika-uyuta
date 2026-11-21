@@ -16,5 +16,16 @@ export const FOOTER = typo({
 	leadText: 'Оставьте заявку, и мы обсудим детали вашего будущего изделия.',
 	rights: 'Фабрика Уюта. Все права защищены.',
 	privacy: 'Политика обработки персональных данных',
-	consent: 'Согласие на обработку персональных данных'
+	consent: 'Согласие на обработку персональных данных',
+	cookies: 'Политика использования cookie'
+});
+
+// The sentence is split so that the word "cookie" links to /cookies; the markup adds the spaces.
+export const COOKIE_NOTICE = typo({
+	label: 'Уведомление об использовании cookie',
+	textBefore: 'Сайт использует',
+	linkText: 'cookie',
+	textAfter:
+		'и сервис веб-аналитики Яндекс.Метрика. Продолжая использование сайта, вы даёте согласие на обработку данных с использованием указанных технологий.',
+	accept: 'ОК'
 });

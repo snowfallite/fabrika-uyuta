@@ -1,8 +1,11 @@
 <script lang="ts">
 	import '../app.css';
-	import { navigating } from '$app/state';
+	import { env } from '$env/dynamic/public';
+	import { navigating, page } from '$app/state';
+	import CookieNotice from '$lib/components/layout/CookieNotice.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
+	import Metrika from '$lib/components/layout/Metrika.svelte';
 	import SkipLink from '$lib/components/layout/SkipLink.svelte';
 	import { NAV } from '$lib/config/nav';
 	import LeadDialog from '$lib/features/lead-form/LeadDialog.svelte';
@@ -23,3 +26,5 @@
 	<Footer settings={data.settings} nav={NAV} />
 </div>
 <LeadDialog settings={data.settings} />
+<CookieNotice accepted={data.cookieConsent} path={page.url.pathname + page.url.search} />
+<Metrika id={env.PUBLIC_YANDEX_METRIKA_ID ?? ''} />
