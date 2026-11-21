@@ -48,7 +48,9 @@ test.describe('cookie notice', () => {
 			'/cookies'
 		);
 
+		const stored = page.waitForResponse((response) => response.url().includes('/cookie-consent'));
 		await notice.getByRole('button', { name: 'ОК' }).click();
+		await stored;
 		await expect(notice).toBeHidden();
 
 		await page.goto('/privacy');
@@ -92,13 +94,15 @@ test.describe('cookie notice', () => {
 			if (message.text().includes('Content Security Policy')) violations.push(message.text());
 		});
 
-		await page.goto('/cookies', { waitUntil: 'networkidle' });
+		await page.goto('/', { waitUntil: 'networkidle' });
 		await expect(page.getByRole('region', { name: NOTICE })).toBeVisible();
-		await expectNoSeriousA11yViolations(page);
 
-		// The notice is sticky, so the end of the page frees the footer.
+		// The notice is sticky, so the end of the page frees the footer: the click must land.
 		await page.getByRole('contentinfo').getByRole('link', { name: COOKIES_LINK }).click();
 		await expect(page).toHaveURL(/\/cookies$/);
+
+		await expect(page.getByRole('region', { name: NOTICE })).toBeVisible();
+		await expectNoSeriousA11yViolations(page);
 		expect(violations).toEqual([]);
 	});
 });

@@ -1771,7 +1771,7 @@ tech.md v<N>; touched: <sections> | none
 - AC6: `POST /cookie-consent` с чужим `redirectTo` ведёт на `/`; `GET` того же пути отвечает 405.
 - AC7: пустой `PUBLIC_YANDEX_METRIKA_ID` не даёт ни тега, ни запросов к `mc.yandex.ru`; заполненный даёт тег счётчика с этим номером.
 - AC8: на 360 и 1440 px уведомление не мешает дойти до подвала: его ссылки кликабельны, пока уведомление на экране. axe без serious и critical на `/`, `/cookies`, `/privacy` и `/consent` с уведомлением на экране, консоль без нарушений CSP.
-- Тесты: fast-check на `sitePath` (результат начинается с `/`, не начинается с `//`, схемы и хоста не содержит, исключений нет); vitest на `buildSitemap` (`/cookies` в карте один раз); компонентные `CookieNotice.svelte.test.ts` (AC4) и `Metrika.svelte.test.ts` (AC7); Playwright `cookies.spec.ts` на AC3..AC8 (AC5 с `javaScriptEnabled: false`, AC7 слушателем запросов, axe), `/cookies` в списке страниц `seo.spec.ts`. Остальные спеки получают cookie согласия из проекта `setup` в `playwright.config.ts`, иначе уведомление перекрывает низ экрана на 360 px.
+- Тесты: fast-check на `sitePath` (результат начинается с `/` и не начинается ни с `//`, ни с `/\`, исключений нет); vitest на `buildSitemap` (`/cookies` в карте один раз); компонентные `CookieNotice.svelte.test.ts` (AC4, AC5) и `Metrika.svelte.test.ts` (AC7, загрузчик замокан: сети в юнит-тестах нет); Playwright `cookies.spec.ts` на AC3..AC8 (AC5 с `javaScriptEnabled: false`, AC7 слушателем запросов, axe), `/cookies` в списке страниц и в проверке карты сайта `seo.spec.ts`. Остальные спеки идут с cookie согласия: её задаёт `storageState` в `use` файла `playwright.config.ts`, а `cookies.spec.ts` сбрасывает его своим `test.use`.
 
 ## 23. Вне скоупа v1
 
