@@ -22,7 +22,8 @@
 </script>
 
 {#if !accepted && !dismissed}
-	<div class="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:px-6 sm:pb-6">
+	<!-- Sticky, not fixed: at the end of the page it steps aside and frees the footer links. -->
+	<div class="sticky bottom-0 z-40 px-4 pb-4 sm:px-6 sm:pb-6">
 		<section
 			aria-label={COOKIE_NOTICE.label}
 			class="mx-auto flex max-w-3xl flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-float sm:flex-row sm:items-center sm:gap-6 sm:p-6"

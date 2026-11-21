@@ -16,11 +16,3 @@
 		return startMetrika(counter);
 	});
 </script>
-
-{#if enabled}
-	<noscript
-		><div>
-			<img src="https://mc.yandex.ru/watch/{counter}" class="absolute -left-[9999px]" alt="" />
-		</div></noscript
-	>
-{/if}

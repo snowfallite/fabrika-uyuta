@@ -23,8 +23,8 @@
 	<main id="main" tabindex="-1" class="flex-1 outline-none">
 		{@render children()}
 	</main>
+	<CookieNotice accepted={data.cookieConsent} path={page.url.pathname + page.url.search} />
 	<Footer settings={data.settings} nav={NAV} />
 </div>
 <LeadDialog settings={data.settings} />
-<CookieNotice accepted={data.cookieConsent} path={page.url.pathname + page.url.search} />
 <Metrika id={env.PUBLIC_YANDEX_METRIKA_ID ?? ''} />

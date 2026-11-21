@@ -1,7 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectNoSeriousA11yViolations } from './axe';
 
-const PAGES = ['/', '/catalog/kitchens', '/catalog/office', '/lead', '/privacy', '/consent'];
+const PAGES = [
+	'/',
+	'/catalog/kitchens',
+	'/catalog/office',
+	'/lead',
+	'/privacy',
+	'/consent',
+	'/cookies'
+];
 
 async function meta(page: Page, path: string) {
 	await page.goto(path);
@@ -97,6 +105,7 @@ test.describe('seo', () => {
 				'/',
 				'/privacy',
 				'/consent',
+				'/cookies',
 				'/catalog/kitchens',
 				'/catalog/kitchen-tables',
 				'/catalog/wardrobes',
@@ -281,7 +290,7 @@ test.describe('seo', () => {
 		expect(manifest.name).toBe('Фабрика Уюта');
 	});
 
-	for (const path of ['/privacy', '/consent']) {
+	for (const path of ['/privacy', '/consent', '/cookies']) {
 		test(`axe finds no serious issues on ${path}`, async ({ page }) => {
 			await page.goto(path, { waitUntil: 'networkidle' });
 			await expectNoSeriousA11yViolations(page);

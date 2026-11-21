@@ -29,6 +29,7 @@ describe('buildSitemap', () => {
 			'https://example.com/',
 			'https://example.com/privacy',
 			'https://example.com/consent',
+			'https://example.com/cookies',
 			'https://example.com/catalog/office'
 		]);
 	});
